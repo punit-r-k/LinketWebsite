@@ -201,7 +201,11 @@ function overlapArea(a: BoxRect, b: BoxRect) {
   return xOverlap * yOverlap;
 }
 
-export default function DashboardOnboardingTour() {
+export default function DashboardOnboardingTour({
+  initialSeen = false,
+}: {
+  initialSeen?: boolean;
+}) {
   const user = useDashboardUser();
   const userId = user?.id ?? null;
   const pathname = usePathname() ?? "";
@@ -346,6 +350,14 @@ export default function DashboardOnboardingTour() {
   }, [isOpen, stepIndex, viewport.width]);
 
   useEffect(() => {
+    if (!initialSeen || !storageKey) return;
+    if (!readDashboardTourStatus(storageKey)) {
+      writeDashboardTourStatus(storageKey, "dismissed");
+    }
+    writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
+  }, [autoOpenStorageKey, initialSeen, storageKey]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const handleStart = () => startTour("manual");
     window.addEventListener(TOUR_START_EVENT, handleStart);
@@ -389,7 +401,7 @@ export default function DashboardOnboardingTour() {
     const hasAutoOpened = readDashboardTourAutoOpenSeen(autoOpenStorageKey);
     const status = readDashboardTourStatus(storageKey);
     let startTimer: ReturnType<typeof setTimeout> | null = null;
-    if (!hasAutoOpened && status) {
+    if (!hasAutoOpened && (status || initialSeen)) {
       autoStartHandled.current = true;
       writeDashboardTourAutoOpenSeen(autoOpenStorageKey);
     } else if (!hasAutoOpened && !hasTourQueryParam) {
@@ -418,7 +430,15 @@ export default function DashboardOnboardingTour() {
     return () => {
       if (startTimer) clearTimeout(startTimer);
     };
-  }, [autoOpenStorageKey, pathname, router, searchParams, startTour, storageKey]);
+  }, [
+    autoOpenStorageKey,
+    initialSeen,
+    pathname,
+    router,
+    searchParams,
+    startTour,
+    storageKey,
+  ]);
 
   useEffect(() => {
     if (!isOpen || isNavigating) return;

@@ -58,7 +58,7 @@ const COLLECTION_AREAS = [
     eyebrow: "Usage",
     title: "Operational and analytics data",
     description:
-      "When Linket is used, we record signals such as taps, scans, link clicks, and lead form submissions so the product can function and report activity.",
+      "When Linket is used, we record signals such as taps, scans, link clicks, onboarding progress, and lead form submissions so the product can function and report activity.",
   },
 ] as const;
 
@@ -66,7 +66,7 @@ const USE_CASES = [
   "Operate the core product, including public profiles, QR and NFC routing, contact saving, and lead capture.",
   "Show analytics dashboards so you can understand visits, scans, clicks, and follow-up activity.",
   "Respond to support questions, account requests, and reliability issues.",
-  "Improve the product by identifying broken flows, performance issues, and frequently used features.",
+  "Improve the product by identifying broken flows, onboarding drop-off points, performance issues, and frequently used features.",
   "Protect the service, investigate misuse, and comply with legal or safety obligations when necessary.",
 ] as const;
 

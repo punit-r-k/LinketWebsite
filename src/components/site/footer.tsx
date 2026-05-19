@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { brand, hasBrandMark } from "@/config/brand";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { isPublicProfilePathname } from "@/lib/routing";
 
 const FOOTER_LEGAL_LINKS = [
@@ -88,6 +89,7 @@ export function Footer() {
           </div>
 
           <div className="space-y-6 text-sm text-white/70">
+            <LanguageSwitcher className="border-white/10 bg-white/10 text-white" />
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-white/60 sm:tracking-[0.35em]">
                 Contact

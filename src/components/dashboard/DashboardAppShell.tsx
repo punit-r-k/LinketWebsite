@@ -215,7 +215,11 @@ export default function DashboardAppShell({
           </div>
         </div>
       ) : null}
-      {!shouldHideChrome ? <DashboardOnboardingTour /> : null}
+      {!shouldHideChrome ? (
+        <DashboardOnboardingTour
+          initialSeen={effectiveOnboardingState.dashboardTourSeen}
+        />
+      ) : null}
     </div>
   );
 }

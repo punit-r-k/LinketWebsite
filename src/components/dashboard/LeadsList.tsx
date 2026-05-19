@@ -816,7 +816,7 @@ export default function LeadsList({ userId }: { userId: string }) {
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="dashboard-leads-list space-y-3 sm:space-y-4">
         {!canLabelLeads ? (
           <div className="rounded-[1.6rem] border border-primary/20 bg-primary/5 px-4 py-4 shadow-sm">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -834,24 +834,24 @@ export default function LeadsList({ userId }: { userId: string }) {
             </div>
           </div>
         ) : null}
-        <div className="sticky top-3 z-20 rounded-[1.75rem] border border-border/60 bg-card/90 p-3 shadow-[0_20px_48px_-36px_rgba(15,23,42,0.4)] backdrop-blur sm:top-4 sm:p-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
+        <div className="dashboard-leads-toolbar sticky top-2 z-20 rounded-[1.25rem] border border-border/60 bg-card/95 p-2 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.4)] backdrop-blur sm:top-4 sm:rounded-[1.75rem] sm:p-4">
+          <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
             <div className="min-w-0 flex-1">
               <Input
                 value={q}
                 onChange={(event) => setQ(event.target.value)}
                 placeholder="Search name, email, phone, company, note, status"
                 aria-label="Search leads"
-                className="h-11 rounded-2xl"
+                className="h-10 rounded-xl text-sm sm:h-11 sm:rounded-2xl"
               />
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
+            <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
               <Button
                 type="button"
                 variant={filtersOpen || hasActiveFilters(filters) ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setFiltersOpen((value) => !value)}
-                className="h-10 rounded-2xl sm:h-9"
+                className="h-9 rounded-xl"
               >
                 <Filter className="h-4 w-4" aria-hidden />
                 Filters
@@ -860,7 +860,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                 value={sortBy}
                 onValueChange={(value) => setSortBy(value as LeadSortOption)}
               >
-                <SelectTrigger className="h-10 w-full min-w-0 rounded-2xl bg-background/70 sm:h-9 sm:min-w-[170px]">
+                <SelectTrigger className="h-9 w-full min-w-0 rounded-xl bg-background/80 sm:min-w-[170px] sm:rounded-2xl">
                   <SelectValue placeholder="Sort" />
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-border/60 bg-popover/95">
@@ -876,7 +876,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                 variant="outline"
                 size="sm"
                 onClick={() => load({ reset: true })}
-                className="h-10 rounded-2xl sm:h-9"
+                className="h-9 rounded-xl"
               >
                 <RefreshCw className={cn("h-4 w-4", fetching && "animate-spin")} aria-hidden />
                 Refresh
@@ -886,7 +886,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                   type="button"
                   size="sm"
                   onClick={() => setExportMenuOpen((value) => !value)}
-                  className="h-10 w-full rounded-2xl sm:h-9 sm:w-auto"
+                  className="h-9 w-full rounded-xl sm:w-auto sm:rounded-2xl"
                 >
                   <Download className="h-4 w-4" aria-hidden />
                   Export
@@ -931,7 +931,7 @@ export default function LeadsList({ userId }: { userId: string }) {
           </div>
 
           {(filtersOpen || hasActiveFilters(filters)) && (
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:mt-3 sm:gap-2">
               <FilterChip
                 active={filters.hasAttachment}
                 onClick={() =>
@@ -968,7 +968,7 @@ export default function LeadsList({ userId }: { userId: string }) {
           )}
 
           {selectedIds.size > 0 ? (
-            <div className="mt-3 flex flex-col items-start gap-2 rounded-2xl border border-border/50 bg-background/80 px-3 py-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="mt-2 flex flex-col items-start gap-2 rounded-xl border border-border/50 bg-background/80 px-3 py-2 sm:mt-3 sm:flex-row sm:flex-wrap sm:items-center sm:rounded-2xl">
               <span className="text-sm font-medium">{selectedIds.size} selected</span>
               <Button
                 type="button"
@@ -1001,7 +1001,7 @@ export default function LeadsList({ userId }: { userId: string }) {
           ) : null}
         </div>
 
-        <div className="overflow-hidden rounded-[1.8rem] border border-border/60 bg-card/80 shadow-[0_24px_60px_-42px_rgba(15,23,42,0.35)]">
+        <div className="dashboard-leads-results overflow-hidden rounded-[1.2rem] border border-border/60 bg-card/90 shadow-[0_20px_48px_-38px_rgba(15,23,42,0.35)] sm:rounded-[1.8rem]">
           {loading ? (
             <div className="space-y-3 p-4">
               {[...Array(6)].map((_, index) => (
@@ -1017,7 +1017,7 @@ export default function LeadsList({ userId }: { userId: string }) {
             </div>
           ) : (
             <>
-              <div className="border-b border-border/40 px-4 py-3 md:hidden">
+              <div className="border-b border-border/40 px-3 py-2 md:hidden">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-foreground">
@@ -1026,7 +1026,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     <p className="text-xs text-muted-foreground">
                       {selectedIds.size > 0
                         ? `${selectedIds.size} selected for export or deletion`
-                        : "Tap any card to review the full submission."}
+                        : "Tap a lead for full details."}
                     </p>
                   </div>
                   <Button
@@ -1041,14 +1041,14 @@ export default function LeadsList({ userId }: { userId: string }) {
                 </div>
               </div>
 
-              <div className="space-y-3 p-3 md:hidden">
+              <div className="space-y-2 p-2 md:hidden">
                 {leadViews.map((row) => (
                   <article
                     key={row.lead.id}
-                    className="overflow-hidden rounded-[1.5rem] border border-border/50 bg-background/65 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.45)]"
+                    className="dashboard-lead-card overflow-hidden rounded-[1.05rem] border border-border/55 bg-background/75 shadow-[0_14px_34px_-30px_rgba(15,23,42,0.45)]"
                   >
-                    <div className="flex items-start gap-3 p-4">
-                      <div className="pt-1">
+                    <div className="flex items-start gap-2.5 p-3">
+                      <div className="pt-0.5">
                         <input
                           type="checkbox"
                           checked={selectedIds.has(row.lead.id)}
@@ -1062,79 +1062,73 @@ export default function LeadsList({ userId }: { userId: string }) {
                         className="min-w-0 flex-1 text-left"
                         onClick={() => setActiveLeadId(row.lead.id)}
                       >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <StatusBadge status={row.status} />
-                          <RatingBadge rating={row.lead.lead_rating} />
-                          {row.attachments.length > 0 ? (
-                            <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/80 px-2.5 py-1 text-[11px] font-medium text-foreground">
-                              <Paperclip className="h-3.5 w-3.5" aria-hidden />
-                              {row.attachments.length}
-                            </span>
-                          ) : null}
-                          <span className="text-xs text-muted-foreground">
+                        <div className="flex min-w-0 items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="truncate text-sm font-semibold leading-5 text-foreground">
+                              {row.lead.name || "Unnamed lead"}
+                            </div>
+                            <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                              <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                              <span className="truncate">
+                                {row.lead.email || "No email provided"}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="shrink-0 text-[11px] leading-5 text-muted-foreground">
                             {row.submittedShortLabel}
                           </span>
                         </div>
-                        <div className="mt-3 min-w-0">
-                          <div className="truncate text-base font-semibold text-foreground">
-                            {row.lead.name || "Unnamed lead"}
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            {row.lead.company ? (
-                              <span className="rounded-full border border-border/50 bg-card/80 px-2.5 py-1">
-                                {row.lead.company}
-                              </span>
-                            ) : null}
-                            <span className="rounded-full border border-border/50 bg-card/80 px-2.5 py-1">
-                              {row.lead.handle || "Unknown form"}
+
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          <StatusBadge status={row.status} compact />
+                          <RatingBadge rating={row.lead.lead_rating} compact />
+                          {row.attachments.length > 0 ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/90 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                              <Paperclip className="h-3 w-3" aria-hidden />
+                              {row.attachments.length}
                             </span>
-                          </div>
-                          {row.lead.note.trim() || row.lead.next_follow_up_at ? (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {row.lead.note.trim() ? (
-                                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                                  <StickyNote className="h-3.5 w-3.5" aria-hidden />
-                                  Note
-                                </span>
-                              ) : null}
-                              {row.lead.next_follow_up_at ? (
-                                <span className="inline-flex items-center gap-1.5 rounded-full border border-border/50 bg-card/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                                  <CalendarClock className="h-3.5 w-3.5" aria-hidden />
-                                  {formatRelativeTime(row.lead.next_follow_up_at)}
-                                </span>
-                              ) : null}
-                            </div>
+                          ) : null}
+                          {row.lead.note.trim() ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/90 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              <StickyNote className="h-3 w-3" aria-hidden />
+                              Note
+                            </span>
+                          ) : null}
+                          {row.lead.next_follow_up_at ? (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-card/90 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              <CalendarClock className="h-3 w-3" aria-hidden />
+                              {formatRelativeTime(row.lead.next_follow_up_at)}
+                            </span>
                           ) : null}
                         </div>
-                        <div className="mt-3 space-y-2">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Mail className="h-4 w-4 shrink-0" aria-hidden />
-                            <span className="truncate">
-                              {row.lead.email || "No email provided"}
-                            </span>
-                          </div>
+
+                        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           {row.lead.phone ? (
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Phone className="h-4 w-4 shrink-0" aria-hidden />
+                            <span className="inline-flex min-w-0 items-center gap-1.5">
+                              <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
                               <span className="truncate">{row.lead.phone}</span>
-                            </div>
+                            </span>
                           ) : null}
+                          {row.lead.company ? (
+                            <span className="inline-flex min-w-0 items-center gap-1.5">
+                              <Building2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                              <span className="truncate">{row.lead.company}</span>
+                            </span>
+                          ) : null}
+                          <span className="truncate">{row.lead.handle || "Unknown form"}</span>
                         </div>
                         {row.preview ? (
-                          <p className="mt-3 line-clamp-3 rounded-2xl border border-border/40 bg-card/80 px-3 py-3 text-sm text-foreground/90">
+                          <p className="mt-2 line-clamp-1 text-xs leading-5 text-foreground/90">
                             {row.preview}
                           </p>
                         ) : null}
-                        <p className="mt-3 text-xs font-medium text-muted-foreground">
-                          Tap to review full submission
-                        </p>
                       </button>
                     </div>
-                    <div className="flex flex-wrap gap-2 border-t border-border/40 px-4 py-3">
+                    <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5 border-t border-border/40 px-3 py-2">
                       <Button
                         type="button"
                         size="sm"
-                        className="flex-1 rounded-xl"
+                        className="h-8 rounded-lg text-xs"
                         onClick={() => setActiveLeadId(row.lead.id)}
                       >
                         Open
@@ -1143,17 +1137,18 @@ export default function LeadsList({ userId }: { userId: string }) {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="flex-1 rounded-xl"
+                        className="h-8 rounded-lg text-xs"
                         disabled={!row.lead.email}
                         onClick={() => copyToClipboard(row.lead.email, "Email copied")}
                       >
-                        Copy email
+                        <Copy className="h-3.5 w-3.5" aria-hidden />
+                        Email
                       </Button>
                       <Button
                         type="button"
                         variant="custom"
                         size="icon"
-                        className="ml-auto h-9 w-9 rounded-xl border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700"
+                        className="h-8 w-8 rounded-lg border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:text-rose-700"
                         onClick={() => deleteLead(row.lead.id)}
                         aria-label={`Delete ${row.lead.name || row.lead.email || "lead"}`}
                       >
@@ -1166,7 +1161,7 @@ export default function LeadsList({ userId }: { userId: string }) {
 
               <div className="hidden md:block">
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[760px] text-left text-sm">
+                  <table className="w-full min-w-[640px] text-left text-sm">
                   <thead className="bg-muted/50 text-xs uppercase tracking-[0.18em] text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3">
@@ -1182,7 +1177,6 @@ export default function LeadsList({ userId }: { userId: string }) {
                       <th className="px-4 py-3">Name</th>
                       <th className="px-4 py-3">Email</th>
                       <th className="px-4 py-3">Phone</th>
-                      <th className="px-4 py-3">Message preview</th>
                       <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1239,13 +1233,6 @@ export default function LeadsList({ userId }: { userId: string }) {
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {row.lead.phone || "—"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {row.preview ? (
-                            <p className="max-w-[280px] truncate text-muted-foreground">
-                              {row.preview}
-                            </p>
-                          ) : null}
                         </td>
                         <td
                           className="px-4 py-3"
@@ -1804,27 +1791,48 @@ function FilterChip({
   );
 }
 
-function StatusBadge({ status }: { status: LeadWorkflowStatus }) {
+function StatusBadge({
+  status,
+  compact = false,
+}: {
+  status: LeadWorkflowStatus;
+  compact?: boolean;
+}) {
   return (
     <Badge
       variant="outline"
-      className={cn("rounded-full px-2.5 py-1 text-[11px]", STATUS_META[status].className)}
+      className={cn(
+        "rounded-full text-[11px]",
+        compact ? "px-2 py-0.5" : "px-2.5 py-1",
+        STATUS_META[status].className
+      )}
     >
       {STATUS_META[status].label}
     </Badge>
   );
 }
 
-function RatingBadge({ rating }: { rating: number }) {
+function RatingBadge({
+  rating,
+  compact = false,
+}: {
+  rating: number;
+  compact?: boolean;
+}) {
   const normalized = normalizeLeadRating(rating);
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100">
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 text-[11px] font-semibold text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100",
+        compact ? "px-2 py-0.5" : "px-2.5 py-1"
+      )}
+    >
       <span className="inline-flex items-center gap-0.5" aria-label={getLeadRatingLabel(normalized)}>
         {Array.from({ length: 5 }).map((_, index) => (
           <Star
             key={index}
             className={cn(
-              "h-3.5 w-3.5",
+              compact ? "h-3 w-3" : "h-3.5 w-3.5",
               index < normalized ? "fill-current" : "opacity-30"
             )}
             aria-hidden
@@ -2159,4 +2167,3 @@ function canUseRealtime() {
     hostname.endsWith(".local")
   );
 }
-

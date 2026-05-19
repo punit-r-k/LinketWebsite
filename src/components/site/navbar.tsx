@@ -41,6 +41,7 @@ import { AdaptiveNavPill } from "@/components/ui/3d-adaptive-navigation-bar";
 import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
 import { LEGAL_PAGE_LINKS } from "@/components/site/legal-page-actions";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { getSiteOrigin } from "@/lib/site-url";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
 
@@ -1471,6 +1472,14 @@ export function Navbar() {
         <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
           {isLandingPage || isMarketingPage ? (
             <div className="hidden items-center gap-2 sm:flex md:gap-4">
+              <LanguageSwitcher
+                compact
+                className={cn(
+                  overlayMode
+                    ? "border-white/40 bg-white/90 text-slate-900"
+                    : "border-foreground/10 bg-white/80"
+                )}
+              />
               {loginButton}
               {primaryCta}
             </div>
@@ -1554,6 +1563,7 @@ export function Navbar() {
                 <div className="w-full">{mobilePrimaryCta}</div>
                 <div className="w-full">{mobileSecondaryAction}</div>
               </div>
+              <LanguageSwitcher className="w-full justify-center bg-white" />
             </nav>
           </div>
         </div>

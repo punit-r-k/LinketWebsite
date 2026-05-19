@@ -4,6 +4,7 @@ import { sanitizeThemeForPlan } from "@/lib/plan-access";
 import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { getActiveProfileForUser } from "@/lib/profile-service";
+import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import { getConfiguredSiteHost } from "@/lib/site-url";
 import { normalizeThemeName } from "@/lib/themes";
@@ -15,6 +16,12 @@ const SHARE_TEST_EVENTS = [
   "vcard_download_success",
   "copy_public_link_clicked",
   "open_public_profile_clicked",
+] as const;
+const DASHBOARD_TOUR_SEEN_EVENTS = [
+  "onboarding_walkthrough_started",
+  "onboarding_walkthrough_completed",
+  "onboarding_walkthrough_dismissed",
+  "onboarding_publish_succeeded",
 ] as const;
 
 function normaliseLinkUrl(url: string | null | undefined) {
@@ -44,7 +51,9 @@ async function countEventsForUser(
   userId: string,
   eventIds: readonly string[]
 ): Promise<number> {
-  const supabase = await createServerSupabaseReadonly();
+  const supabase = isSupabaseAdminAvailable
+    ? supabaseAdmin
+    : await createServerSupabaseReadonly();
   const { count, error } = await supabase
     .from("conversion_events")
     .select("id", { count: "exact", head: true })
@@ -115,6 +124,7 @@ export async function getDashboardOnboardingState(
     contactResult,
     publishEventCount,
     shareTestCount,
+    dashboardTourEventCount,
     claimedLinketCount,
     planAccess,
   ] =
@@ -124,6 +134,7 @@ export async function getDashboardOnboardingState(
       loadContactState(userId),
       countEventsForUser(userId, ["profile_published"]).catch(() => 0),
       countEventsForUser(userId, SHARE_TEST_EVENTS).catch(() => 0),
+      countEventsForUser(userId, DASHBOARD_TOUR_SEEN_EVENTS).catch(() => 0),
       countClaimedLinketsForUser(userId).catch(() => 0),
       getDashboardPlanAccessForUser(userId),
     ]);
@@ -169,6 +180,8 @@ export async function getDashboardOnboardingState(
     (activeProfileState.isActive && hasProfileBasics && hasContact && hasMeaningfulLink);
   const hasTestedShare = shareTestCount > 0;
   const isLaunchReady = hasProfileBasics && hasContact && hasMeaningfulLink && hasPublished;
+  const dashboardTourSeen =
+    dashboardTourEventCount > 0 || hasPublished || isLaunchReady;
 
   return {
     userId,
@@ -176,6 +189,7 @@ export async function getDashboardOnboardingState(
     isLaunchReady,
     hasPublished,
     hasTestedShare,
+    dashboardTourSeen,
     publishEventCount,
     shareTestCount,
     claimedLinketCount,

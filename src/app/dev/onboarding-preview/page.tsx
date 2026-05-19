@@ -74,6 +74,7 @@ function buildPreviewState(
     isLaunchReady: false,
     hasPublished: false,
     hasTestedShare: false,
+    dashboardTourSeen: false,
     publishEventCount: 0,
     shareTestCount: 0,
     claimedLinketCount: 0,

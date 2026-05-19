@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Check,
   CheckCircle2,
+  Languages,
   Link2,
   Loader2,
   Mail,
@@ -68,8 +69,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { useI18n } from "@/components/i18n/LocaleProvider";
+import {
+  LOCALE_OPTIONS,
+  type SupportedLocale,
+} from "@/lib/i18n";
 
-type SetupStepId = "profile" | "contact" | "links" | "publish";
+type SetupStepId = "language" | "profile" | "contact" | "links" | "publish";
 type SaveStatus = "idle" | "saving" | "saved" | "error" | "publishing";
 type FieldSaveState = "saved" | "saving" | "unsaved" | "error";
 
@@ -144,6 +150,8 @@ const ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX =
   "linket:onboarding:profile-draft";
 const ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX =
   "linket:onboarding:contact-draft";
+const ONBOARDING_LANGUAGE_STORAGE_PREFIX =
+  "linket:onboarding:language-selected";
 const SAVE_RETRY_DELAYS_MS = [1500, 4000, 8000, 15000] as const;
 
 function getSaveRetryDelay(attempt: number) {
@@ -165,6 +173,10 @@ function getOnboardingDraftStorageKey(
       ? ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX
       : ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX
   }:${userId}`;
+}
+
+function getOnboardingLanguageStorageKey(userId: string) {
+  return `${ONBOARDING_LANGUAGE_STORAGE_PREFIX}:${userId}`;
 }
 
 function readOnboardingDraftCache<T>(
@@ -217,6 +229,12 @@ const SETUP_STEPS: Array<{
   description: string;
   icon: LucideIcon;
 }> = [
+  {
+    id: "language",
+    label: "Language",
+    description: "Choose how to continue",
+    icon: Languages,
+  },
   {
     id: "profile",
     label: "Profile",
@@ -644,14 +662,21 @@ function getDraftLinkFieldKey(link: ProfileLinkDraft, index: number) {
 }
 
 function getInitialStepIndex(input: {
+  languageComplete: boolean;
   profileComplete: boolean;
   contactComplete: boolean;
   linksComplete: boolean;
 }) {
-  if (!input.profileComplete) return 0;
-  if (!input.contactComplete) return 1;
-  if (!input.linksComplete) return 2;
-  return 3;
+  if (!input.languageComplete) return 0;
+  if (!input.profileComplete) return getSetupStepIndex("profile");
+  if (!input.contactComplete) return getSetupStepIndex("contact");
+  if (!input.linksComplete) return getSetupStepIndex("links");
+  return getSetupStepIndex("publish");
+}
+
+function getSetupStepIndex(stepId: SetupStepId) {
+  const index = SETUP_STEPS.findIndex((step) => step.id === stepId);
+  return index >= 0 ? index : 0;
 }
 
 function hasContactMethod(
@@ -763,6 +788,7 @@ export default function DashboardSetupFlow({
   initialOnboardingState: DashboardOnboardingState;
   previewMode?: boolean;
 }) {
+  const { locale, setLocale, ui } = useI18n();
   const user = useDashboardUser();
   const planAccess = useDashboardPlanAccess();
   const { setTheme } = useThemeOptional();
@@ -800,11 +826,16 @@ export default function DashboardSetupFlow({
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(
     getInitialStepIndex({
+      languageComplete: previewMode,
       profileComplete: initialOnboardingState.steps.profile,
       contactComplete: initialOnboardingState.steps.contact,
       linksComplete: initialOnboardingState.steps.links,
     })
   );
+  const [selectedLocale, setSelectedLocale] =
+    useState<SupportedLocale>(locale);
+  const [languagePreferenceLoaded, setLanguagePreferenceLoaded] =
+    useState(previewMode);
   const [contactRequiresReview, setContactRequiresReview] = useState(false);
   const [profileSaveStatus, setProfileSaveStatus] = useState<SaveStatus>("idle");
   const [contactSaveStatus, setContactSaveStatus] = useState<SaveStatus>("idle");
@@ -824,6 +855,7 @@ export default function DashboardSetupFlow({
   const [completedSetupSteps, setCompletedSetupSteps] = useState<
     Record<SetupStepId, boolean>
   >({
+    language: previewMode,
     profile: false,
     contact: false,
     links: false,
@@ -848,6 +880,10 @@ export default function DashboardSetupFlow({
   const contactRetryAttemptRef = useRef(0);
   const startedTrackingRef = useRef(false);
   const lastStepViewRef = useRef<SetupStepId | null>(null);
+  const currentStepIndexRef = useRef(currentStepIndex);
+  const completedSetupStepsRef = useRef(completedSetupSteps);
+  const showLaunchHubRef = useRef(showLaunchHub || publishedThisSession);
+  const exitTrackingRef = useRef(false);
 
   const profileDraftSignature = useMemo(
     () => buildProfileDraftSignature(profileDraft),
@@ -864,6 +900,59 @@ export default function DashboardSetupFlow({
   useEffect(() => {
     contactDraftRef.current = contactDraft;
   }, [contactDraft]);
+
+  useEffect(() => {
+    currentStepIndexRef.current = currentStepIndex;
+  }, [currentStepIndex]);
+
+  useEffect(() => {
+    completedSetupStepsRef.current = completedSetupSteps;
+  }, [completedSetupSteps]);
+
+  useEffect(() => {
+    setSelectedLocale(locale);
+  }, [locale]);
+
+  useEffect(() => {
+    if (previewMode || !userId) return;
+
+    let confirmed = false;
+    try {
+      confirmed = window.localStorage.getItem(
+        getOnboardingLanguageStorageKey(userId)
+      ) === "1";
+    } catch {
+      confirmed = false;
+    }
+
+    if (confirmed) {
+      setCompletedSetupSteps((current) => ({
+        ...current,
+        language: true,
+      }));
+      setCurrentStepIndex((current) =>
+        current === getSetupStepIndex("language")
+          ? getInitialStepIndex({
+              languageComplete: true,
+              profileComplete: initialOnboardingState.steps.profile,
+              contactComplete: initialOnboardingState.steps.contact,
+              linksComplete: initialOnboardingState.steps.links,
+            })
+          : current
+      );
+    }
+    setLanguagePreferenceLoaded(true);
+  }, [
+    initialOnboardingState.steps.contact,
+    initialOnboardingState.steps.links,
+    initialOnboardingState.steps.profile,
+    previewMode,
+    userId,
+  ]);
+
+  useEffect(() => {
+    showLaunchHubRef.current = showLaunchHub || publishedThisSession;
+  }, [publishedThisSession, showLaunchHub]);
 
   useEffect(() => {
     if (!contactDraft) return;
@@ -1104,6 +1193,7 @@ export default function DashboardSetupFlow({
         setTheme(nextProfile.theme);
         setCurrentStepIndex(
           getInitialStepIndex({
+            languageComplete: previewMode || languagePreferenceLoaded,
             profileComplete:
               Boolean(nextProfile.name.trim()) &&
               !isAutoHandle(nextProfile.handle),
@@ -1174,6 +1264,7 @@ export default function DashboardSetupFlow({
           setTheme(fallbackProfile.theme);
           setCurrentStepIndex(
             getInitialStepIndex({
+              languageComplete: previewMode || languagePreferenceLoaded,
               profileComplete:
                 Boolean(fallbackProfile.name.trim()) &&
                 !isAutoHandle(fallbackProfile.handle),
@@ -1212,6 +1303,7 @@ export default function DashboardSetupFlow({
     initialOnboardingState.activeProfile.handle,
     initialOnboardingState.publishEventCount,
     setTheme,
+    languagePreferenceLoaded,
     userEmail,
     userId,
     previewMode,
@@ -1344,6 +1436,7 @@ export default function DashboardSetupFlow({
       "onboarding_started",
       trackingMeta({
         initial_step: SETUP_STEPS[currentStepIndex]?.id ?? "profile",
+        step_count: SETUP_STEPS.length,
         claimed_linkets: initialOnboardingState.claimedLinketCount,
       })
     );
@@ -1359,9 +1452,48 @@ export default function DashboardSetupFlow({
       trackingMeta({
         step_id: stepId,
         step_index: currentStepIndex + 1,
+        step_count: SETUP_STEPS.length,
       })
     );
   }, [currentStepIndex, loading]);
+
+  useEffect(() => {
+    if (previewMode || loading || !userId) return;
+
+    const trackExit = () => {
+      if (exitTrackingRef.current || showLaunchHubRef.current) return;
+      exitTrackingRef.current = true;
+
+      const stepIndex = currentStepIndexRef.current;
+      const stepId = SETUP_STEPS[stepIndex]?.id ?? "profile";
+      const completedStepIds = Object.entries(completedSetupStepsRef.current)
+        .filter(([, completed]) => completed)
+        .map(([id]) => id);
+
+      void trackEvent(
+        "onboarding_exited",
+        trackingMeta({
+          current_step: stepId,
+          current_step_index: stepIndex,
+          step_count: SETUP_STEPS.length,
+          completed_step_ids: completedStepIds,
+        })
+      );
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        trackExit();
+      }
+    };
+
+    window.addEventListener("pagehide", trackExit);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      window.removeEventListener("pagehide", trackExit);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loading, previewMode, userId]);
 
   const saveProfileDraft = useCallback(
     async function saveProfileDraftImpl(options?: {
@@ -1829,6 +1961,10 @@ export default function DashboardSetupFlow({
   }
 
   function focusFirstMissingField(stepId: SetupStepId) {
+    if (stepId === "language") {
+      focusFieldById(`setup-language-${selectedLocale}`);
+      return;
+    }
     if (stepId === "profile") {
       if (!profileDraftRef.current?.name.trim()) {
         focusFieldById("setup-name");
@@ -1859,6 +1995,8 @@ export default function DashboardSetupFlow({
 
   function validateStep(stepIndex: number) {
     switch (SETUP_STEPS[stepIndex]?.id) {
+      case "language":
+        return selectedLocale ? null : "Choose a language to continue.";
       case "profile":
         if (!profileDraft?.name.trim()) {
           return "Add your name to continue.";
@@ -1889,14 +2027,45 @@ export default function DashboardSetupFlow({
   }
 
   async function handleContinue() {
+    const stepId = SETUP_STEPS[currentStepIndex]?.id;
+    void trackEvent(
+      "onboarding_continue_clicked",
+      trackingMeta({
+        step_id: stepId ?? "unknown",
+        step_index: currentStepIndex + 1,
+      })
+    );
+
     const error = validateStep(currentStepIndex);
     if (error) {
       setStepError(error);
       focusFirstMissingField(currentStep.id);
+      void trackEvent(
+        "onboarding_step_validation_failed",
+        trackingMeta({
+          step_id: stepId ?? "unknown",
+          step_index: currentStepIndex + 1,
+          reason: error,
+        })
+      );
       return;
     }
 
-    const stepId = SETUP_STEPS[currentStepIndex]?.id;
+    if (stepId === "language") {
+      setLocale(selectedLocale);
+      if (userId) {
+        try {
+          window.localStorage.setItem(
+            getOnboardingLanguageStorageKey(userId),
+            "1"
+          );
+        } catch {
+          // Cookie persistence still keeps the language preference.
+        }
+      }
+      setLanguagePreferenceLoaded(true);
+    }
+
     if (stepId === "profile" || stepId === "links") {
       const saved = await saveProfileDraft({ quiet: true });
       if (!saved) return;
@@ -1939,13 +2108,13 @@ export default function DashboardSetupFlow({
     if (error) {
       setStepError(error);
       if (!liveProfileReady) {
-        setCurrentStepIndex(0);
+        setCurrentStepIndex(getSetupStepIndex("profile"));
         focusFirstMissingField("profile");
       } else if (!contactReady || contactRequiresReview) {
-        setCurrentStepIndex(1);
+        setCurrentStepIndex(getSetupStepIndex("contact"));
         focusFirstMissingField("contact");
       } else if (!linksReady) {
-        setCurrentStepIndex(2);
+        setCurrentStepIndex(getSetupStepIndex("links"));
         focusFirstMissingField("links");
       }
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1974,6 +2143,7 @@ export default function DashboardSetupFlow({
     setPublishedThisSession(true);
     setShowLaunchHub(true);
     setCompletedSetupSteps({
+      language: true,
       profile: true,
       contact: true,
       links: true,
@@ -1991,6 +2161,16 @@ export default function DashboardSetupFlow({
   }
 
   function handleBackStep() {
+    const stepId = SETUP_STEPS[currentStepIndex]?.id;
+    void trackEvent(
+      "onboarding_back_clicked",
+      trackingMeta({
+        step_id: stepId ?? "unknown",
+        step_index: currentStepIndex + 1,
+        previous_step_id:
+          SETUP_STEPS[Math.max(currentStepIndex - 1, 0)]?.id ?? "profile",
+      })
+    );
     setCurrentStepIndex((current) => Math.max(current - 1, 0));
     setStepError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2127,6 +2307,7 @@ export default function DashboardSetupFlow({
   const softPanelClassName =
     "rounded-2xl border border-border/60 bg-background/40";
   const stepCompletion = {
+    language: completedSetupSteps.language,
     profile:
       completedSetupSteps.profile &&
       liveProfileReady &&
@@ -2142,6 +2323,7 @@ export default function DashboardSetupFlow({
     publish: completedSetupSteps.publish && publishReady,
   };
   const checklistItems = [
+    { label: "Choose language", done: stepCompletion.language, icon: Languages },
     { label: "Add profile basics", done: stepCompletion.profile, icon: UserRound },
     { label: "Add contact info", done: stepCompletion.contact, icon: Mail },
     { label: "Add your first link", done: stepCompletion.links, icon: Link2 },
@@ -2205,6 +2387,11 @@ export default function DashboardSetupFlow({
           title: "You're live",
           description: "Your page is live. Next, continue to the dashboard.",
         }
+      : currentStep.id === "language"
+      ? {
+          title: ui.onboarding.language.pageTitle,
+          description: ui.onboarding.language.pageDescription,
+        }
       : currentStep.id === "profile"
       ? {
           title: "Set up your public profile",
@@ -2231,6 +2418,11 @@ export default function DashboardSetupFlow({
           title: "You're live",
           description: "Continue to the dashboard, then share or keep building anytime.",
         }
+      : currentStep.id === "language"
+      ? {
+          title: ui.onboarding.language.stepLabel,
+          description: ui.onboarding.language.stepDescription,
+        }
       : currentStep.id === "profile"
       ? {
           title: "Profile",
@@ -2252,7 +2444,11 @@ export default function DashboardSetupFlow({
             };
   const linkButtonLabel = "Add another link";
   const continueButtonLabel =
-    currentStep.id === "profile"
+    currentStep.id === "language"
+      ? `${ui.onboarding.language.continuePrefix} ${
+          ui.onboarding.language.options[selectedLocale].title
+        }`
+      : currentStep.id === "profile"
       ? "Continue to contact info"
       : currentStep.id === "contact"
         ? "Continue to links"
@@ -2268,7 +2464,9 @@ export default function DashboardSetupFlow({
       ? "max-w-[272px] max-h-[470px]"
       : "max-w-[286px] max-h-[560px]";
   const previewDescription =
-    currentStep.id === "contact"
+    currentStep.id === "language"
+      ? ui.onboarding.language.cardDescription
+      : currentStep.id === "contact"
       ? "This is what someone saves to contacts."
       : currentStep.id === "links"
         ? "This updates your first link and theme."
@@ -2317,15 +2515,20 @@ export default function DashboardSetupFlow({
       selectedThemeValue
   );
   const mobileStepLabels: Record<SetupStepId, string> = {
+    language: ui.onboarding.language.stepLabel,
     profile: "Profile",
     contact: "Contact",
     links: "Links",
     publish: "Review",
   };
   const previewContactEnabled =
-    (showLaunchHub || currentStep.id !== "profile") && contactReady;
+    (showLaunchHub ||
+      (currentStep.id !== "language" && currentStep.id !== "profile")) &&
+    contactReady;
   const previewContactDisabledText =
-    currentStep.id === "profile"
+    currentStep.id === "language"
+      ? ui.onboarding.language.stepDescription
+      : currentStep.id === "profile"
       ? "Contact card comes next"
       : "Add email or phone";
   const showAvatarSavePill =
@@ -2338,7 +2541,8 @@ export default function DashboardSetupFlow({
         <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3">
           <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">
             <p className="text-sm font-medium text-muted-foreground">
-              Step {currentStepIndex + 1} of {SETUP_STEPS.length}: {stepHeading.title}
+              {ui.onboarding.stepPrefix} {currentStepIndex + 1}{" "}
+              {ui.onboarding.stepOf} {SETUP_STEPS.length}: {stepHeading.title}
             </p>
             <h1 className="text-[2rem] font-semibold tracking-tight text-foreground sm:text-4xl">
               {pageHeading.title}
@@ -2352,7 +2556,7 @@ export default function DashboardSetupFlow({
         {!showLaunchHub ? (
           <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
             <CardContent className="px-3 py-3">
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
                 {SETUP_STEPS.map((step, index) => {
                   const isCurrent = index === currentStepIndex;
                   const isDone = stepCompletion[step.id];
@@ -2534,6 +2738,72 @@ export default function DashboardSetupFlow({
                     ) : null}
                   </CardHeader>
                   <CardContent className="space-y-6 px-5 py-5 sm:px-6">
+                    {currentStep.id === "language" ? (
+                      <div className="space-y-5">
+                        <div className={cn("space-y-2 p-4", softPanelClassName)}>
+                          <p className="text-sm font-semibold text-foreground">
+                            {ui.onboarding.language.cardTitle}
+                          </p>
+                          <p className={fieldHelperClassName}>
+                            {ui.onboarding.language.cardDescription}
+                          </p>
+                        </div>
+                        <div className="grid gap-3 md:grid-cols-3">
+                          {LOCALE_OPTIONS.map((option) => {
+                            const optionCopy =
+                              ui.onboarding.language.options[option.code];
+                            const selected = selectedLocale === option.code;
+                            const detected = locale === option.code;
+
+                            return (
+                              <button
+                                key={option.code}
+                                id={`setup-language-${option.code}`}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedLocale(option.code as SupportedLocale);
+                                  setLocale(option.code as SupportedLocale);
+                                  setStepError(null);
+                                }}
+                                className={cn(
+                                  "min-h-[148px] rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                                  selected
+                                    ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
+                                    : "border-border/60 bg-background/55 text-foreground hover:border-border hover:bg-card"
+                                )}
+                                aria-pressed={selected}
+                              >
+                                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">
+                                  {option.nativeLabel}
+                                </span>
+                                <span className="mt-3 block text-lg font-semibold">
+                                  {optionCopy.title}
+                                </span>
+                                <span className="mt-2 block text-sm leading-6 opacity-80">
+                                  {optionCopy.description}
+                                </span>
+                                <span className="mt-4 flex flex-wrap gap-2">
+                                  {selected ? (
+                                    <span className="rounded-full border border-current/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]">
+                                      {ui.onboarding.language.selectedBadge}
+                                    </span>
+                                  ) : null}
+                                  {detected && !selected ? (
+                                    <span className="rounded-full border border-current/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-80">
+                                      {ui.onboarding.language.detectedBadge}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <p className="text-sm leading-6 text-muted-foreground">
+                          {ui.onboarding.language.helper}
+                        </p>
+                      </div>
+                    ) : null}
+
                     {currentStep.id === "profile" ? (
                       <div className="space-y-6">
                         <div className="space-y-3">

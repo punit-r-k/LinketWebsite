@@ -1488,10 +1488,8 @@ body.theme-forest .dashboard-forest-pin {
 /* Tablet layout alignment */
 @media (max-width: 1024px) {
   #dashboard-theme-scope .dashboard-content {
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    text-align: left;
+    display: block;
     padding-left: 1.25rem;
     padding-right: 1.25rem;
   }
@@ -1503,24 +1501,24 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-content .text-left {
-    text-align: center;
+    text-align: left;
   }
 
   #dashboard-theme-scope .dashboard-content > .grid {
-    justify-content: center;
+    justify-content: stretch;
     justify-items: stretch;
-    align-items: center;
+    align-items: stretch;
   }
 
   #dashboard-theme-scope .dashboard-content > .flex {
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: stretch;
   }
 
   #dashboard-theme-scope .dashboard-content [data-slot=card-header],
   #dashboard-theme-scope .dashboard-content [data-slot=card-content] {
     justify-items: stretch;
-    text-align: center;
+    text-align: left;
     width: 100%;
   }
 
@@ -1529,27 +1527,20 @@ body.theme-forest .dashboard-forest-pin {
     width: 100%;
   }
 
-  #dashboard-theme-scope .dashboard-content input,
-  #dashboard-theme-scope .dashboard-content textarea,
-  #dashboard-theme-scope .dashboard-content select,
-  #dashboard-theme-scope .dashboard-content button {
-    margin-left: auto;
-    margin-right: auto;
+  #dashboard-theme-scope .dashboard-content .justify-between {
+    justify-content: space-between;
   }
 
-  #dashboard-theme-scope .dashboard-content [data-slot="switch"] {
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  #dashboard-theme-scope .dashboard-content .justify-between,
   #dashboard-theme-scope .dashboard-content .justify-start {
-    justify-content: center;
+    justify-content: flex-start;
   }
 
-  #dashboard-theme-scope .dashboard-content .items-start,
+  #dashboard-theme-scope .dashboard-content .items-start {
+    align-items: flex-start;
+  }
+
   #dashboard-theme-scope .dashboard-content .items-end {
-    align-items: center;
+    align-items: flex-end;
   }
 
   #dashboard-theme-scope .dashboard-copy-link-button {
@@ -3029,5 +3020,73 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-onboarding-tour-helper {
     text-align: left;
     font-size: 0.68rem;
+  }
+}
+
+/* Phone-first dashboard readability and dense inbox rhythm */
+@media (max-width: 640px) {
+  #dashboard-theme-scope {
+    --mobile-readable-muted: color-mix(in srgb, var(--foreground) 78%, var(--muted-foreground) 22%);
+    --mobile-readable-border: color-mix(in srgb, var(--foreground) 18%, var(--border) 82%);
+    --mobile-raised-surface: color-mix(in srgb, var(--card) 92%, var(--background) 8%);
+  }
+
+  #dashboard-theme-scope .dashboard-scroll-area {
+    padding-top: 0.5rem;
+    padding-bottom: 1rem;
+  }
+
+  #dashboard-theme-scope .text-muted-foreground {
+    color: var(--mobile-readable-muted);
+  }
+
+  #dashboard-theme-scope [data-slot=input],
+  #dashboard-theme-scope [data-slot=textarea],
+  #dashboard-theme-scope [data-slot=select-trigger] {
+    border-color: var(--mobile-readable-border);
+    background: var(--premium-input-gradient);
+  }
+
+  #dashboard-theme-scope [data-slot=input]::placeholder,
+  #dashboard-theme-scope [data-slot=textarea]::placeholder {
+    color: color-mix(in srgb, var(--foreground) 58%, transparent);
+  }
+
+  #dashboard-theme-scope .dashboard-leads-page {
+    gap: 0.75rem;
+  }
+
+  #dashboard-theme-scope .dashboard-leads-header {
+    align-items: stretch;
+  }
+
+  #dashboard-theme-scope .dashboard-leads-toolbar {
+    position: static;
+    border-color: var(--mobile-readable-border);
+    background: var(--mobile-raised-surface);
+  }
+
+  #dashboard-theme-scope .dashboard-leads-results,
+  #dashboard-theme-scope .dashboard-lead-card {
+    border-color: var(--mobile-readable-border);
+    background: var(--mobile-raised-surface);
+  }
+
+  #dashboard-theme-scope .dashboard-lead-card {
+    transition: transform 140ms var(--dashboard-interaction-ease),
+      background-color 140ms var(--dashboard-interaction-ease),
+      border-color 140ms var(--dashboard-interaction-ease);
+  }
+
+  #dashboard-theme-scope .dashboard-lead-card:active {
+    transform: scale(0.992);
+  }
+
+  #dashboard-theme-scope .dashboard-lead-card [data-slot=button] {
+    min-width: 0;
+  }
+
+  #dashboard-theme-scope .dashboard-lead-card .dashboard-leads-checkbox {
+    margin-top: 0.1rem;
   }
 }

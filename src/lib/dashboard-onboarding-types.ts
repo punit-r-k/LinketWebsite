@@ -39,6 +39,7 @@ export type DashboardOnboardingState = {
   isLaunchReady: boolean;
   hasPublished: boolean;
   hasTestedShare: boolean;
+  dashboardTourSeen: boolean;
   publishEventCount: number;
   shareTestCount: number;
   claimedLinketCount: number;

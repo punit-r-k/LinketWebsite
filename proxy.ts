@@ -16,6 +16,13 @@ import {
   readBearerTokenFromHeaders,
   verifySupabaseAccessToken,
 } from "@/lib/supabase/auth-token";
+import {
+  LOCALE_COOKIE_NAME,
+  LOCALE_SOURCE_COOKIE_NAME,
+  normalizeLocale,
+  resolveDetectedLocale,
+  type SupportedLocale,
+} from "@/lib/i18n";
 import { getOptionalConfiguredSiteOrigin } from "@/lib/site-url";
 
 type CanonicalHostConfig = {
@@ -126,6 +133,75 @@ function resolveApiCorsHeaders(request: NextRequest) {
   return resolveCorsHeaders(request.headers.get("origin"), {
     allowHeaders: readRequestedCorsHeaders(request),
     allowMethods: ["OPTIONS", requestedMethod],
+  });
+}
+
+function getRequestCountry(request: NextRequest) {
+  return (
+    request.headers.get("x-vercel-ip-country") ??
+    request.headers.get("cf-ipcountry") ??
+    request.headers.get("x-country-code")
+  );
+}
+
+function resolveLocaleForRequest(request: NextRequest) {
+  const cookieSource = request.cookies.get(LOCALE_SOURCE_COOKIE_NAME)?.value;
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
+  const preferredCookieLocale =
+    !cookieSource || cookieSource === "manual" ? cookieLocale : undefined;
+
+  return resolveDetectedLocale({
+    queryLocale: request.nextUrl.searchParams.get("lang"),
+    cookieLocale: preferredCookieLocale,
+    country: getRequestCountry(request),
+    acceptLanguage: request.headers.get("accept-language"),
+  });
+}
+
+function buildLocalizedRequestHeaders(
+  request: NextRequest,
+  locale: SupportedLocale
+) {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-linket-locale", locale);
+  return requestHeaders;
+}
+
+function applyLocaleCookies(
+  request: NextRequest,
+  response: NextResponse,
+  locale: SupportedLocale
+) {
+  const requestedLocale = normalizeLocale(request.nextUrl.searchParams.get("lang"));
+  const cookieLocale = normalizeLocale(
+    request.cookies.get(LOCALE_COOKIE_NAME)?.value
+  );
+  const cookieSource = request.cookies.get(LOCALE_SOURCE_COOKIE_NAME)?.value;
+  const source =
+    requestedLocale || cookieSource === "manual" ? "manual" : "detected";
+
+  if (!requestedLocale && cookieLocale === locale && cookieSource === source) {
+    return;
+  }
+
+  const secure = request.nextUrl.protocol === "https:";
+  const maxAge = 60 * 60 * 24 * 365;
+
+  response.cookies.set({
+    name: LOCALE_COOKIE_NAME,
+    value: locale,
+    sameSite: "lax",
+    secure,
+    path: "/",
+    maxAge,
+  });
+  response.cookies.set({
+    name: LOCALE_SOURCE_COOKIE_NAME,
+    value: source,
+    sameSite: "lax",
+    secure,
+    path: "/",
+    maxAge,
   });
 }
 
@@ -282,6 +358,8 @@ async function handleApiRequest(request: NextRequest) {
 
 export async function proxy(req: NextRequest) {
   const url = req.nextUrl;
+  const locale = resolveLocaleForRequest(req);
+  const localizedRequestHeaders = buildLocalizedRequestHeaders(req, locale);
 
   if (hasAmbiguousRequestBodyHeaders(req.headers)) {
     return NextResponse.json(
@@ -293,7 +371,9 @@ export async function proxy(req: NextRequest) {
   const canonicalHost = getCanonicalHostConfig();
   if (canonicalHost && shouldRedirectToCanonicalHost(url, canonicalHost)) {
     url.host = canonicalHost.host;
-    return NextResponse.redirect(url, 308);
+    const redirect = NextResponse.redirect(url, 308);
+    applyLocaleCookies(req, redirect, locale);
+    return redirect;
   }
 
   const path = url.pathname;
@@ -308,10 +388,17 @@ export async function proxy(req: NextRequest) {
     path.startsWith("/admin");
 
   if (!needsSupabase) {
-    return NextResponse.next();
+    const response = NextResponse.next({
+      request: { headers: localizedRequestHeaders },
+    });
+    applyLocaleCookies(req, response, locale);
+    return response;
   }
 
-  const res = NextResponse.next({ request: { headers: req.headers } });
+  const res = NextResponse.next({
+    request: { headers: localizedRequestHeaders },
+  });
+  applyLocaleCookies(req, res, locale);
   if (!req.cookies.get(CSRF_COOKIE_NAME)?.value) {
     res.cookies.set({
       name: CSRF_COOKIE_NAME,

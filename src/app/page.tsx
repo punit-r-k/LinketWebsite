@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies, headers } from "next/headers";
 import Link from "next/link";
 import Image from "next/image";
 import Script from "next/script";
@@ -26,38 +27,89 @@ import { DISCOVER_PAGES } from "@/config/discover-pages";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { getConfiguredSiteOrigin } from "@/lib/site-url";
+import {
+  DEFAULT_LOCALE,
+  LOCALE_COOKIE_NAME,
+  LOCALE_SOURCE_COOKIE_NAME,
+  normalizeLocale,
+  resolveDetectedLocale,
+  translatePhrase,
+} from "@/lib/i18n";
 
 // -----------------------------------------------------------------------------
 // Landing page metadata and runtime configuration.
 // -----------------------------------------------------------------------------
-export const metadata: Metadata = {
-  title: "Linket Connect | NFC keychains, digital profiles, and lead capture",
-  description:
-    "Linket Connect combines NFC keychains, live digital profiles, and built-in lead capture so students, creators, and teams can share contact info, update links instantly, and track every scan.",
-  alternates: {
-    canonical: "/",
-  },
-  openGraph: {
-    title: "Linket Connect | NFC keychains and live digital profiles",
-    description:
-      "Share contact info with one tap, keep your profile current, and capture leads with NFC + QR hardware built for students, creators, and teams.",
-    images: [
-      {
-        url: "/og.png",
-        width: 1366,
-        height: 768,
-        alt: "Linket logo mark.",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Linket Connect | NFC keychains and live digital profiles",
-    description:
-      "NFC keychains, live digital profiles, and lead capture that keep every intro current from the first tap onward.",
-    images: ["/og.png"],
-  },
-};
+async function getLandingLocale() {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const cookieSource = cookieStore.get(LOCALE_SOURCE_COOKIE_NAME)?.value;
+  const cookieLocale =
+    !cookieSource || cookieSource === "manual"
+      ? cookieStore.get(LOCALE_COOKIE_NAME)?.value
+      : undefined;
+
+  return (
+    normalizeLocale(cookieLocale) ??
+    resolveDetectedLocale({
+      cookieLocale: headerStore.get("x-linket-locale"),
+      country:
+        headerStore.get("x-vercel-ip-country") ??
+        headerStore.get("cf-ipcountry") ??
+        headerStore.get("x-country-code"),
+      acceptLanguage: headerStore.get("accept-language"),
+    }) ??
+    DEFAULT_LOCALE
+  );
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLandingLocale();
+  const title = translatePhrase(
+    locale,
+    "Linket Connect | NFC keychains, digital profiles, and lead capture"
+  );
+  const description = translatePhrase(
+    locale,
+    "Linket Connect combines NFC keychains, live digital profiles, and built-in lead capture so students, creators, and teams can share contact info, update links instantly, and track every scan."
+  );
+  const socialTitle = translatePhrase(
+    locale,
+    "Linket Connect | NFC keychains and live digital profiles"
+  );
+  const socialDescription = translatePhrase(
+    locale,
+    "Share contact info with one tap, keep your profile current, and capture leads with NFC + QR hardware built for students, creators, and teams."
+  );
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: "/",
+    },
+    openGraph: {
+      title: socialTitle,
+      description: socialDescription,
+      images: [
+        {
+          url: "/og.png",
+          width: 1366,
+          height: 768,
+          alt: "Linket logo mark.",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: socialTitle,
+      description: translatePhrase(
+        locale,
+        "NFC keychains, live digital profiles, and lead capture that keep every intro current from the first tap onward."
+      ),
+      images: ["/og.png"],
+    },
+  };
+}
 
 // Revalidate the landing page every 60 seconds to keep preview data fresh.
 export const revalidate = 60;

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
 import { createClient } from "@/lib/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import {
   LayoutDashboard,
@@ -127,6 +128,11 @@ export default function Sidebar({
     if (!isAdmin) return BASE_NAV;
     return [
       ...BASE_NAV,
+      {
+        href: "/dashboard/admin/analytics",
+        label: "Product Analytics",
+        icon: BarChart3,
+      },
       { href: "/dashboard/admin/mint", label: "Minting", icon: Package },
       {
         href: "/dashboard/admin/entitlements",
@@ -207,6 +213,12 @@ export default function Sidebar({
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
                 onClick={(event) => {
+                  void trackEvent("dashboard_nav_clicked", {
+                    href: item.href,
+                    label: item.label,
+                    source: variant,
+                    from_path: pathname ?? null,
+                  });
                   requestAutosave();
                   if (!isProfileEditor) {
                     onNavigate?.();

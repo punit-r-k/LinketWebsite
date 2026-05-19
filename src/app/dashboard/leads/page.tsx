@@ -64,28 +64,28 @@ export default function LeadsPage() {
   }
 
   return (
-    <Tabs defaultValue="leads" className="space-y-5 sm:space-y-6">
-      <div className="flex flex-col gap-4 md:gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-2">
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+    <Tabs defaultValue="leads" className="dashboard-leads-page space-y-3 sm:space-y-6">
+      <div className="dashboard-leads-header flex flex-col gap-3 text-left md:gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-1 sm:space-y-2">
+          <h1 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-3xl">
             Leads
           </h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
+          <p className="hidden max-w-2xl text-sm leading-6 text-muted-foreground sm:block">
             Manage inbound contacts in a compact inbox, then switch to the form
             builder when you need to change what people submit.
           </p>
         </div>
-        <TabsList className="grid h-auto w-full grid-cols-2 rounded-[1.35rem] border border-border/60 bg-card/80 p-1 shadow-sm sm:w-auto">
+        <TabsList className="grid h-auto w-full grid-cols-2 rounded-[1.1rem] border border-border/60 bg-card/90 p-1 shadow-sm sm:w-auto sm:rounded-[1.35rem]">
           <TabsTrigger
             value="leads"
-            className="min-w-0 rounded-[1.05rem] px-3 py-2.5 sm:rounded-full sm:px-4 sm:py-2"
+            className="min-w-0 rounded-[0.85rem] px-3 py-2 text-sm sm:rounded-full sm:px-4 sm:py-2"
           >
             <Inbox className="h-4 w-4" aria-hidden />
             Leads
           </TabsTrigger>
           <TabsTrigger
             value="builder"
-            className="min-w-0 rounded-[1.05rem] px-3 py-2.5 sm:rounded-full sm:px-4 sm:py-2"
+            className="min-w-0 rounded-[0.85rem] px-3 py-2 text-sm sm:rounded-full sm:px-4 sm:py-2"
           >
             <FileText className="h-4 w-4" aria-hidden />
             Form Builder
