@@ -4,19 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { useThemeOptional } from "@/components/theme/theme-provider";
@@ -34,7 +21,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { CheckCircle2, Circle, Download, Star } from "lucide-react";
+import { Download, Star } from "lucide-react";
 import {
   getLeadFlagBadgeClassName,
   getLeadFlagLabel,
@@ -116,55 +103,6 @@ type ActionInsight = {
   tone: "primary" | "accent" | "neutral";
 };
 
-type CustomerNeedCardData = {
-  eyebrow: string;
-  value: string;
-  detail: string;
-  tone: "primary" | "accent" | "neutral";
-};
-
-const SECTION_OPTIONS = [
-  {
-    value: "start-here",
-    label: "Start here",
-    description: "Overview and newest follow-up",
-    accordionValue: null,
-  },
-  {
-    value: "guide",
-    label: "Learn the signals",
-    description: "What each headline number means",
-    accordionValue: "guide",
-  },
-  {
-    value: "setup",
-    label: "Setup and reporting",
-    description: "Checklist and export",
-    accordionValue: "setup",
-  },
-  {
-    value: "trends",
-    label: "Traffic and conversion",
-    description: "Volume and capture trendlines",
-    accordionValue: "trends",
-  },
-  {
-    value: "breakdowns",
-    label: "Linkets and links",
-    description: "What is driving results",
-    accordionValue: "breakdowns",
-  },
-] as const;
-
-type SectionOptionValue = (typeof SECTION_OPTIONS)[number]["value"];
-
-type QuickGuideStep = {
-  step: string;
-  title: string;
-  detail: string;
-  target: SectionOptionValue;
-};
-
 export default function AnalyticsContent() {
   const { theme } = useThemeOptional();
   const useDarkDeltaText = DARK_DELTA_TEXT_THEMES.has(theme);
@@ -173,9 +111,6 @@ export default function AnalyticsContent() {
   const [reloadToken, setReloadToken] = useState(0);
   const [isPhone, setIsPhone] = useState(false);
   const [range, setRange] = useState<number>(DEFAULT_RANGE);
-  const [sectionJump, setSectionJump] =
-    useState<SectionOptionValue>("start-here");
-  const [openSections, setOpenSections] = useState<string[]>(["guide"]);
   const [hasLoadedPersistedRange, setHasLoadedPersistedRange] = useState(false);
   const analyticsCacheRef = useRef<Map<string, CachedAnalyticsEntry>>(
     new Map(),
@@ -658,156 +593,11 @@ export default function AnalyticsContent() {
   ]);
   const primaryInsight = nextSteps[0] ?? null;
   const supportingInsights = nextSteps.slice(1, 4);
-    const recentLeadContextCount = useMemo(
-      () =>
-        recentLeads.filter(
-          (lead) =>
-            Boolean(lead.company?.trim()) ||
-            Boolean(lead.phone?.trim()) ||
-            Boolean(lead.message?.trim()) ||
-            Boolean(lead.note?.trim()) ||
-            Boolean(lead.next_follow_up_at),
-        ).length,
-      [recentLeads],
-    );
-  const topLinkSharePercent =
-    topLink && topLinksTotalClicks > 0
-      ? (topLink.clicks / topLinksTotalClicks) * 100
-      : 0;
-  const onboardingProgressPercent = onboarding
-    ? Math.round(onboarding.progress * 100)
-    : 0;
-  const customerNeeds = useMemo<CustomerNeedCardData[]>(() => {
-    const reachValue = analytics
-      ? numberFormatter.format(rangeTotals.scans)
-      : loading
-        ? "--"
-        : "0";
-    const followUpValue = analytics
-      ? numberFormatter.format(rangeTotals.leads)
-      : loading
-        ? "--"
-        : "0";
-    const contextValue =
-      recentLeads.length > 0
-        ? `${recentLeadContextCount}/${recentLeads.length}`
-        : loading
-          ? "--"
-          : "0/0";
-    const optimizationValue = topLink
-      ? `${topLinkSharePercent.toFixed(1)}%`
-      : loading
-        ? "--"
-        : "0%";
-
-    return [
-      {
-        eyebrow: "Reach signal",
-        value: reachValue,
-        detail:
-          rangeTotals.scans > 0
-            ? `${trendDeltas?.scans?.text ?? "Volume is moving."} ${totals?.lastScanAt ? `Latest scan ${formatRelativeTime(totals.lastScanAt)}.` : "Keep the share flow active to maintain signal."}`
-            : `No scans in the last ${range} days yet. Share your Linket to start building a real signal.`,
-        tone: "neutral",
-      },
-      {
-        eyebrow: "Follow-up ready",
-        value: followUpValue,
-        detail:
-          rangeTotals.leads > 0
-            ? `${(rangeTotals.conversion * 100).toFixed(1)}% of scans became follow-up-ready contacts.`
-            : rangeTotals.scans > 0
-              ? "People are engaging, but they are not sharing their details yet."
-              : "Contact capture appears here once the share flow is live.",
-        tone: rangeTotals.leads > 0 ? "primary" : "accent",
-      },
-      {
-        eyebrow: "Context captured",
-        value: contextValue,
-        detail:
-          recentLeads.length > 0
-            ? `${recentLeadContextCount} of the last ${recentLeads.length} contacts included company, phone, notes, or reminders.`
-            : "Teams pay for context, not just names. Company, phone, notes, and reminders appear here once leads are captured.",
-        tone: recentLeadContextCount > 0 ? "primary" : "neutral",
-      },
-      {
-        eyebrow: "Best CTA share",
-        value: optimizationValue,
-        detail: topLink
-          ? `${truncateText(topLink.title, 38)} currently owns ${topLinkSharePercent.toFixed(1)}% of clicks across active links.`
-          : "Link-click concentration appears once visitors start choosing CTAs on your page.",
-        tone: topLink ? "primary" : "neutral",
-      },
-    ];
-  }, [
-    analytics,
-    loading,
-    range,
-    rangeTotals.conversion,
-    rangeTotals.leads,
-    rangeTotals.scans,
-    recentLeadContextCount,
-    recentLeads.length,
-    topLink,
-    topLinkSharePercent,
-    totals?.lastScanAt,
-    trendDeltas?.scans?.text,
-  ]);
-  const quickGuideSteps = useMemo<QuickGuideStep[]>(() => {
-    const firstGap = incompleteOnboardingItems[0];
-
-    return [
-      {
-        step: "1",
-        title: "Start with follow-up",
-        detail: latestLead
-          ? `${latestLead.name?.trim() || latestLead.email || "Your newest contact"} came in ${formatRelativeTime(latestLead.created_at)}.`
-          : "Open the first section to see who needs attention before you read charts.",
-        target: "start-here",
-      },
-      {
-        step: "2",
-        title: "Check setup if capture is low",
-        detail: firstGap
-          ? `${firstGap.label}: ${firstGap.detail}`
-          : "Your setup checklist is in good shape. Use export when you need a report.",
-        target: "setup",
-      },
-      {
-        step: "3",
-        title: "Use trends to optimize",
-        detail: topLink
-          ? `${truncateText(topLink.title, 32)} is your current leading CTA. Open trends and breakdowns to understand why.`
-          : "Open the trend and breakdown sections once visits and clicks start coming in.",
-        target: "trends",
-      },
-    ];
-  }, [incompleteOnboardingItems, latestLead, topLink]);
   const isFreeAnalytics =
     analytics?.meta.analyticsScope === "public_profile_visits";
   const publicProfileLabel = analytics?.meta.publicProfileHandle
     ? `${siteHost}/${analytics.meta.publicProfileHandle}`
     : "your public profile";
-
-  const handleSectionJump = useCallback((value: SectionOptionValue) => {
-    setSectionJump(value);
-
-    const targetOption = SECTION_OPTIONS.find((option) => option.value === value);
-    if (targetOption?.accordionValue) {
-      setOpenSections((current) =>
-        current.includes(targetOption.accordionValue as string)
-          ? current
-          : [...current, targetOption.accordionValue as string],
-      );
-    }
-
-    if (typeof window === "undefined") return;
-    window.setTimeout(() => {
-      document
-        .getElementById(`analytics-${value}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
-  }, []);
 
   const handleExport = useCallback(() => {
     if (!analytics) return;
@@ -856,34 +646,15 @@ export default function AnalyticsContent() {
       data-tour="analytics-overview"
     >
       <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
-            Analytics workspace
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
+            Analytics
+          </h1>
+          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+            Scans, captured contacts, conversion, and the links people choose.
           </p>
-          <div className="space-y-1">
-            <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
-              Understand your Linket performance
-            </h1>
-            <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-              Start at the top if you are new: first see who needs follow-up,
-              then open the dropdown sections for setup, trends, and what is
-              driving results.
-            </p>
-          </div>
         </div>
         <div className="dashboard-analytics-range flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
-          <Select value={sectionJump} onValueChange={handleSectionJump}>
-            <SelectTrigger className="h-9 w-[220px] rounded-full border-border/60 bg-card/80 text-sm shadow-sm">
-              <SelectValue placeholder="Jump to section" />
-            </SelectTrigger>
-            <SelectContent>
-              {SECTION_OPTIONS.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           {RANGES.map((option) => (
             <Button
               key={option.value}
@@ -930,33 +701,16 @@ export default function AnalyticsContent() {
         </Card>
       )}
 
-      <section className="grid gap-3 lg:grid-cols-3">
-        {quickGuideSteps.map((step) => (
-          <QuickGuideCard
-            key={step.step}
-            step={step.step}
-            title={step.title}
-            detail={step.detail}
-            onSelect={() => handleSectionJump(step.target)}
-          />
-        ))}
-      </section>
-
       <section id="analytics-start-here">
         <Card className="dashboard-analytics-card rounded-[32px] border bg-card/85 shadow-[0_22px_55px_rgba(15,23,42,0.08)]">
-          <CardHeader className="space-y-5">
+          <CardHeader>
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-              <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/80">
-                  Step 1
-                </p>
-                <CardTitle className="text-2xl font-semibold text-foreground sm:text-3xl">
-                  Start with the follow-up signal.
+              <div className="space-y-1">
+                <CardTitle className="text-xl font-semibold text-foreground sm:text-2xl">
+                  Follow-up
                 </CardTitle>
                 <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
-                  New users should begin here. This section answers the simplest
-                  question first: did anyone share their details, and who should
-                  you reach out to next?
+                  Who shared contact details, and what should you check next.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -1191,147 +945,17 @@ export default function AnalyticsContent() {
         </Card>
       </section>
 
-      <section>
-        <Accordion
-          type="multiple"
-          value={openSections}
-          onValueChange={setOpenSections}
-          className="space-y-4"
-        >
-          <AccordionItem
-            value="guide"
-            id="analytics-guide"
-            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
-          >
-            <AccordionTrigger className="py-0 hover:no-underline">
-              <SectionDropdownHeader
-                step="Step 2"
-                title="Learn the four signals"
-                description="Open this first if you are new. These are the headline numbers that matter most."
-              />
-            </AccordionTrigger>
-            <AccordionContent className="pt-5 pb-0">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {customerNeeds.map((item) => (
-                  <CustomerNeedCard
-                    key={item.eyebrow}
-                    eyebrow={item.eyebrow}
-                    value={item.value}
-                    detail={item.detail}
-                    tone={item.tone}
-                  />
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem
-            value="setup"
-            id="analytics-setup"
-            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
-          >
-            <AccordionTrigger className="py-0 hover:no-underline">
-              <SectionDropdownHeader
-                step="Step 3"
-                title="Setup and reporting"
-                description="Use this when traffic is coming in but people are not becoming follow-up-ready contacts."
-              />
-            </AccordionTrigger>
-            <AccordionContent className="pt-5 pb-0">
-              <div className="space-y-5">
-                <div className="rounded-[26px] border border-border/70 bg-background/45 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                        Setup progress
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {onboarding
-                          ? `${onboarding.completedCount} of ${onboarding.totalCount} foundations live`
-                          : loading
-                            ? "Checking your workspace..."
-                            : "No setup data yet."}
-                      </p>
-                    </div>
-                    <div className="text-2xl font-semibold text-foreground">
-                      {loading && !analytics
-                        ? "--"
-                        : `${onboardingProgressPercent}%`}
-                    </div>
-                  </div>
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted/80">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all duration-500"
-                      style={{ width: `${onboardingProgressPercent}%` }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {loading && !analytics
-                    ? Array.from({ length: 4 }).map((_, index) => (
-                        <div
-                          key={`readiness-skeleton-${index}`}
-                          className="dashboard-skeleton h-14 animate-pulse rounded-2xl bg-muted"
-                          data-skeleton
-                        />
-                      ))
-                    : onboarding?.items.map((item) => (
-                        <ReadinessChecklistItem
-                          key={item.id}
-                          label={item.label}
-                          detail={item.detail}
-                          completed={item.completed}
-                        />
-                      ))}
-                </div>
-
-                <div className="rounded-[26px] border border-primary/20 bg-primary/5 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
-                        Reporting
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">
-                        CSV export is ready for manager wrap-ups and RevOps handoff.
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className="rounded-full"
-                      onClick={handleExport}
-                      disabled={!analytics || analytics.timeline.length === 0}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Export latest
-                    </Button>
-                  </div>
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    {analytics
-                      ? `Latest snapshot generated ${timestampFormatter.format(new Date(analytics.meta.generatedAt))}.`
-                      : loading
-                        ? "Refreshing analytics snapshot..."
-                        : "No reportable activity yet."}
-                  </p>
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem
-            value="trends"
-            id="analytics-trends"
-            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
-          >
-            <AccordionTrigger className="py-0 hover:no-underline">
-              <SectionDropdownHeader
-                step="Step 4"
-                title="Traffic and conversion"
-                description="Open this to see whether visits are growing and whether those visits are turning into captured contacts."
-              />
-            </AccordionTrigger>
-            <AccordionContent className="pt-5 pb-0">
+      <section id="analytics-trends">
+        <Card className="dashboard-analytics-card rounded-[32px] border bg-card/80 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground">
+              Traffic and capture
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Daily scans, captured contacts, and capture rate.
+            </p>
+          </CardHeader>
+          <CardContent>
               <div className="grid gap-6 xl:grid-cols-[minmax(0,1.32fr)_minmax(320px,0.88fr)]">
             <div className="min-w-0">
               {loading ? (
@@ -1542,34 +1166,25 @@ export default function AnalyticsContent() {
                 )}
               </div>
             </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
-          <AccordionItem
-            value="breakdowns"
-            id="analytics-breakdowns"
-            className="overflow-hidden rounded-[32px] border border-border/70 bg-card/80 px-5 py-5 shadow-sm sm:px-6"
-          >
-            <AccordionTrigger className="py-0 hover:no-underline">
-              <SectionDropdownHeader
-                step="Step 5"
-                title="What is driving results"
-                description="Open this after trends when you want to see which Linkets and links are actually pulling people forward."
-              />
-            </AccordionTrigger>
-            <AccordionContent className="pt-5 pb-0">
-              <div className="grid gap-8 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">
-                  Linkets driving conversations
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Which profile or tag is producing the strongest mix of scans
-                  and captured contacts.
-                </p>
-              </div>
+      <section
+        id="analytics-breakdowns"
+        className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
+      >
+        <Card className="dashboard-analytics-card rounded-[32px] border bg-card/80 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-foreground">
+              Top Linkets
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Scans, contacts, and capture rate by profile.
+            </p>
+          </CardHeader>
+          <CardContent>
               {loading ? (
                 <div className="space-y-2">
                   <div
@@ -1628,17 +1243,19 @@ export default function AnalyticsContent() {
                   onAction={() => setReloadToken((value) => value + 1)}
                 />
               )}
-            </div>
+          </CardContent>
+        </Card>
 
-            <div className="space-y-4 xl:border-l xl:border-border/60 xl:pl-8">
-              <div className="space-y-1">
-                <h3 className="text-base font-semibold text-foreground">
-                  Links people actually choose
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Click distribution across the links on your public page.
-                </p>
-              </div>
+        <Card className="dashboard-analytics-card rounded-[32px] border bg-card/80 shadow-sm">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold text-foreground">
+              Top links
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Click distribution across your public profile links.
+            </p>
+          </CardHeader>
+          <CardContent>
               {loading ? (
                 <div className="space-y-2">
                   <div
@@ -1727,11 +1344,8 @@ export default function AnalyticsContent() {
                   onAction={() => setReloadToken((value) => value + 1)}
                 />
               )}
-            </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );
@@ -2069,57 +1683,6 @@ function PriorityMetricCard({
   );
 }
 
-function QuickGuideCard({
-  step,
-  title,
-  detail,
-  onSelect,
-}: Omit<QuickGuideStep, "target"> & {
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className="rounded-[28px] border border-border/70 bg-card/80 px-5 py-4 text-left shadow-sm transition-transform duration-150 ease-out hover:-translate-y-0.5 active:scale-[0.98]"
-    >
-      <div className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
-          Step {step}
-        </p>
-        <div className="text-base font-semibold text-foreground">{title}</div>
-        <p className="text-sm leading-6 text-muted-foreground">{detail}</p>
-      </div>
-    </button>
-  );
-}
-
-function SectionDropdownHeader({
-  step,
-  title,
-  description,
-}: {
-  step: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="space-y-2 pr-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
-        {step}
-      </p>
-      <div className="space-y-1">
-        <div className="text-left text-lg font-semibold text-foreground">
-          {title}
-        </div>
-        <p className="text-left text-sm leading-6 text-muted-foreground">
-          {description}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 function PriorityInfoChip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-background/65 px-4 py-3">
@@ -2153,80 +1716,6 @@ function CompactInsightCard({ insight }: { insight: ActionInsight }) {
         <p className="text-sm leading-6 text-muted-foreground">
           {insight.detail}
         </p>
-      </div>
-    </div>
-  );
-}
-
-function CustomerNeedCard({
-  eyebrow,
-  value,
-  detail,
-  tone,
-}: CustomerNeedCardData) {
-  const accentClasses =
-    tone === "primary"
-      ? "border-primary/20 bg-primary/5"
-      : tone === "accent"
-        ? "border-accent/20 bg-accent/10"
-        : "border-border/70 bg-background/45";
-
-  return (
-    <div
-      className={cn("rounded-[26px] border px-4 py-4 shadow-sm", accentClasses)}
-    >
-      <div className="space-y-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          {eyebrow}
-        </p>
-        <div className="text-2xl font-semibold text-foreground">{value}</div>
-        <p className="text-sm leading-6 text-muted-foreground">{detail}</p>
-      </div>
-    </div>
-  );
-}
-
-function ReadinessChecklistItem({
-  label,
-  detail,
-  completed,
-}: {
-  label: string;
-  detail: string;
-  completed: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3 rounded-2xl border border-border/70 bg-background/35 px-4 py-3">
-      <span
-        className={cn(
-          "mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full",
-          completed
-            ? "bg-emerald-500/10 text-emerald-300"
-            : "bg-amber-500/10 text-amber-300",
-        )}
-        aria-hidden
-      >
-        {completed ? (
-          <CheckCircle2 className="h-4 w-4" />
-        ) : (
-          <Circle className="h-4 w-4" />
-        )}
-      </span>
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold text-foreground">{label}</div>
-          <span
-            className={cn(
-              "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em]",
-              completed
-                ? "bg-emerald-500/10 text-emerald-300"
-                : "bg-amber-500/10 text-amber-300",
-            )}
-          >
-            {completed ? "Live" : "Next"}
-          </span>
-        </div>
-        <p className="text-sm leading-6 text-muted-foreground">{detail}</p>
       </div>
     </div>
   );
