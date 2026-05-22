@@ -676,11 +676,14 @@ export default function AnalyticsContent() {
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-full shrink-0"
+            className="dashboard-analytics-export-button h-10 w-10 shrink-0 rounded-full px-0 sm:h-9 sm:w-auto sm:px-4"
             onClick={handleExport}
             disabled={!analytics || analytics.timeline.length === 0}
+            aria-label="Export CSV"
+            title="Export CSV"
           >
-            <Download className="mr-2 h-4 w-4" /> Export CSV
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export CSV</span>
           </Button>
         </div>
       </header>
@@ -1415,11 +1418,14 @@ function FreeAnalyticsView({
             type="button"
             variant="outline"
             size="sm"
-            className="rounded-full shrink-0"
+            className="dashboard-analytics-export-button h-10 w-10 shrink-0 rounded-full px-0 sm:h-9 sm:w-auto sm:px-4"
             onClick={onExport}
             disabled={analytics.timeline.length === 0}
+            aria-label="Export CSV"
+            title="Export CSV"
           >
-            <Download className="mr-2 h-4 w-4" /> Export CSV
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Export CSV</span>
           </Button>
         </div>
       </header>
