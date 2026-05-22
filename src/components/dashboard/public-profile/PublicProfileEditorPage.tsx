@@ -1222,7 +1222,7 @@ export default function PublicProfileEditorPage() {
               <SelectItem
                 key={section.id}
                 value={section.id}
-                className="rounded-xl text-sm font-medium focus:bg-muted/60"
+                className="rounded-xl text-sm font-medium focus:bg-muted/60 data-[state=checked]:bg-[color:color-mix(in_srgb,var(--accent)_14%,transparent)] data-[state=checked]:text-[color:var(--accent)] data-[state=checked]:focus:bg-[color:color-mix(in_srgb,var(--accent)_18%,transparent)]"
               >
                 {section.label}
               </SelectItem>
@@ -1674,7 +1674,7 @@ function EditorPanel({
               controls={
                 <div className="flex flex-col gap-2">
                   <Label className="text-[11px] text-muted-foreground sm:text-xs">Logo shape</Label>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="grid grid-cols-2 gap-2">
                     <Button
                       type="button"
                       size="sm"
@@ -1682,7 +1682,7 @@ function EditorPanel({
                       onClick={() => onProfileChange({ logoShape: "circle" })}
                       disabled={loading || !userId}
                       className={cn(
-                        "h-9 w-full px-3 sm:h-8 sm:w-auto",
+                        "h-9 w-full px-3 sm:h-8",
                         draft?.logoShape !== "rect"
                           ? `bg-[#cfe4ff] ${theme === "honey" ? "text-[#8a3f0a]" : "text-foreground"} border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]`
                           : "text-muted-foreground border border-border/60 hover:bg-muted/40"
@@ -1697,7 +1697,7 @@ function EditorPanel({
                       onClick={() => onProfileChange({ logoShape: "rect" })}
                       disabled={loading || !userId}
                       className={cn(
-                        "h-9 w-full px-3 sm:h-8 sm:w-auto",
+                        "h-9 w-full px-3 sm:h-8",
                         draft?.logoShape === "rect"
                           ? `bg-[#cfe4ff] ${theme === "honey" ? "text-[#8a3f0a]" : "text-foreground"} border-2 border-[#5aa0ff] shadow-[0_6px_16px_-10px_rgba(90,160,255,0.6)]`
                           : "text-muted-foreground border border-border/60 hover:bg-muted/40"
@@ -1775,11 +1775,7 @@ function EditorPanel({
             </div>
             {handleError ? (
               <p className="text-xs text-destructive">{handleError}</p>
-            ) : (
-              <p className="text-[11px] text-muted-foreground">
-                Changes auto-save. Your handle is public only after publish.
-              </p>
-            )}
+            ) : null}
           </div>
         </CardContent>
       </Card>
