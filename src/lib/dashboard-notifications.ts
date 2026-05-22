@@ -33,6 +33,7 @@ export type DashboardNotificationItem = {
   severity: AnnouncementSeverity;
   createdAt: string;
   updatedAt: string;
+  viewedAt?: string | null;
 };
 
 export type NormalizedAnnouncementInput = {

@@ -93,11 +93,7 @@ const NOTIFICATIONS_POLL_INTERVAL_IDLE_MS = 120_000;
 const DASHBOARD_VERIFICATION_ENTRY = "/dashboard/overview";
 const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:last-read-at";
-const NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX =
-  "linket:dashboard-notifications:opened-at";
-const NOTIFICATIONS_DISMISSED_STORAGE_KEY_PREFIX =
-  "linket:dashboard-notifications:dismissed";
-const NOTIFICATIONS_INBOX_RETENTION_MS = 3 * 24 * 60 * 60 * 1000;
+const NOTIFICATIONS_INBOX_RETENTION_MS = 2 * 24 * 60 * 60 * 1000;
 
 function toUserLite(
   value: {
@@ -122,6 +118,25 @@ const notificationTimeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
 });
+
+async function persistDashboardNotificationState(
+  action: "view" | "dismiss",
+  notificationIds: string[]
+) {
+  if (notificationIds.length === 0) return;
+
+  const response = await fetch("/api/dashboard/notifications", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action, notificationIds }),
+  });
+  if (response.ok) return;
+
+  const payload = (await response.json().catch(() => null)) as
+    | { error?: string }
+    | null;
+  throw new Error(payload?.error || "Unable to save notification state.");
+}
 
 export function Navbar() {
   const pathname = usePathname();
@@ -165,7 +180,7 @@ export function Navbar() {
     Record<string, number>
   >({});
   const [notificationsDismissedById, setNotificationsDismissedById] = useState<
-    Record<string, string>
+    Record<string, true>
   >({});
   const notificationsButtonRef = useRef<HTMLButtonElement | null>(null);
   const siteOrigin = getSiteOrigin();
@@ -205,12 +220,6 @@ export function Navbar() {
   );
   const notificationsReadStorageKey = user?.id
     ? `${NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX}:${user.id}`
-    : null;
-  const notificationsOpenedStorageKey = user?.id
-    ? `${NOTIFICATIONS_OPENED_AT_STORAGE_KEY_PREFIX}:${user.id}`
-    : null;
-  const notificationsDismissedStorageKey = user?.id
-    ? `${NOTIFICATIONS_DISMISSED_STORAGE_KEY_PREFIX}:${user.id}`
     : null;
 
   useEffect(() => {
@@ -353,47 +362,10 @@ export function Navbar() {
   }, [notificationsReadStorageKey, shouldShowNotifications]);
 
   useEffect(() => {
-    if (!shouldShowNotifications || !notificationsOpenedStorageKey) {
-      setNotificationsOpenedAtById({});
-      return;
-    }
-
-    const now = Date.now();
-    const rawValue = window.localStorage.getItem(notificationsOpenedStorageKey);
-    if (!rawValue) {
-      setNotificationsOpenedAtById({});
-      return;
-    }
-
-    const parsed = safeParseNotificationOpenedAtMap(rawValue);
-    const nextEntries = Object.entries(parsed).filter(([, openedAt]) => {
-      return now - openedAt <= NOTIFICATIONS_INBOX_RETENTION_MS;
-    });
-    const nextMap = Object.fromEntries(nextEntries);
-
-    window.localStorage.setItem(
-      notificationsOpenedStorageKey,
-      JSON.stringify(nextMap)
-    );
-    setNotificationsOpenedAtById(nextMap);
-  }, [notificationsOpenedStorageKey, shouldShowNotifications]);
-
-  useEffect(() => {
-    if (!shouldShowNotifications || !notificationsDismissedStorageKey) {
-      setNotificationsDismissedById({});
-      return;
-    }
-
-    const rawValue = window.localStorage.getItem(notificationsDismissedStorageKey);
-    if (!rawValue) {
-      setNotificationsDismissedById({});
-      return;
-    }
-
-    setNotificationsDismissedById(
-      safeParseNotificationDismissedAtMap(rawValue)
-    );
-  }, [notificationsDismissedStorageKey, shouldShowNotifications]);
+    if (shouldShowNotifications) return;
+    setNotificationsOpenedAtById({});
+    setNotificationsDismissedById({});
+  }, [shouldShowNotifications]);
 
   useEffect(() => {
     if (!shouldShowNotifications || !user?.id) {
@@ -420,9 +392,25 @@ export function Navbar() {
           throw new Error(payload?.error || "Unable to load notifications.");
         }
         if (!active) return;
-        setNotifications(
-          Array.isArray(payload?.notifications) ? payload.notifications : []
-        );
+        const nextNotifications = Array.isArray(payload?.notifications)
+          ? payload.notifications
+          : [];
+        setNotifications(nextNotifications);
+        setNotificationsOpenedAtById((previous) => {
+          let hasChanges = false;
+          const next = { ...previous };
+
+          for (const notification of nextNotifications) {
+            if (!notification.viewedAt) continue;
+            const viewedAt = Date.parse(notification.viewedAt);
+            if (!Number.isFinite(viewedAt)) continue;
+            if (next[notification.id] === viewedAt) continue;
+            next[notification.id] = viewedAt;
+            hasChanges = true;
+          }
+
+          return hasChanges ? next : previous;
+        });
         setNotificationsError(null);
       } catch (error) {
         if (!active) return;
@@ -471,64 +459,82 @@ export function Navbar() {
   }, [notifications, notificationsReadStorageKey]);
 
   const markNotificationsAsOpened = useCallback(() => {
-    if (!notificationsOpenedStorageKey || notifications.length === 0) return;
+    if (notifications.length === 0) return;
 
     const now = Date.now();
-    setNotificationsOpenedAtById((previous) => {
-      const next: Record<string, number> = {};
-      let hasChanges = false;
+    const next: Record<string, number> = {};
+    let hasChanges = false;
 
-      for (const [id, openedAt] of Object.entries(previous)) {
-        if (now - openedAt <= NOTIFICATIONS_INBOX_RETENTION_MS) {
-          next[id] = openedAt;
-        } else {
-          hasChanges = true;
-        }
-      }
-
-      for (const notification of notifications) {
-        if (typeof next[notification.id] === "number") continue;
-        next[notification.id] = now;
+    for (const [id, openedAt] of Object.entries(notificationsOpenedAtById)) {
+      if (now - openedAt <= NOTIFICATIONS_INBOX_RETENTION_MS) {
+        next[id] = openedAt;
+      } else {
         hasChanges = true;
       }
+    }
 
-      if (hasChanges) {
-        window.localStorage.setItem(
-          notificationsOpenedStorageKey,
-          JSON.stringify(next)
-        );
-      }
+    const notificationIdsToPersist: string[] = [];
+    for (const notification of notifications) {
+      if (notificationsDismissedById[notification.id]) continue;
+      if (typeof next[notification.id] === "number") continue;
+      next[notification.id] = now;
+      notificationIdsToPersist.push(notification.id);
+      hasChanges = true;
+    }
 
-      return hasChanges ? next : previous;
-    });
-  }, [notifications, notificationsOpenedStorageKey]);
+    if (hasChanges) {
+      setNotificationsOpenedAtById(next);
+    }
+
+    if (notificationIdsToPersist.length > 0) {
+      void persistDashboardNotificationState("view", notificationIdsToPersist).catch(
+        () => {
+          toast({
+            title: "Notification view was not saved",
+            description: "This message may stay visible until your next refresh.",
+            variant: "destructive",
+          });
+        }
+      );
+    }
+  }, [notifications, notificationsDismissedById, notificationsOpenedAtById]);
 
   const dismissNotification = useCallback(
     (notification: DashboardNotificationItem) => {
-      if (!notificationsDismissedStorageKey) return;
-
-      setNotificationsDismissedById((previous) => {
-        if (previous[notification.id] === notification.updatedAt) {
-          return previous;
+      setNotificationsDismissedById((previous) =>
+        previous[notification.id]
+          ? previous
+          : {
+              ...previous,
+              [notification.id]: true,
+            }
+      );
+      void persistDashboardNotificationState("dismiss", [notification.id]).catch(
+        (error) => {
+          setNotificationsDismissedById((previous) => {
+            if (!previous[notification.id]) return previous;
+            const next = { ...previous };
+            delete next[notification.id];
+            return next;
+          });
+          toast({
+            title: "Notification was not dismissed",
+            description:
+              error instanceof Error
+                ? error.message
+                : "Please try dismissing it again.",
+            variant: "destructive",
+          });
         }
-        const next = {
-          ...previous,
-          [notification.id]: notification.updatedAt,
-        };
-        window.localStorage.setItem(
-          notificationsDismissedStorageKey,
-          JSON.stringify(next)
-        );
-        return next;
-      });
+      );
     },
-    [notificationsDismissedStorageKey]
+    []
   );
 
   const notificationsInboxItems = useMemo(() => {
     const now = Date.now();
     return notifications.filter((notification) => {
-      if (notificationsDismissedById[notification.id] === notification.updatedAt) {
+      if (notificationsDismissedById[notification.id]) {
         return false;
       }
       const openedAt = notificationsOpenedAtById[notification.id];
@@ -573,6 +579,12 @@ export function Navbar() {
       return nextOpen;
     });
   }, [markNotificationsAsOpened, markNotificationsAsRead]);
+
+  useEffect(() => {
+    if (!notificationsOpen) return;
+    markNotificationsAsOpened();
+    markNotificationsAsRead();
+  }, [markNotificationsAsOpened, markNotificationsAsRead, notificationsOpen]);
 
   const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
 
@@ -1579,32 +1591,6 @@ export function Navbar() {
       )}
     </header>
   );
-}
-
-function safeParseNotificationOpenedAtMap(value: string): Record<string, number> {
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
-    const entries = Object.entries(parsed as Record<string, unknown>).filter(
-      ([, timestamp]) => Number.isFinite(timestamp)
-    ) as Array<[string, number]>;
-    return Object.fromEntries(entries);
-  } catch {
-    return {};
-  }
-}
-
-function safeParseNotificationDismissedAtMap(value: string): Record<string, string> {
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (!parsed || typeof parsed !== "object") return {};
-    const entries = Object.entries(parsed as Record<string, unknown>).filter(
-      ([, timestamp]) => typeof timestamp === "string" && timestamp.length > 0
-    ) as Array<[string, string]>;
-    return Object.fromEntries(entries);
-  } catch {
-    return {};
-  }
 }
 
 function PopoverDialog({

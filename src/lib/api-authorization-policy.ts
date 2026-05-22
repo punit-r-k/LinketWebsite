@@ -33,6 +33,7 @@ export type PrivilegedRouteId =
   | "POST /api/billing/setup-intent"
   | "POST /api/billing/subscribe"
   | "POST /api/billing/subscription/cancel"
+  | "POST /api/dashboard/notifications"
   | "POST /api/linket-profiles/[id]/activate"
   | "POST /api/linket-profiles"
   | "POST /api/linkets/claim"
@@ -82,6 +83,7 @@ export const PRIVILEGED_ROUTE_POLICIES: Record<
   "POST /api/billing/setup-intent": "authenticated",
   "POST /api/billing/subscribe": "authenticated",
   "POST /api/billing/subscription/cancel": "authenticated",
+  "POST /api/dashboard/notifications": "authenticated",
   "POST /api/linket-profiles/[id]/activate": "self",
   "POST /api/linket-profiles": "self",
   "POST /api/linkets/claim": "authenticated",
