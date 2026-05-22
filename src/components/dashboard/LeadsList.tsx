@@ -1137,7 +1137,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="h-8 rounded-lg text-xs"
+                        className="h-8 gap-1.5 rounded-lg text-xs"
                         disabled={!row.lead.email}
                         onClick={() => copyToClipboard(row.lead.email, "Email copied")}
                       >
@@ -1614,7 +1614,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full justify-center sm:w-auto"
+                    className="w-full justify-center gap-1.5 sm:w-auto"
                     disabled={!activeLeadView.lead.email}
                     onClick={() =>
                       copyToClipboard(activeLeadView.lead.email, "Email copied")
@@ -1627,7 +1627,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full justify-center sm:w-auto"
+                    className="w-full justify-center gap-1.5 sm:w-auto"
                     onClick={() => downloadVCard(activeLeadView.lead)}
                   >
                     <FileText className="h-4 w-4" aria-hidden />
