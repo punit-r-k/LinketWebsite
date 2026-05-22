@@ -46,7 +46,6 @@ const MIN_ZOOM = 0.7;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
 const RECT_GUIDE_RATIO = 2.5;
-const AUTOSAVE_DEBOUNCE_MS = 700;
 
 export default function ProfileLogoUploader({
   userId,
@@ -78,8 +77,6 @@ export default function ProfileLogoUploader({
   const rectGuideOffset = (previewSize - rectGuideHeight) / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastUploadSignatureRef = useRef<string | null>(null);
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -145,7 +142,6 @@ export default function ProfileLogoUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
-      lastUploadSignatureRef.current = null;
       if (!file.type.startsWith("image/")) {
         setError("Please select an image file.");
         return;
@@ -328,46 +324,8 @@ export default function ProfileLogoUploader({
     resetEditor,
   ]);
 
-  const uploadSignature = useMemo(() => {
-    if (!sourceUrl || !previewReady || !imageMeta) return null;
-    return JSON.stringify({
-      source: inputFileName ?? sourceFile?.name ?? sourceUrl,
-      zoom: Number(zoom.toFixed(3)),
-      offsetX: Number(offset.x.toFixed(1)),
-      offsetY: Number(offset.y.toFixed(1)),
-    });
-  }, [imageMeta, inputFileName, offset.x, offset.y, previewReady, sourceFile?.name, sourceUrl, zoom]);
-
-  useEffect(() => {
-    if (!uploadSignature || loading || isDragging) {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-      return;
-    }
-    if (uploadSignature === lastUploadSignatureRef.current) {
-      return;
-    }
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-    autosaveTimerRef.current = setTimeout(() => {
-      autosaveTimerRef.current = null;
-      lastUploadSignatureRef.current = uploadSignature;
-      void handleUpload();
-    }, AUTOSAVE_DEBOUNCE_MS);
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-    };
-  }, [handleUpload, isDragging, loading, uploadSignature]);
-
   const handleReset = useCallback(() => {
     if (sourceUrl) {
-      lastUploadSignatureRef.current = null;
       resetEditor();
       setSourceFile(null);
       setInputFileName(null);
@@ -445,14 +403,6 @@ export default function ProfileLogoUploader({
   const displayUrl = sourceUrl || latestLogoUrl;
   const visibleFileName = inputFileName ?? persistedFileName;
   const inputTargetId = inputId ?? "profile-logo-upload";
-
-  useEffect(() => {
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-      }
-    };
-  }, []);
 
   if (variant === "compact") {
     const previewScale = baseScale * zoom;
@@ -663,7 +613,7 @@ export default function ProfileLogoUploader({
               >
                 {loading
                   ? "Uploading crop..."
-                  : "Crop auto-applies after you stop moving."}
+                  : "Adjust the crop, then save it."}
               </span>
               <Button
                 type="button"
@@ -674,6 +624,15 @@ export default function ProfileLogoUploader({
                 disabled={!(sourceUrl || latestLogoUrl) || loading}
               >
                 Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="h-10 rounded-full px-4 sm:h-8"
+                onClick={() => void handleUpload()}
+                disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+              >
+                Save crop
               </Button>
             </div>
             {controls ? (
@@ -792,6 +751,22 @@ export default function ProfileLogoUploader({
                 </svg>
               </div>
             </div>
+            ) : latestLogoUrl ? (
+              <button
+                type="button"
+                className="relative h-full w-full"
+                onClick={handleReCrop}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={latestLogoUrl}
+                  alt="Current logo badge"
+                  className={cn("h-full w-full object-cover", logoFrameClassName)}
+                />
+                <span className="absolute bottom-3 right-3 rounded-full bg-background/90 px-3 py-1 text-[11px] font-semibold text-foreground shadow-sm">
+                  Re-crop
+                </span>
+              </button>
             ) : (
               <button
                 type="button"
@@ -807,6 +782,63 @@ export default function ProfileLogoUploader({
               </button>
             )}
           </div>
+          {sourceUrl ? (
+            <div className="mx-auto w-full max-w-sm space-y-3">
+              <div className="space-y-2">
+                <label
+                  htmlFor="logo-zoom-default"
+                  className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground"
+                >
+                  Zoom:
+                  <span className="text-[11px] font-semibold text-foreground">
+                    {Math.round(zoom * 100)}%
+                  </span>
+                </label>
+                <input
+                  id="logo-zoom-default"
+                  type="range"
+                  min={MIN_ZOOM}
+                  max={MAX_ZOOM}
+                  step={ZOOM_STEP}
+                  value={zoom}
+                  onChange={(event) => setZoom(Number(event.target.value))}
+                  disabled={loading}
+                  className="dashboard-zoom-slider w-full"
+                />
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <span
+                  className={cn(
+                    "text-center text-xs",
+                    loading
+                      ? "dashboard-saving-indicator text-foreground"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  {loading ? "Uploading crop..." : "Adjust the crop, then save it."}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-10 rounded-full px-4 sm:h-8"
+                  onClick={handleReset}
+                  disabled={!(sourceUrl || latestLogoUrl) || loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-10 rounded-full px-4 sm:h-8"
+                  onClick={() => void handleUpload()}
+                  disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+                >
+                  Save crop
+                </Button>
+              </div>
+            </div>
+          ) : null}
           {error && <p className="text-sm text-destructive">{error}</p>}
         </section>
       </CardContent>

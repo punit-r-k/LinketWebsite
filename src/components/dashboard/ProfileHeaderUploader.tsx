@@ -44,7 +44,6 @@ const OUTPUT_HEIGHT = 600;
 const MIN_ZOOM = 0.7;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
-const AUTOSAVE_DEBOUNCE_MS = 700;
 
 export default function ProfileHeaderUploader({
   userId,
@@ -89,8 +88,6 @@ export default function ProfileHeaderUploader({
   const cropHalfHeight = cropHeight / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastUploadSignatureRef = useRef<string | null>(null);
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -147,7 +144,6 @@ export default function ProfileHeaderUploader({
     (file: File | null) => {
       resetEditor();
       if (!file) return;
-      lastUploadSignatureRef.current = null;
       const selectedName = file.name || null;
       setInputFileName(selectedName);
       setPersistedFileName(selectedName);
@@ -364,46 +360,8 @@ export default function ProfileHeaderUploader({
     resetEditor,
   ]);
 
-  const uploadSignature = useMemo(() => {
-    if (!sourceUrl || !previewReady || !imageMeta) return null;
-    return JSON.stringify({
-      source: inputFileName ?? sourceFile?.name ?? sourceUrl,
-      zoom: Number(zoom.toFixed(3)),
-      offsetX: Number(offset.x.toFixed(1)),
-      offsetY: Number(offset.y.toFixed(1)),
-    });
-  }, [imageMeta, inputFileName, offset.x, offset.y, previewReady, sourceFile?.name, sourceUrl, zoom]);
-
-  useEffect(() => {
-    if (!uploadSignature || loading || isDragging) {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-      return;
-    }
-    if (uploadSignature === lastUploadSignatureRef.current) {
-      return;
-    }
-    if (autosaveTimerRef.current) {
-      clearTimeout(autosaveTimerRef.current);
-    }
-    autosaveTimerRef.current = setTimeout(() => {
-      autosaveTimerRef.current = null;
-      lastUploadSignatureRef.current = uploadSignature;
-      void handleUpload();
-    }, AUTOSAVE_DEBOUNCE_MS);
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-    };
-  }, [handleUpload, isDragging, loading, uploadSignature]);
-
   const handleReset = useCallback(() => {
     if (sourceUrl) {
-      lastUploadSignatureRef.current = null;
       resetEditor();
       setSourceFile(null);
       setInputFileName(null);
@@ -473,14 +431,6 @@ export default function ProfileHeaderUploader({
   const helperText = sourceFile
     ? "Drag to reposition the image inside the crop."
     : "Upload a photo to start cropping.";
-
-  useEffect(() => {
-    return () => {
-      if (autosaveTimerRef.current) {
-        clearTimeout(autosaveTimerRef.current);
-      }
-    };
-  }, []);
 
   const previewContainerClassName = cn(
     "relative flex items-center justify-center overflow-hidden border bg-muted/40",
@@ -660,7 +610,7 @@ export default function ProfileHeaderUploader({
               >
                 {loading
                   ? "Uploading crop..."
-                  : "Crop auto-applies after you stop moving."}
+                  : "Adjust the crop, then save it."}
               </span>
               <Button
                 type="button"
@@ -671,6 +621,15 @@ export default function ProfileHeaderUploader({
                 disabled={!(sourceUrl || latestHeaderUrl) || loading}
               >
                 Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="h-10 rounded-full px-4 sm:h-8"
+                onClick={() => void handleUpload()}
+                disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+              >
+                Save crop
               </Button>
             </div>
           </div>
@@ -832,7 +791,7 @@ export default function ProfileHeaderUploader({
                 {loading
                   ? "Uploading crop..."
                   : sourceUrl
-                  ? "Crop auto-applies after you stop moving."
+                  ? "Adjust the crop, then save it."
                   : "Choose an image to start editing."}
               </span>
               <span className={cn("text-xs text-muted-foreground", isCompact && "text-[11px]")}>
@@ -869,6 +828,17 @@ export default function ProfileHeaderUploader({
             )}
 
             <div className="flex items-center gap-3 text-xs">
+              {sourceUrl ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 rounded-full px-4"
+                  onClick={() => void handleUpload()}
+                  disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+                >
+                  Save crop
+                </Button>
+              ) : null}
               <button
                 type="button"
                 className="text-muted-foreground hover:text-foreground"

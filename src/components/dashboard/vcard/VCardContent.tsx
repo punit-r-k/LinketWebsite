@@ -116,11 +116,15 @@ export default function VCardContent({
   onFieldsChange,
   onStatusChange,
   idPrefix,
+  defaultPhotoUrl,
+  defaultPhotoName,
 }: {
   variant?: "card" | "embedded";
   onFieldsChange?: (fields: VCardFields) => void;
   onStatusChange?: (payload: VCardStatusPayload) => void;
   idPrefix?: string;
+  defaultPhotoUrl?: string | null;
+  defaultPhotoName?: string | null;
 }) {
   const [fields, setFields] = useState<VCardFields>({
     fullName: "",
@@ -166,8 +170,6 @@ export default function VCardContent({
   const [isDragging, setIsDragging] = useState(false);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const photoApplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastPhotoCropSignatureRef = useRef<string | null>(null);
 
   const previewSize = 240;
   const cropSize = 200;
@@ -235,7 +237,6 @@ export default function VCardContent({
   function handlePhotoChange(file: File | null) {
     resetPhotoEditor();
     if (!file) return;
-    lastPhotoCropSignatureRef.current = null;
     setPhotoSourceUrl(URL.createObjectURL(file));
     setPhotoSourceName(file.name);
   }
@@ -485,12 +486,12 @@ export default function VCardContent({
   }, [resetPhotoEditor, userId, loading, status, persist]);
 
   const handlePhotoReCrop = useCallback(() => {
-    if (!fields.photoData) return;
+    const sourceUrl = fields.photoData ?? defaultPhotoUrl;
+    if (!sourceUrl) return;
     resetPhotoEditor();
-    lastPhotoCropSignatureRef.current = null;
-    setPhotoSourceUrl(fields.photoData);
-    setPhotoSourceName(fields.photoName ?? "profile-photo.jpg");
-  }, [fields.photoData, fields.photoName, resetPhotoEditor]);
+    setPhotoSourceUrl(sourceUrl);
+    setPhotoSourceName(fields.photoName ?? defaultPhotoName ?? "profile-photo.jpg");
+  }, [defaultPhotoName, defaultPhotoUrl, fields.photoData, fields.photoName, resetPhotoEditor]);
 
   const handlePhotoApply = useCallback(async () => {
     if (!photoSourceUrl || !imageMeta || !previewReady) return;
@@ -527,50 +528,6 @@ export default function VCardContent({
     persist,
     resetPhotoEditor,
   ]);
-
-  useEffect(() => {
-    if (!photoSourceUrl || !previewReady || !imageMeta || isDragging) {
-      if (photoApplyTimerRef.current) {
-        clearTimeout(photoApplyTimerRef.current);
-        photoApplyTimerRef.current = null;
-      }
-      return;
-    }
-    const snapshot = JSON.stringify({
-      source: photoSourceName ?? photoSourceUrl,
-      zoom: Number(zoom.toFixed(3)),
-      offsetX: Number(offset.x.toFixed(1)),
-      offsetY: Number(offset.y.toFixed(1)),
-    });
-    if (snapshot === lastPhotoCropSignatureRef.current) {
-      return;
-    }
-    if (photoApplyTimerRef.current) {
-      clearTimeout(photoApplyTimerRef.current);
-    }
-    photoApplyTimerRef.current = setTimeout(() => {
-      photoApplyTimerRef.current = null;
-      lastPhotoCropSignatureRef.current = snapshot;
-      void handlePhotoApply();
-    }, 700);
-    return () => {
-      if (photoApplyTimerRef.current) {
-        clearTimeout(photoApplyTimerRef.current);
-        photoApplyTimerRef.current = null;
-      }
-    };
-  }, [
-    photoSourceUrl,
-    photoSourceName,
-    previewReady,
-    imageMeta,
-    isDragging,
-    zoom,
-    offset.x,
-    offset.y,
-    handlePhotoApply,
-  ]);
-
 
   const isDirty = useMemo(() => {
     if (!lastSavedRef.current) {
@@ -749,6 +706,14 @@ export default function VCardContent({
     return "All changes saved";
   }, [error, isDirty, isOnline, loading, restoredLocalDraft, savedLocally, status]);
 
+  const inheritedPhotoPreview =
+    !fields.photoData && !photoSourceUrl ? defaultPhotoUrl ?? null : null;
+  const visiblePhotoPreview = photoPreview ?? inheritedPhotoPreview;
+  const visiblePhotoName =
+    photoSourceName ??
+    fields.photoName ??
+    (inheritedPhotoPreview ? defaultPhotoName ?? "Profile photo" : "No image selected");
+
   useEffect(() => {
     return () => {
       if (autosaveTimerRef.current) {
@@ -756,9 +721,6 @@ export default function VCardContent({
       }
       if (retryTimerRef.current) {
         clearTimeout(retryTimerRef.current);
-      }
-      if (photoApplyTimerRef.current) {
-        clearTimeout(photoApplyTimerRef.current);
       }
     };
   }, []);
@@ -822,9 +784,9 @@ export default function VCardContent({
           {!photoSourceUrl ? (
             <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
               <div className="h-24 w-24 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
-                {photoPreview ? (
+                {visiblePhotoPreview ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photoPreview} alt="Selected profile" className="h-full w-full object-cover" />
+                  <img src={visiblePhotoPreview} alt="Selected profile" className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">150x150</div>
                 )}
@@ -843,9 +805,9 @@ export default function VCardContent({
                 <div className="flex w-full min-w-0 flex-col items-stretch gap-2 overflow-hidden rounded-xl border border-input bg-background/70 px-3 py-2">
                   <span
                     className="min-w-0 truncate whitespace-nowrap text-center text-sm text-muted-foreground"
-                    title={photoSourceName ?? fields.photoName ?? "No image selected"}
+                    title={visiblePhotoName}
                   >
-                    {photoSourceName ?? fields.photoName ?? "No image selected"}
+                    {visiblePhotoName}
                   </span>
                   <Button
                     type="button"
@@ -868,7 +830,7 @@ export default function VCardContent({
                     size="sm"
                     className={UPLOADER_ACTION_BUTTON_CLASS}
                     onClick={handlePhotoReCrop}
-                    disabled={!fields.photoData}
+                    disabled={!fields.photoData && !defaultPhotoUrl}
                   >
                     Re-crop
                   </Button>
@@ -960,7 +922,7 @@ export default function VCardContent({
               </div>
               <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-3">
                 <span className="col-span-2 text-center text-xs text-muted-foreground sm:col-span-1 sm:text-left">
-                  Crop auto-applies after you stop moving.
+                  Adjust the crop, then save it.
                 </span>
                 <Button
                   type="button"
@@ -970,6 +932,15 @@ export default function VCardContent({
                   onClick={resetPhotoEditor}
                 >
                   Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
+                  onClick={() => void handlePhotoApply()}
+                  disabled={!previewReady || !imageMeta || isDragging || status === "saving"}
+                >
+                  Save crop
                 </Button>
               </div>
             </div>
@@ -1171,6 +1142,9 @@ function blobToDataUrl(blob: Blob): Promise<string> {
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    if (/^https?:\/\//i.test(src)) {
+      img.crossOrigin = "anonymous";
+    }
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;

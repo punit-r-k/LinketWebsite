@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { buildVCard } from "@/lib/vcard/buildVCard";
+import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ContactProfile } from "@/lib/profile.store";
 import { sanitizeAttachmentFilename } from "@/lib/security";
@@ -34,6 +35,7 @@ function buildContactProfile(
   handle: string,
   record: VCardRecord | null,
   fallbackName: string,
+  fallbackPhotoUrl: string | null,
   links: Array<{
     title?: string | null;
     url?: string | null;
@@ -59,6 +61,8 @@ function buildContactProfile(
     address: parsedAddress ?? undefined,
     photo: record?.photo_data
       ? { dataUrl: record.photo_data }
+      : fallbackPhotoUrl
+        ? { url: fallbackPhotoUrl }
       : undefined,
     links: links
       .filter((link) => link.is_active ?? true)
@@ -143,11 +147,15 @@ export async function GET(
       .eq("user_id", account.user_id)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw error;
+    const fallbackPhotoUrl = data?.photo_data
+      ? null
+      : await getSignedAvatarUrl(account.avatar_url, account.avatar_updated_at);
 
     const contactProfile = buildContactProfile(
       handle,
       (data as VCardRecord | null) ?? null,
       fallbackName,
+      fallbackPhotoUrl,
       profile.links ?? []
     );
     const vcard = buildVCard(contactProfile);

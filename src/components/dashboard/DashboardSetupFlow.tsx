@@ -2826,7 +2826,6 @@ export default function DashboardSetupFlow({
                             avatarUrl={avatarPreviewUrl}
                             avatarOriginalFileName={account.avatarOriginalFileName}
                             variant="compact"
-                            autoSave
                             onSaveStateChange={setAvatarSaveState}
                             onUploaded={(payload) => {
                               const hasAvatar = Boolean(payload.path);
