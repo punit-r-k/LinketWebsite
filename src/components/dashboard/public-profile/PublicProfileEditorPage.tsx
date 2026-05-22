@@ -1213,7 +1213,7 @@ export default function PublicProfileEditorPage() {
         >
           <SelectTrigger
             data-tour="profile-section-select"
-            className="mx-auto h-11 w-full max-w-[260px] rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-5 text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur"
+            className="relative mx-auto h-11 w-full max-w-[260px] justify-center rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-12 text-center text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur *:data-[slot=select-value]:justify-center [&_svg]:absolute [&_svg]:right-5"
           >
             <SelectValue placeholder="Section" />
           </SelectTrigger>

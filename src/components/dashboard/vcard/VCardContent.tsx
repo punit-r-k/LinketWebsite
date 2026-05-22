@@ -960,8 +960,10 @@ export default function VCardContent({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Address line 1" id="addressLine1" value={fields.addressLine1} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
           <Field label="Address line 2" id="addressLine2" value={fields.addressLine2} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="City" id="addressCity" value={fields.addressCity} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="State / Region" id="addressRegion" value={fields.addressRegion} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          <div className="grid grid-cols-2 gap-3 sm:contents">
+            <Field label="City" id="addressCity" value={fields.addressCity} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+            <Field label="State / Region" id="addressRegion" value={fields.addressRegion} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+          </div>
           <Field label="Postal code" id="addressPostal" value={fields.addressPostal} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
           <Field label="Country" id="addressCountry" value={fields.addressCountry} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
