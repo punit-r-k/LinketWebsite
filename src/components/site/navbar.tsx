@@ -1050,6 +1050,8 @@ export function Navbar() {
     </Button>
   );
 
+  const showBuyLinketCta = isMarketingPage;
+
   const navClassName = cn(
     "mx-auto flex max-w-6xl items-center justify-between px-3 py-2 md:px-6 md:py-3",
     overlayMode ? "text-white" : "text-foreground"
@@ -1481,7 +1483,7 @@ export function Navbar() {
                 )}
               />
               {loginButton}
-              {primaryCta}
+              {showBuyLinketCta ? primaryCta : null}
             </div>
           ) : null}
           {isLandingPage || isMarketingPage ? (
@@ -1559,8 +1561,15 @@ export function Navbar() {
                   })}
                 </div>
               ) : null}
-              <div className="grid grid-cols-2 gap-2.5">
-                <div className="w-full">{mobilePrimaryCta}</div>
+              <div
+                className={cn(
+                  "grid gap-2.5",
+                  showBuyLinketCta ? "grid-cols-2" : "grid-cols-1"
+                )}
+              >
+                {showBuyLinketCta ? (
+                  <div className="w-full">{mobilePrimaryCta}</div>
+                ) : null}
                 <div className="w-full">{mobileSecondaryAction}</div>
               </div>
               <LanguageSwitcher className="w-full justify-center bg-white" />

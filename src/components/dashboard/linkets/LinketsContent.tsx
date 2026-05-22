@@ -458,27 +458,30 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
   const emptyState = !loading && linkets.length === 0;
 
   return (
-    <section className={cn("space-y-6", isEmbedded && "space-y-4")} data-tour="linkets-root">
+    <section
+      className={cn("w-full min-w-0 space-y-6", isEmbedded && "space-y-4")}
+      data-tour="linkets-root"
+    >
       <Card
         className={cn(
-          "border border-border/60 bg-card/80 shadow-sm",
+          "w-full min-w-0 overflow-hidden border border-border/60 bg-card/80 shadow-sm",
           isEmbedded && "bg-card/70"
         )}
       >
         <CardHeader
           className={cn(
-            "linkets-card-header flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between",
+            "linkets-card-header flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between",
             isEmbedded && "gap-2.5"
           )}
         >
-          <div>
+          <div className="min-w-0">
             <CardTitle
               className={cn(
-                "flex items-center gap-2 text-2xl font-semibold text-foreground",
+                "flex min-w-0 flex-wrap items-center gap-2 text-2xl font-semibold text-foreground",
                 isEmbedded && "text-lg"
               )}
             >
-              <Tags className="h-5 w-5" /> Linkets
+              <Tags className="h-5 w-5 shrink-0" /> Linkets
             </CardTitle>
             <CardDescription>Manage every physical Linket tag tied to your account.</CardDescription>
           </div>
@@ -488,16 +491,16 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="min-w-0 space-y-6">
           <form
             data-tour="linkets-claim"
-            className="grid gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4 md:grid-cols-[minmax(0,260px)_auto]"
+            className="grid w-full min-w-0 gap-3 rounded-2xl border border-dashed border-primary/40 bg-primary/5 p-4 lg:grid-cols-[minmax(0,260px)_auto]"
             onSubmit={(event) => {
               event.preventDefault();
               void submitClaim();
             }}
           >
-            <div className="space-y-2">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="claim-code" className="text-sm font-medium text-primary">
                 Claim with a code
               </Label>
@@ -526,10 +529,10 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                 </p>
               ) : null}
             </div>
-            <div className="flex items-end justify-end md:justify-start">
+            <div className="flex min-w-0 items-end justify-stretch md:justify-start">
               <Button
                 type="submit"
-                className="rounded-full text-foreground"
+                className="w-full rounded-full text-foreground md:w-auto"
                 disabled={claiming}
               >
                 {claiming ? (
@@ -545,12 +548,12 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           </form>
 
           {claimedAssignmentFromQuery ? (
-            <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-4 text-amber-950">
+            <div className="min-w-0 overflow-hidden rounded-2xl border border-amber-300 bg-amber-50/70 p-4 text-amber-950">
               {loading ? (
                 <p className="text-sm">Loading the Linket you just opened...</p>
               ) : openedClaimedLinket ? (
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-1.5">
+                <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0 space-y-1.5">
                     <p className="text-sm font-semibold">
                       This Linket is already claimed to your account.
                     </p>
@@ -564,21 +567,21 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                       . The matching card is highlighted below.
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-900/80">
-                      <span>
+                      <span className="min-w-0 break-words">
                         Claim code:{" "}
-                        <code className="font-mono">
+                        <code className="break-all font-mono">
                           {formatClaimCodeDisplay(
                             openedClaimedLinket.tag.claim_code
                           ) || "Unavailable"}
                         </code>
                       </span>
-                      <span>
+                      <span className="min-w-0 break-words">
                         Claimed:{" "}
                         {formatLinketTimestamp(
                           openedClaimedLinket.tag.last_claimed_at
                         ) ?? "Unknown"}
                       </span>
-                      <span>
+                      <span className="min-w-0 break-words">
                         Last tap:{" "}
                         {formatLinketTimestamp(
                           openedClaimedLinket.assignment.last_redirected_at
@@ -588,7 +591,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                   </div>
                   {(openedClaimedLinket.profile?.handle ??
                     activeDefaultProfile?.handle) ? (
-                    <Button asChild variant="outline" className="rounded-full">
+                    <Button asChild variant="outline" className="w-full rounded-full lg:w-auto">
                       <Link
                         href={`/${
                           openedClaimedLinket.profile?.handle ??
@@ -613,7 +616,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           ) : null}
 
           {transferTokenFromQuery ? (
-            <div className="rounded-2xl border border-sky-300 bg-sky-50/70 p-4 text-sky-950">
+            <div className="min-w-0 overflow-hidden rounded-2xl border border-sky-300 bg-sky-50/70 p-4 text-sky-950">
               {transferPreviewLoading ? (
                 <p className="inline-flex items-center gap-2 text-sm">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -622,8 +625,8 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
               ) : transferPreviewError ? (
                 <p className="text-sm">{transferPreviewError}</p>
               ) : transferPreview ? (
-                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                  <div className="space-y-1.5">
+                <div className="flex min-w-0 flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="min-w-0 space-y-1.5">
                     <p className="text-sm font-semibold">
                       {transferPreview.canAccept
                         ? "This Linket transfer is ready for you to accept."
@@ -646,14 +649,18 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                         : ""}
                     </p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-sky-900/80">
-                      <span>Invited email {transferPreview.recipientEmail}</span>
-                      <span>Expires {formatLinketTimestamp(transferPreview.expiresAt) ?? "Unknown"}</span>
+                      <span className="min-w-0 break-all">
+                        Invited email {transferPreview.recipientEmail}
+                      </span>
+                      <span className="min-w-0 break-words">
+                        Expires {formatLinketTimestamp(transferPreview.expiresAt) ?? "Unknown"}
+                      </span>
                     </div>
                   </div>
                   {transferPreview.canAccept ? (
                     <Button
                       onClick={() => void acceptTransfer()}
-                      className="rounded-full"
+                      className="w-full rounded-full lg:w-auto"
                       disabled={acceptingTransfer}
                     >
                       {acceptingTransfer ? (
@@ -677,12 +684,13 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           ) : null}
 
           {error && (
-            <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              <AlertCircle className="h-4 w-4" /> {error}
+            <div className="flex min-w-0 items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span className="min-w-0 break-words">{error}</span>
             </div>
           )}
 
-          <div data-tour="linkets-list">
+          <div className="min-w-0" data-tour="linkets-list">
             {loading ? (
             <div className="flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading your Linkets...
@@ -717,42 +725,49 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                   <div
                     key={item.assignment.id}
                     className={cn(
-                      "rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm transition-colors",
+                      "min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card/90 p-4 shadow-sm transition-colors",
                       isOpenedLinket && "border-primary/70 ring-2 ring-primary/20"
                     )}
                   >
-                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                      <div className="space-y-2">
-                        <div className="text-sm font-semibold text-foreground">
+                    <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="min-w-0 space-y-2">
+                        <div className="break-words text-sm font-semibold text-foreground">
                           {item.assignment.nickname || `Linket ${item.tag.chip_uid}`}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          Chip ID: <code className="font-mono text-[11px]">{item.tag.chip_uid}</code>
+                        <div className="min-w-0 break-words text-xs text-muted-foreground">
+                          Chip ID:{" "}
+                          <code className="break-all font-mono text-[11px]">
+                            {item.tag.chip_uid}
+                          </code>
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Status: {item.tag.status === "claimed" ? "Active" : item.tag.status}
                         </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                          <span>
+                        <div className="flex min-w-0 flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                          <span className="min-w-0 basis-full break-words lg:basis-auto">
                             Assigned to{" "}
                             <span className="font-medium text-foreground/80">
                               {assignedProfile?.label ?? "Active profile (default)"}
                             </span>
                           </span>
                           {claimCodeDisplay ? (
-                            <span>
+                            <span className="min-w-0 basis-full break-words lg:basis-auto">
                               Claim code{" "}
-                              <code className="font-mono text-[11px]">
+                              <code className="break-all font-mono text-[11px]">
                                 {claimCodeDisplay}
                               </code>
                             </span>
                           ) : null}
-                          <span>Claimed {claimedAtLabel ?? "Unknown"}</span>
-                          <span>Last tap {lastTapLabel ?? "No scans yet"}</span>
+                          <span className="min-w-0 basis-full break-words lg:basis-auto">
+                            Claimed {claimedAtLabel ?? "Unknown"}
+                          </span>
+                          <span className="min-w-0 basis-full break-words lg:basis-auto">
+                            Last tap {lastTapLabel ?? "No scans yet"}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-2 text-sm md:flex-row md:items-center">
-                        <div className="flex items-center gap-2">
+                      <div className="flex min-w-0 flex-col gap-2 text-sm lg:flex-row lg:items-center">
+                        <div className="flex w-full min-w-0 flex-col items-stretch gap-2 lg:flex-row lg:flex-wrap lg:items-center xl:flex-nowrap">
                           <Select
                             value={assignedProfileId ?? "default"}
                             onValueChange={(value) =>
@@ -762,7 +777,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                               )
                             }
                           >
-                            <SelectTrigger className="min-w-[220px]">
+                            <SelectTrigger className="w-full min-w-0 lg:w-auto lg:min-w-[220px]">
                               <SelectValue placeholder="Assign a profile" />
                             </SelectTrigger>
                             <SelectContent>
@@ -780,7 +795,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                               href={`/${assignedProfile.handle}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
+                              className="inline-flex w-full items-center justify-center gap-1 rounded-full border px-2 py-1 text-xs text-muted-foreground hover:text-foreground lg:w-auto"
                             >
                               <ExternalLink className="h-3 w-3" /> View
                             </Link>
@@ -788,7 +803,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                           <Button
                             type="button"
                             variant="outline"
-                            className="rounded-full"
+                            className="w-full rounded-full lg:w-auto"
                             onClick={() => openTransferDialog(item)}
                           >
                             <ArrowRightLeft className="mr-2 h-3.5 w-3.5" />
@@ -797,7 +812,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                         </div>
                         <button
                           type="button"
-                          className="inline-flex items-center gap-2 text-xs text-rose-600 hover:underline"
+                          className="inline-flex items-center gap-2 self-start text-xs text-rose-600 hover:underline"
                           onClick={() => handleRelease(item.assignment.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" /> Release
@@ -823,9 +838,9 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           }
         }}
       >
-        <DialogContent className="max-w-lg rounded-[28px] border-border/60 bg-card/95 p-6">
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-lg overflow-hidden rounded-[28px] border-border/60 bg-card/95 p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-semibold text-foreground">
+            <DialogTitle className="text-xl font-semibold text-foreground sm:text-2xl">
               Transfer Linket
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
@@ -836,13 +851,13 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           {transferDialogAssignment ? (
             <div className="space-y-5">
               <div className="rounded-2xl border border-border/60 bg-background/60 p-4 text-sm">
-                <div className="font-semibold text-foreground">
+                <div className="break-words font-semibold text-foreground">
                   {transferDialogAssignment.assignment.nickname ||
                     `Linket ${transferDialogAssignment.tag.chip_uid}`}
                 </div>
-                <div className="mt-1 text-xs text-muted-foreground">
+                <div className="mt-1 min-w-0 break-words text-xs text-muted-foreground">
                   Claim code{" "}
-                  <code className="font-mono">
+                  <code className="break-all font-mono">
                     {formatClaimCodeDisplay(transferDialogAssignment.tag.claim_code) ||
                       "Unavailable"}
                   </code>
@@ -863,18 +878,18 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-3">
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
                 <Button
                   type="button"
                   variant="outline"
-                  className="rounded-full"
+                  className="w-full rounded-full sm:w-auto"
                   onClick={() => setTransferDialogAssignment(null)}
                 >
                   Close
                 </Button>
                 <Button
                   type="button"
-                  className="rounded-full"
+                  className="w-full rounded-full sm:w-auto"
                   disabled={transferSubmitting || !transferRecipientEmail.trim()}
                   onClick={() => void submitTransferInvite()}
                 >
@@ -893,26 +908,27 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
               </div>
 
               {createdTransfer ? (
-                <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-950">
+                <div className="min-w-0 space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-950">
                   <div>
                     <div className="font-semibold">Invite ready</div>
-                    <p className="mt-1 text-xs text-emerald-900/80">
+                    <p className="mt-1 break-words text-xs text-emerald-900/80">
                       Share the invite link with {createdTransfer.recipientEmail}. It expires{" "}
                       {formatLinketTimestamp(createdTransfer.expiresAt) ?? "soon"}.
                     </p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="transfer-invite-link">Invite link</Label>
-                    <div className="flex gap-2">
+                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                       <Input
                         id="transfer-invite-link"
+                        className="min-w-0 sm:flex-1"
                         value={createdTransfer.inviteUrl}
                         readOnly
                       />
                       <Button
                         type="button"
                         variant="outline"
-                        className="rounded-full"
+                        className="w-full rounded-full sm:w-auto"
                         onClick={() => void copyTransferInvite(createdTransfer.inviteUrl)}
                       >
                         <Copy className="mr-2 h-4 w-4" />
