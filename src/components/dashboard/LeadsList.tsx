@@ -1498,33 +1498,6 @@ export default function LeadsList({ userId }: { userId: string }) {
                                     ? "Saving..."
                                     : "Save follow-up"}
                                 </Button>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="w-full justify-center sm:w-auto"
-                                  onClick={() =>
-                                    setLeadDrafts((prev) => ({
-                                      ...prev,
-                                      [activeLeadView.lead.id]: {
-                                        note:
-                                          prev[activeLeadView.lead.id]?.note ??
-                                          activeLeadView.lead.note ??
-                                          "",
-                                        next_follow_up_at: "",
-                                        lead_flag:
-                                          prev[activeLeadView.lead.id]?.lead_flag ??
-                                          activeLeadStatus,
-                                        lead_rating:
-                                          prev[activeLeadView.lead.id]?.lead_rating ??
-                                          activeLeadRating,
-                                      },
-                                    }))
-                                  }
-                                  disabled={savingLeadId === activeLeadView.lead.id}
-                                >
-                                  Clear reminder
-                                </Button>
                               </div>
                             </div>
                           ) : (

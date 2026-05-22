@@ -636,7 +636,7 @@ export default function NetworkingModePanel({
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full justify-center sm:w-auto"
+                      className="w-full justify-center !border-[color:color-mix(in_srgb,var(--foreground)_28%,var(--border)_72%)] sm:w-auto"
                       onClick={() =>
                         setActiveLeadId(
                           leadStream.find((lead) => lead.id !== activeLeadId)?.id ??
@@ -646,14 +646,6 @@ export default function NetworkingModePanel({
                       }
                     >
                       Previous lead
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full justify-center sm:w-auto"
-                      onClick={() => updateActiveLeadDraft({ next_follow_up_at: "" })}
-                    >
-                      Clear reminder
                     </Button>
                   </div>
                 </div>
