@@ -43,7 +43,7 @@ const AUTO_SAVE_RETRY_DELAY_MS = 2000;
 const LEAD_STATUS_OPTIONS: LeadFlag[] = ["follow_up", "done"];
 const LEAD_RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
 
-export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
+export default function NetworkingModePanel({
   userId,
 }: {
   userId: string | null;
@@ -505,42 +505,37 @@ export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
             </div>
           </section>
 
-          <section className="order-1 min-w-0 space-y-4 rounded-[1.75rem] border border-border/60 bg-card/95 p-4 text-center text-foreground shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:text-left">
-            <div className="space-y-1">
+          <section className="order-1 min-w-0 space-y-3 rounded-[1.75rem] border border-border/60 bg-card/95 p-3 text-center text-foreground shadow-[0_18px_45px_rgba(15,23,42,0.08)] sm:text-left">
+            <div>
               <div className="text-sm font-semibold text-foreground">Quick capture</div>
-              <p className="text-xs text-muted-foreground">
-                Add a few words after the conversation.
-              </p>
             </div>
 
             {activeLead ? (
               canLabelLeads ? (
-                <div className="space-y-4">
-                <div className="space-y-1 text-center sm:text-left">
-                  <div className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                    Active lead
-                  </div>
-                  <div className="text-base font-semibold text-foreground">
+                <div className="space-y-3">
+                  <div className="space-y-0.5 text-center sm:text-left">
+                    <div className="text-base font-semibold leading-tight text-foreground">
                       {activeLead.name || "Unnamed lead"}
                     </div>
-                    <div className="break-all text-sm text-muted-foreground sm:break-normal">
+                    <div className="break-all text-sm leading-tight text-muted-foreground sm:break-normal">
                       {activeLead.email || "No email"}
                       {activeLead.company ? ` - ${activeLead.company}` : ""}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                      Status
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                  <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                    <div
+                      className="flex flex-wrap justify-center gap-2 sm:justify-start"
+                      role="group"
+                      aria-label="Lead status"
+                    >
                       {LEAD_STATUS_OPTIONS.map((status) => (
                         <button
                           key={status}
                           type="button"
                           onClick={() => updateActiveLeadDraft({ lead_flag: status })}
                           className={cn(
-                            "rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                            "rounded-full border px-3 py-1 text-sm font-medium transition",
                             activeLeadStatus === status
                               ? getLeadFlagBadgeClassName(status)
                               : "border-border/60 bg-background/80 text-foreground hover:bg-muted/50"
@@ -550,22 +545,18 @@ export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-center gap-3 sm:justify-start">
-                      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                        Rating
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                    <div
+                      className="flex flex-wrap justify-center gap-1.5 sm:justify-start"
+                      role="group"
+                      aria-label="Lead rating"
+                    >
                       {LEAD_RATING_OPTIONS.map((rating) => (
                         <button
                           key={rating}
                           type="button"
                           onClick={() => updateActiveLeadDraft({ lead_rating: rating })}
                           className={cn(
-                            "inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                            "inline-flex h-8 w-8 items-center justify-center rounded-full border text-sm font-medium transition",
                             rating <= activeLeadRating
                               ? "border-primary/20 bg-primary/10 text-primary"
                               : "border-border/60 bg-background/80 text-foreground hover:bg-muted/50"
@@ -587,7 +578,7 @@ export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
                   <div className="space-y-2">
                     <Label
                       htmlFor={`networking-note-${activeLead.id}`}
-                      className="block text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-left"
+                      className="sr-only"
                     >
                       Note
                     </Label>
@@ -596,14 +587,14 @@ export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
                       value={activeDraft?.note ?? ""}
                       onChange={(event) => updateActiveLeadDraft({ note: event.target.value })}
                       placeholder="A few words about the conversation."
-                      className="min-h-28 rounded-2xl"
+                      className="min-h-20 rounded-2xl"
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label
                       htmlFor={`networking-follow-up-${activeLead.id}`}
-                      className="block text-center text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-left"
+                      className="sr-only"
                     >
                       Reminder
                     </Label>
@@ -631,9 +622,6 @@ export default function tttttttttttttttttttttttr5fcNetworkingModePanel({
                         <CalendarDays className="h-4 w-4" aria-hidden />
                       </Button>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Reminders default to tomorrow.
-                    </p>
                   </div>
 
                   {savingLeadIds[activeLead.id] ? (
