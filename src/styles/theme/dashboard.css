@@ -2507,7 +2507,8 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.68rem;
+    font-size: 0.875rem;
+    line-height: 1.25;
   }
 
   #dashboard-theme-scope .dashboard-metric-label {
@@ -2605,7 +2606,8 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.64rem;
+    font-size: 0.8125rem;
+    line-height: 1.25;
   }
 
   #dashboard-theme-scope .dashboard-analytics-range-button {
@@ -2658,7 +2660,8 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.6rem;
+    font-size: 0.75rem;
+    line-height: 1.25;
   }
 
   #dashboard-theme-scope .dashboard-analytics-range-button {
