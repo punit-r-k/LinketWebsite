@@ -67,9 +67,6 @@ export default function LeadsPage() {
     <Tabs defaultValue="leads" className="dashboard-leads-page space-y-3 sm:space-y-6">
       <div className="dashboard-leads-header flex flex-col gap-3 text-left md:gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1 sm:space-y-2">
-          <h1 className="font-display text-xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            Leads
-          </h1>
           <p className="hidden max-w-2xl text-sm leading-6 text-muted-foreground sm:block">
             Manage inbound contacts in a compact inbox, then switch to the form
             builder when you need to change what people submit.
