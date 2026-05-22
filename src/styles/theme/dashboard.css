@@ -1747,8 +1747,8 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-scroll-area {
-    padding-left: 0.35rem;
-    padding-right: 0.35rem;
+    padding-left: max(0.95rem, env(safe-area-inset-left));
+    padding-right: max(0.95rem, env(safe-area-inset-right));
     width: 100%;
   }
 
@@ -1777,8 +1777,8 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-content [data-slot=card-header],
   #dashboard-theme-scope .dashboard-content [data-slot=card-content],
   #dashboard-theme-scope .dashboard-content [data-slot=card-footer] {
-    padding-left: 0.6rem;
-    padding-right: 0.6rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 
   #dashboard-theme-scope .linkets-card-header {
@@ -2033,8 +2033,8 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-scroll-area {
-    padding-left: 0.4rem;
-    padding-right: 0.4rem;
+    padding-left: max(0.85rem, env(safe-area-inset-left));
+    padding-right: max(0.85rem, env(safe-area-inset-right));
   }
 
   #dashboard-theme-scope .dashboard-content {
@@ -2050,8 +2050,8 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-content [data-slot=card-header],
   #dashboard-theme-scope .dashboard-content [data-slot=card-content],
   #dashboard-theme-scope .dashboard-content [data-slot=card-footer] {
-    padding-left: 0.55rem;
-    padding-right: 0.55rem;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
   }
 
   #dashboard-theme-scope .dashboard-content [data-slot=card-title] {
@@ -2219,8 +2219,8 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-scroll-area {
-    padding-left: 0.3rem;
-    padding-right: 0.3rem;
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
   }
 
   #dashboard-theme-scope .dashboard-content {
@@ -2236,8 +2236,8 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-content [data-slot=card-header],
   #dashboard-theme-scope .dashboard-content [data-slot=card-content],
   #dashboard-theme-scope .dashboard-content [data-slot=card-footer] {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
   }
 
   #dashboard-theme-scope .dashboard-content [data-slot=card-title] {

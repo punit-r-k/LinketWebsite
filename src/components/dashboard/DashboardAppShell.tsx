@@ -159,7 +159,7 @@ export default function DashboardAppShell({
             "dashboard-scroll-area flex-1 overflow-auto",
             shouldHideChrome
               ? "px-0 pb-0 pt-0"
-              : "px-3 pb-6 pt-3 sm:px-4 sm:pb-8 sm:pt-4 lg:px-8 lg:pb-10"
+              : "px-5 pb-6 pt-4 sm:px-6 sm:pb-8 sm:pt-5 lg:px-8 lg:pb-10"
           )}
         >
           <div
