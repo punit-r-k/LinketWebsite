@@ -21,6 +21,7 @@ type VCardFields = {
   note: string;
   photoData: string | null;
   photoName: string | null;
+  photoRemoved: boolean;
 };
 
 const EMPTY_FIELDS: VCardFields = {
@@ -38,6 +39,7 @@ const EMPTY_FIELDS: VCardFields = {
   note: "",
   photoData: null,
   photoName: null,
+  photoRemoved: false,
 };
 
 const vcardQuerySchema = z.object({
@@ -59,6 +61,7 @@ const vcardBodySchema = z.object({
     phone: z.string().max(64),
     photoData: z.string().nullable(),
     photoName: z.string().max(255).nullable(),
+    photoRemoved: z.boolean().optional(),
     title: z.string().max(240),
   }),
   userId: z.string().uuid(),
@@ -143,7 +146,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("vcard_profiles")
-      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name")
+      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at")
       .eq("user_id", userId)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw error;
@@ -163,6 +166,7 @@ export async function GET(request: NextRequest) {
       note: data.note ?? "",
       photoData,
       photoName: photoData ? data.photo_name ?? null : null,
+      photoRemoved: !photoData && Boolean(data.photo_removed_at),
     };
 
     return NextResponse.json({ fields: payload }, { status: 200 });
@@ -198,6 +202,7 @@ export async function POST(request: NextRequest) {
       ...fields,
       photoData,
       photoName: photoData ? fields.photoName : null,
+      photoRemoved: photoData ? false : Boolean(fields.photoRemoved),
     };
 
     const payload = {
@@ -211,6 +216,7 @@ export async function POST(request: NextRequest) {
       note: savedFields.note?.trim() || null,
       photo_data: savedFields.photoData,
       photo_name: savedFields.photoName,
+      photo_removed_at: savedFields.photoRemoved ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
     };
 

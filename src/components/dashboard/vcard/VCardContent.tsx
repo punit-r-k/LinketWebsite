@@ -40,6 +40,7 @@ type VCardFields = {
   note: string;
   photoData: string | null;
   photoName: string | null;
+  photoRemoved: boolean;
 };
 
 type VCardStatusPayload = {
@@ -82,6 +83,7 @@ function sanitizeVCardFields(fields: VCardFields): VCardFields {
     ...fields,
     photoData,
     photoName: photoData ? fields.photoName : null,
+    photoRemoved: photoData ? false : Boolean(fields.photoRemoved),
   };
 }
 
@@ -160,6 +162,7 @@ export default function VCardContent({
     note: "",
     photoData: null,
     photoName: null,
+    photoRemoved: false,
   });
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -182,6 +185,7 @@ export default function VCardContent({
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [photoSourceUrl, setPhotoSourceUrl] = useState<string | null>(null);
   const [photoSourceName, setPhotoSourceName] = useState<string | null>(null);
+  const [photoRemoved, setPhotoRemoved] = useState(false);
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -374,6 +378,7 @@ export default function VCardContent({
 
         setFields(nextFields);
         setPhotoPreview(nextFields.photoData);
+        setPhotoRemoved(nextFields.photoRemoved);
         lastSavedRef.current = nextSaved;
         initialisedRef.current = true;
         setSavedLocally(localHasUnsyncedChanges);
@@ -393,6 +398,7 @@ export default function VCardContent({
           const safeFields = sanitizeVCardFields(localDraft.fields);
           setFields(safeFields);
           setPhotoPreview(safeFields.photoData);
+          setPhotoRemoved(safeFields.photoRemoved);
           lastSavedRef.current = localDraft.lastSaved
             ? sanitizeVCardFields(localDraft.lastSaved)
             : null;
@@ -442,6 +448,7 @@ export default function VCardContent({
             latestFieldsRef.current = latestFields;
             setFields(latestFields);
             setPhotoPreview(latestFields.photoData);
+            setPhotoRemoved(latestFields.photoRemoved);
           }
 
           lastSavedRef.current = savedFields;
@@ -451,6 +458,7 @@ export default function VCardContent({
           ) {
             setFields(savedFields);
             setPhotoPreview(savedFields.photoData);
+            setPhotoRemoved(savedFields.photoRemoved);
           }
 
           const stillDirty = !areVCardFieldsEqual(latestFields, savedFields);
@@ -507,9 +515,15 @@ export default function VCardContent({
       return;
     }
     resetPhotoEditor();
-    const nextFields = { ...latestFieldsRef.current, photoData: null, photoName: null };
+    const nextFields = {
+      ...latestFieldsRef.current,
+      photoData: null,
+      photoName: null,
+      photoRemoved: true,
+    };
     setFields(nextFields);
     setPhotoPreview(null);
+    setPhotoRemoved(true);
     if (userId && initialisedRef.current && !loading && status !== "saving") {
       void persist(nextFields);
     }
@@ -535,9 +549,15 @@ export default function VCardContent({
     });
     if (!cropped) return;
     const name = photoSourceName ?? fields.photoName ?? "profile-photo.jpg";
-    const nextFields = { ...latestFieldsRef.current, photoData: cropped, photoName: name };
+    const nextFields = {
+      ...latestFieldsRef.current,
+      photoData: cropped,
+      photoName: name,
+      photoRemoved: false,
+    };
     setFields(nextFields);
     setPhotoPreview(cropped);
+    setPhotoRemoved(false);
     resetPhotoEditor();
     if (userId && initialisedRef.current && !loading && status !== "saving") {
       void persist(nextFields);
@@ -734,7 +754,7 @@ export default function VCardContent({
   }, [error, isDirty, isOnline, loading, restoredLocalDraft, savedLocally, status]);
 
   const inheritedPhotoPreview =
-    !fields.photoData && !photoSourceUrl ? inheritedPhotoUrl : null;
+    !photoRemoved && !fields.photoData && !photoSourceUrl ? inheritedPhotoUrl : null;
   const visiblePhotoPreview = photoPreview ?? inheritedPhotoPreview;
   const visiblePhotoName =
     photoSourceName ??
@@ -857,7 +877,7 @@ export default function VCardContent({
                     size="sm"
                     className={UPLOADER_ACTION_BUTTON_CLASS}
                     onClick={handlePhotoReCrop}
-                    disabled={!fields.photoData && !inheritedPhotoUrl}
+                    disabled={!fields.photoData && (!inheritedPhotoUrl || photoRemoved)}
                   >
                     Re-crop
                   </Button>
@@ -1088,7 +1108,8 @@ function areVCardFieldsEqual(a: VCardFields, b: VCardFields) {
     a.addressCountry === b.addressCountry &&
     a.note === b.note &&
     a.photoData === b.photoData &&
-    a.photoName === b.photoName
+    a.photoName === b.photoName &&
+    a.photoRemoved === b.photoRemoved
   );
 }
 

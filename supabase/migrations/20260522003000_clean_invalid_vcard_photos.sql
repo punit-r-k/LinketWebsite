@@ -1,7 +1,11 @@
+alter table public.vcard_profiles
+  add column if not exists photo_removed_at timestamptz;
+
 update public.vcard_profiles
 set
   photo_data = null,
   photo_name = null,
+  photo_removed_at = now(),
   updated_at = now()
 where photo_data is not null
   and (
