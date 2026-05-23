@@ -3,7 +3,6 @@ import { buildVCard } from "@/lib/vcard/buildVCard";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ContactProfile } from "@/lib/profile.store";
 import { sanitizeAttachmentFilename } from "@/lib/security";
-import { createClient } from "@supabase/supabase-js";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +38,8 @@ function buildContactProfile(
     title?: string | null;
     url?: string | null;
     is_active?: boolean | null;
-  }>
+  }>,
+  uid: string
 ): ContactProfile {
   const name = record?.full_name?.trim() || fallbackName;
   const { firstName, lastName } = splitName(name);
@@ -66,7 +66,7 @@ function buildContactProfile(
         url: link.url ?? "",
       }))
       .filter((link) => Boolean(link.url.trim())),
-    uid: `urn:uuid:${handle}`,
+    uid,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -103,21 +103,9 @@ function parseAddress(value: string | null) {
   return { street: trimmed };
 }
 
-function createPublicClient() {
-  const url =
-    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
-  const key =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    "";
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
 async function fetchVCardRecord(userId: string) {
-  const supabase = isSupabaseAdminAvailable ? supabaseAdmin : createPublicClient();
-  const { data, error } = await supabase
+  if (!isSupabaseAdminAvailable) return null;
+  const { data, error } = await supabaseAdmin
     .from("vcard_profiles")
     .select("full_name,title,email,phone,company,address,note,photo_data,photo_name")
     .eq("user_id", userId)
@@ -152,7 +140,8 @@ export async function GET(
       handle,
       vcardRecord,
       fallbackName,
-      profile.links ?? []
+      profile.links ?? [],
+      `urn:uuid:${profile.id}`
     );
     const vcard = buildVCard(contactProfile);
 
