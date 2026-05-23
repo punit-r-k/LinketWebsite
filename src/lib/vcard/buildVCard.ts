@@ -44,15 +44,20 @@ function toEmail(e: Email): string {
 
 function toPhoto(p: ContactProfile): string | null {
   if (!p.photo) return null;
+  const maxEmbeddedPhotoBytes = 500 * 1024;
   const trimmedDataUrl = p.photo.dataUrl?.trim() ?? "";
   const mime =
     p.photo.mime ||
     (trimmedDataUrl.match(/^data:(.*?);base64,/i)?.[1] ?? undefined);
   const base64 = trimmedDataUrl.split(",")[1];
-  if (trimmedDataUrl.startsWith("data:") && base64 && base64.length * 0.75 <= 150 * 1024) {
+  if (
+    trimmedDataUrl.startsWith("data:") &&
+    base64 &&
+    base64.length * 0.75 <= maxEmbeddedPhotoBytes
+  ) {
     return `PHOTO;VALUE=uri:${trimmedDataUrl}`;
   }
-  if (base64 && base64.length * 0.75 <= 150 * 1024) {
+  if (base64 && base64.length * 0.75 <= maxEmbeddedPhotoBytes) {
     return `PHOTO;VALUE=uri:data:${mime || "image/jpeg"};base64,${base64}`;
   }
   if (p.photo.url?.trim()) {

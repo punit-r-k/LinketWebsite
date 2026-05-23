@@ -4,15 +4,12 @@ import type { FormEvent } from "react";
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Check, RefreshCw } from "lucide-react";
+import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
 import { trackEvent } from "@/lib/analytics";
 import { getSiteOrigin } from "@/lib/site-url";
-import {
-  SIGNUP_VERIFICATION_NOTICE,
-  friendlyAuthError,
-} from "@/lib/auth-errors";
+import { friendlyAuthError } from "@/lib/auth-errors";
 
 const DEFAULT_NEXT = "/dashboard";
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
@@ -83,8 +80,6 @@ function AuthPageContent() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [verificationNotice, setVerificationNotice] = useState<string | null>(null);
-  const [resendingVerification, setResendingVerification] = useState(false);
   const isSignUp = view === "signup";
 
   const passwordRequirementStatus = useMemo(
@@ -168,7 +163,6 @@ function AuthPageContent() {
       void trackEvent("signup_start", { method: "email" });
       setPending(true);
       setError(null);
-      setVerificationNotice(null);
 
       try {
         const response = await fetch("/api/auth/signup", {
@@ -181,7 +175,7 @@ function AuthPageContent() {
           }),
         });
         const payload = (await response.json().catch(() => null)) as
-          | { error?: string; verificationNotice?: string | null }
+          | { error?: string }
           | null;
 
         if (!response.ok) {
@@ -190,17 +184,25 @@ function AuthPageContent() {
           );
         }
 
-        const message =
-          payload?.verificationNotice || SIGNUP_VERIFICATION_NOTICE;
-        setEmail(trimmedEmail);
-        setVerificationNotice(message);
-        setPassword("");
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
+        if (error) throw error;
+
+        const destination = data.session
+          ? await resolveRedirect(data.session)
+          : next || DEFAULT_NEXT;
+        if (!destination) {
+          throw new Error("We couldn't complete sign-in. Please try again.");
+        }
 
         toast({
-          title: "Verification email sent",
-          description: message,
+          title: "Account created",
+          description: "Your dashboard is ready to manage Linkets.",
           variant: "success",
         });
+        router.replace(destination);
       } catch (err) {
         const message =
           err instanceof Error
@@ -211,7 +213,7 @@ function AuthPageContent() {
         setPending(false);
       }
     },
-    [email, password, next]
+    [email, password, next, resolveRedirect, router, supabase]
   );
 
   const handlePasswordSignIn = useCallback(
@@ -224,7 +226,6 @@ function AuthPageContent() {
 
       setPending(true);
       setError(null);
-      setVerificationNotice(null);
 
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -261,55 +262,6 @@ function AuthPageContent() {
     },
     [email, password, supabase, router, next, resolveRedirect]
   );
-
-  const handleResendVerificationEmail = useCallback(async () => {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
-      setError("Enter your email to resend the verification link.");
-      return;
-    }
-
-    setResendingVerification(true);
-    setError(null);
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: trimmedEmail,
-        options: {
-          emailRedirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
-            next
-          )}`,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      const message = "A new verification email has been sent. Check your inbox.";
-      setVerificationNotice(message);
-      toast({
-        title: "Verification email sent",
-        description: message,
-        variant: "success",
-      });
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Unable to resend verification email.";
-      const description = friendlyAuthError(message, getAuthErrorCode(err));
-      setError(description);
-      toast({
-        title: "Couldn't resend email",
-        description,
-        variant: "destructive",
-      });
-    } finally {
-      setResendingVerification(false);
-    }
-  }, [email, supabase, siteUrl, next]);
 
   const handleOAuth = useCallback(
     async (provider: "google") => {
@@ -353,12 +305,6 @@ function AuthPageContent() {
     : oauthMessage
     ? friendlyAuthError(oauthMessage, oauthError ?? undefined)
     : null;
-  const hasEnteredEmail = Boolean(email.trim());
-  const showResendVerificationInNotice =
-    hasEnteredEmail && Boolean(verificationNotice);
-  const showResendVerificationInError =
-    hasEnteredEmail &&
-    Boolean(displayedError?.toLowerCase().includes("verify your email"));
   const forgotPasswordHref = useMemo(() => {
     const trimmedEmail = email.trim();
     if (!trimmedEmail) return "/forgot-password";
@@ -389,50 +335,14 @@ function AuthPageContent() {
                 </h1>
                 <p className="text-sm text-slate-600">
                   {isSignUp
-                    ? "Create your account. We'll send a verification email before you sign in."
+                    ? "Create your account and open your dashboard right away."
                     : "Sign in with your credentials to access your dashboard."}
                 </p>
               </header>
 
-              {verificationNotice ? (
-                <div className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  <p>{verificationNotice}</p>
-                  {showResendVerificationInNotice ? (
-                    <button
-                      type="button"
-                      onClick={handleResendVerificationEmail}
-                      disabled={pending || resendingVerification}
-                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:border-emerald-400 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      <RefreshCw
-                        className={`h-3.5 w-3.5 ${resendingVerification ? "animate-spin" : ""}`}
-                      />
-                      {resendingVerification
-                        ? "Sending..."
-                        : "Resend verification email"}
-                    </button>
-                  ) : null}
-                </div>
-              ) : null}
-
               {displayedError ? (
                 <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                   <p>{displayedError}</p>
-                  {showResendVerificationInError ? (
-                    <button
-                      type="button"
-                      onClick={handleResendVerificationEmail}
-                      disabled={pending || resendingVerification}
-                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      <RefreshCw
-                        className={`h-3.5 w-3.5 ${resendingVerification ? "animate-spin" : ""}`}
-                      />
-                      {resendingVerification
-                        ? "Sending..."
-                        : "Resend verification email"}
-                    </button>
-                  ) : null}
                 </div>
               ) : null}
 
@@ -515,7 +425,7 @@ function AuthPageContent() {
                 >
                   {pending
                     ? isSignUp
-                      ? "Sending verification email..."
+                      ? "Creating account..."
                       : "Signing in..."
                     : isSignUp
                     ? "Create account"

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { buildVCard } from "@/lib/vcard/buildVCard";
-import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ContactProfile } from "@/lib/profile.store";
 import { sanitizeAttachmentFilename } from "@/lib/security";
 import { createClient } from "@supabase/supabase-js";
+import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -35,7 +35,6 @@ function buildContactProfile(
   handle: string,
   record: VCardRecord | null,
   fallbackName: string,
-  fallbackPhotoUrl: string | null,
   links: Array<{
     title?: string | null;
     url?: string | null;
@@ -59,11 +58,7 @@ function buildContactProfile(
       : undefined,
     note: record?.note ?? undefined,
     address: parsedAddress ?? undefined,
-    photo: record?.photo_data
-      ? { dataUrl: record.photo_data }
-      : fallbackPhotoUrl
-        ? { url: fallbackPhotoUrl }
-      : undefined,
+    photo: record?.photo_data ? { dataUrl: record.photo_data } : undefined,
     links: links
       .filter((link) => link.is_active ?? true)
       .map((link) => ({
@@ -120,6 +115,17 @@ function createPublicClient() {
   });
 }
 
+async function fetchVCardRecord(userId: string) {
+  const supabase = isSupabaseAdminAvailable ? supabaseAdmin : createPublicClient();
+  const { data, error } = await supabase
+    .from("vcard_profiles")
+    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error && error.code !== "PGRST116") throw error;
+  return (data as VCardRecord | null) ?? null;
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ handle: string }> }
@@ -140,22 +146,12 @@ export async function GET(
     const fallbackName =
       profile.name || account.display_name || profile.handle || handle;
 
-    const supabase = createPublicClient();
-    const { data, error } = await supabase
-      .from("vcard_profiles")
-      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name")
-      .eq("user_id", account.user_id)
-      .maybeSingle();
-    if (error && error.code !== "PGRST116") throw error;
-    const fallbackPhotoUrl = data?.photo_data
-      ? null
-      : await getSignedAvatarUrl(account.avatar_url, account.avatar_updated_at);
+    const vcardRecord = await fetchVCardRecord(account.user_id);
 
     const contactProfile = buildContactProfile(
       handle,
-      (data as VCardRecord | null) ?? null,
+      vcardRecord,
       fallbackName,
-      fallbackPhotoUrl,
       profile.links ?? []
     );
     const vcard = buildVCard(contactProfile);

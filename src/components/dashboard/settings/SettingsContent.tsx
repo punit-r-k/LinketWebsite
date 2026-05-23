@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   Clock3,
   Mail,
-  ShieldCheck,
   User,
 } from "lucide-react";
 
@@ -44,7 +43,6 @@ export default function SettingsContent() {
   const [avatarLoading, setAvatarLoading] = useState(true);
 
   const email = user?.email ?? "";
-  const emailVerified = Boolean(user?.email_confirmed_at);
   const lastSignInLabel = formatDateTime(user?.last_sign_in_at ?? null);
   const memberSinceLabel = formatDateTime(user?.created_at ?? null);
   const initials = useMemo(() => {
@@ -162,11 +160,6 @@ export default function SettingsContent() {
                 <div className="text-lg font-semibold text-foreground">
                   {email || "Email unavailable"}
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="rounded-full">
-                    {emailVerified ? "Email verified" : "Verification pending"}
-                  </Badge>
-                </div>
               </div>
             </div>
           </div>
@@ -189,12 +182,6 @@ export default function SettingsContent() {
               label="Authentication email"
               value={email || "--"}
               helper="This is your actual sign-in address."
-            />
-            <SettingsFact
-              icon={ShieldCheck}
-              label="Email verification"
-              value={emailVerified ? "Verified" : "Pending"}
-              helper="Verification reduces account recovery issues."
             />
             <SettingsFact
               icon={Clock3}

@@ -218,18 +218,6 @@ export async function grantLinketEntitlementToUser(args: {
     throw new Error(tagEventError.message);
   }
 
-  try {
-    await applyComplimentaryBillingProtection({
-      user: args.user,
-      source: args.pauseSource,
-    });
-  } catch (error) {
-    console.error(
-      "Linket entitlement granted but complimentary billing protection failed:",
-      error
-    );
-  }
-
   return {
     assignmentId,
     claimedAt,

@@ -6,8 +6,11 @@ import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-type ClaimEventRow = {
-  occurred_at: string;
+type ComplimentaryTrialClaimRow = {
+  starts_at: string;
+  ends_at: string;
+  accepted_at: string;
+  source: string | null;
 };
 
 type CoveredPaidPeriodRow = {
@@ -48,95 +51,61 @@ function toMs(value: string | null) {
   return date.getTime();
 }
 
-type ClaimLookupResult = {
-  value: string | null;
-  source: "linket_claim" | "unavailable";
-};
-
-async function fetchEarliestClaimAtByMetadataField(
-  userId: string,
-  metadataField: "entitlement_user_id" | "user_id"
-): Promise<ClaimLookupResult> {
-  if (isSupabaseAdminAvailable) {
-    const { data, error } = await supabaseAdmin
-      .from("tag_events")
-      .select("occurred_at")
-      .eq("event_type", "claim")
-      .filter(`metadata->>${metadataField}`, "eq", userId)
-      .order("occurred_at", { ascending: true })
-      .limit(1)
-      .maybeSingle()
-      .returns<ClaimEventRow | null>();
+async function fetchAcceptedTrialClaims(userId: string) {
+  const now = new Date().toISOString();
+  const execute = async (
+    db: typeof supabaseAdmin | Awaited<ReturnType<typeof createServerSupabaseReadonly>>
+  ) => {
+    const { data, error } = await db
+      .from("linket_complimentary_trial_claims")
+      .select("starts_at,ends_at,accepted_at,source")
+      .eq("user_id", userId)
+      .gt("ends_at", now)
+      .order("starts_at", { ascending: true })
+      .returns<ComplimentaryTrialClaimRow[]>();
 
     if (error) {
       if (isMissingRelationError(error.message)) {
-        return { value: null, source: "unavailable" };
+        return { rows: [], source: "unavailable" as const };
       }
       throw new Error(error.message);
     }
 
-    return { value: data?.occurred_at ?? null, source: "linket_claim" };
+    return { rows: data ?? [], source: "linket_claim" as const };
+  };
+
+  if (isSupabaseAdminAvailable) {
+    return execute(supabaseAdmin);
   }
 
   const supabase = await createServerSupabaseReadonly();
-  const { data, error } = await supabase
-    .from("tag_events")
-    .select("occurred_at")
-    .eq("event_type", "claim")
-    .filter(`metadata->>${metadataField}`, "eq", userId)
-    .order("occurred_at", { ascending: true })
-    .limit(1)
-    .maybeSingle()
-    .returns<ClaimEventRow | null>();
-
-  if (error) {
-    if (isMissingRelationError(error.message)) {
-      return { value: null, source: "unavailable" };
-    }
-    throw new Error(error.message);
-  }
-
-  return { value: data?.occurred_at ?? null, source: "linket_claim" };
+  return execute(supabase);
 }
 
-function pickEarliestIsoTimestamp(values: Array<string | null>) {
-  let earliest: string | null = null;
-  let earliestMs: number | null = null;
-
-  for (const value of values) {
-    if (!value) continue;
-    const ms = toMs(value);
-    if (ms === null) continue;
-    if (earliestMs === null || ms < earliestMs) {
-      earliest = value;
-      earliestMs = ms;
-    }
-  }
-
-  return earliest;
+function pickRelevantTrialClaim(
+  rows: ComplimentaryTrialClaimRow[],
+  nowMs: number
+) {
+  return (
+    rows.find((row) => {
+      const startsAtMs = toMs(row.starts_at);
+      const endsAtMs = toMs(row.ends_at);
+      return (
+        startsAtMs !== null &&
+        endsAtMs !== null &&
+        nowMs >= startsAtMs &&
+        nowMs < endsAtMs
+      );
+    }) ??
+    rows.find((row) => {
+      const endsAtMs = toMs(row.ends_at);
+      return endsAtMs !== null && nowMs < endsAtMs;
+    }) ??
+    null
+  );
 }
 
-async function fetchEarliestClaimAt(userId: string) {
-  const [entitlementClaim, legacyClaim] = await Promise.all([
-    fetchEarliestClaimAtByMetadataField(userId, "entitlement_user_id"),
-    fetchEarliestClaimAtByMetadataField(userId, "user_id"),
-  ]);
-
-  const value = pickEarliestIsoTimestamp([
-    entitlementClaim.value,
-    legacyClaim.value,
-  ]);
-
-  const source: "linket_claim" | "unavailable" =
-    entitlementClaim.source === "unavailable" &&
-    legacyClaim.source === "unavailable"
-      ? "unavailable"
-      : "linket_claim";
-
-  return { value, source };
-}
-
-async function fetchDeferredComplimentaryStartAt(
+export async function fetchDeferredComplimentaryStartAt(
   userId: string,
   claimAt: string
 ) {
@@ -210,28 +179,25 @@ export async function getLinketBundleComplimentaryWindowForUser(
     source: "none",
   };
 
-  const claim = await fetchEarliestClaimAt(userId);
-  if (!claim.value) {
+  const nowMs = Date.now();
+  const trialClaims = await fetchAcceptedTrialClaims(userId);
+  const claim = pickRelevantTrialClaim(trialClaims.rows, nowMs);
+  if (!claim) {
     return {
       ...defaultResponse,
-      source: claim.source === "unavailable" ? "unavailable" : "none",
+      source: trialClaims.source === "unavailable" ? "unavailable" : "none",
     };
   }
 
-  const deferredStartAt = await fetchDeferredComplimentaryStartAt(
-    userId,
-    claim.value
-  );
-  const startsAt = deferredStartAt ?? claim.value;
-  const endsAt = addUtcMonths(startsAt, includesProMonths);
-  if (!endsAt) {
+  const startsAt = claim.starts_at;
+  const endsAt = claim.ends_at || addUtcMonths(startsAt, includesProMonths);
+  if (!endsAt || toMs(startsAt) === null || toMs(endsAt) === null) {
     return {
       ...defaultResponse,
       source: "linket_claim",
     };
   }
 
-  const nowMs = Date.now();
   const startsAtMs = toMs(startsAt);
   const endsAtMs = toMs(endsAt);
   const active =

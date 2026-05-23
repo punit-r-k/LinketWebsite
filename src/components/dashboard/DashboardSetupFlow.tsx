@@ -160,6 +160,17 @@ function getSaveRetryDelay(attempt: number) {
   ];
 }
 
+function formatPhoneNumber(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 10);
+  if (digits.length <= 3) {
+    return digits ? `(${digits}` : "";
+  }
+  if (digits.length <= 6) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
+  }
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+}
+
 function getOnboardingCompletionSessionKey(userId: string) {
   return `${ONBOARDING_COMPLETION_SESSION_KEY_PREFIX}:${userId}`;
 }
@@ -1751,27 +1762,27 @@ export default function DashboardSetupFlow({
     }, 0);
   }, [loading, previewMode, saveProfileDraft, showLaunchHub, userId]);
 
-  useEffect(() => {
-    if (loading || !profileDraft || !userId || showLaunchHub) return;
-    if (profileDraftSignature === savedProfileSignatureRef.current) return;
-
-    const timer = window.setTimeout(() => {
-      if (profileSavePromiseRef.current) {
-        queuedProfileSaveRef.current = true;
+  const requestContactSaveSoon = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.setTimeout(() => {
+      if (previewMode || loading || showLaunchHub || !userId) return;
+      const currentDraft = contactDraftRef.current;
+      if (!currentDraft) return;
+      if (
+        buildContactDraftSignature(
+          currentDraft,
+          profileDraftRef.current?.name ?? ""
+        ) === savedContactSignatureRef.current
+      ) {
         return;
       }
-      void saveProfileDraft({ quiet: true });
-    }, 700);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    loading,
-    profileDraft,
-    profileDraftSignature,
-    saveProfileDraft,
-    showLaunchHub,
-    userId,
-  ]);
+      if (contactSavePromiseRef.current) {
+        queuedContactSaveRef.current = true;
+        return;
+      }
+      void saveContactDraft({ quiet: true });
+    }, 0);
+  }, [loading, previewMode, saveContactDraft, showLaunchHub, userId]);
 
   useEffect(() => {
     profileRetryAttemptRef.current = 0;
@@ -1826,37 +1837,6 @@ export default function DashboardSetupFlow({
     profileHasUnsavedChanges,
     profileSaveStatus,
     saveProfileDraft,
-    showLaunchHub,
-    userId,
-  ]);
-
-  useEffect(() => {
-    if (
-      loading ||
-      !contactDraft ||
-      !profileDraft ||
-      !userId ||
-      showLaunchHub
-    ) {
-      return;
-    }
-    if (contactDraftSignature === savedContactSignatureRef.current) return;
-
-    const timer = window.setTimeout(() => {
-      if (contactSavePromiseRef.current) {
-        queuedContactSaveRef.current = true;
-        return;
-      }
-      void saveContactDraft({ quiet: true });
-    }, 700);
-
-    return () => window.clearTimeout(timer);
-  }, [
-    contactDraft,
-    contactDraftSignature,
-    loading,
-    profileDraft,
-    saveContactDraft,
     showLaunchHub,
     userId,
   ]);
@@ -2875,6 +2855,7 @@ export default function DashboardSetupFlow({
                                   : { ...current, fullName: nextName }
                               );
                             }}
+                            onBlur={requestProfileSaveSoon}
                           />
                           <p className={fieldHelperClassName}>
                             What people will see first.
@@ -2966,6 +2947,7 @@ export default function DashboardSetupFlow({
                                 headline: event.target.value,
                               }))
                             }
+                            onBlur={requestProfileSaveSoon}
                           />
                           <p className={fieldHelperClassName}>
                             Keep it short. You can edit later.
@@ -3025,6 +3007,7 @@ export default function DashboardSetupFlow({
                                 email: event.target.value,
                               }), { markReviewed: true })
                             }
+                            onBlur={requestContactSaveSoon}
                           />
                         </div>
                         <div className="space-y-3">
@@ -3063,9 +3046,10 @@ export default function DashboardSetupFlow({
                                 onChange={(event) =>
                                   updateContactDraft((current) => ({
                                     ...current,
-                                    phone: event.target.value,
+                                    phone: formatPhoneNumber(event.target.value),
                                   }), { markReviewed: true })
                                 }
+                                onBlur={requestContactSaveSoon}
                               />
                             </div>
                           ) : (
@@ -3121,6 +3105,7 @@ export default function DashboardSetupFlow({
                                         title: event.target.value,
                                       }), { markReviewed: true })
                                     }
+                                    onBlur={requestContactSaveSoon}
                                   />
                                 </div>
                                 <div className="space-y-2">
@@ -3144,6 +3129,7 @@ export default function DashboardSetupFlow({
                                         company: event.target.value,
                                       }), { markReviewed: true })
                                     }
+                                    onBlur={requestContactSaveSoon}
                                   />
                                 </div>
                               </div>
@@ -3298,6 +3284,7 @@ export default function DashboardSetupFlow({
                                                 ),
                                               }))
                                             }
+                                            onBlur={requestProfileSaveSoon}
                                           />
                                         </div>
                                       ) : null}
@@ -3351,6 +3338,7 @@ export default function DashboardSetupFlow({
                                               ),
                                             }))
                                           }
+                                          onBlur={requestProfileSaveSoon}
                                         />
                                         {!showTitleField ? (
                                           <p className="text-sm text-muted-foreground">
@@ -3559,26 +3547,6 @@ export default function DashboardSetupFlow({
                                 </p>
                               </div>
                             ))}
-                          </div>
-                        </div>
-                        <div className={cn("space-y-3 p-4", softPanelClassName)}>
-                          <p className="text-sm font-semibold text-foreground">
-                            Before you publish
-                          </p>
-                          <div className="space-y-2 text-sm text-muted-foreground">
-                            <p>Check the preview once.</p>
-                            <p>Make sure your first link opens correctly.</p>
-                            <p>Review how the page looks on mobile.</p>
-                          </div>
-                        </div>
-                        <div className={cn("space-y-3 p-4", softPanelClassName)}>
-                          <p className="text-sm font-semibold text-foreground">
-                            After you publish
-                          </p>
-                          <div className="space-y-2 text-sm text-muted-foreground">
-                            <p>Your page goes live at this URL.</p>
-                            <p>Your QR becomes available.</p>
-                            <p>You can still edit the page anytime.</p>
                           </div>
                         </div>
                       </div>

@@ -3,14 +3,11 @@ import { z } from "zod";
 
 import {
   DUPLICATE_ACCOUNT_ERROR,
-  SIGNUP_VERIFICATION_NOTICE,
   friendlyAuthError,
 } from "@/lib/auth-errors";
 import { limitRequest } from "@/lib/rate-limit";
 import { validateJsonBody } from "@/lib/request-validation";
-import { getConfiguredSiteOrigin } from "@/lib/site-url";
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
-import { createServerSupabase } from "@/lib/supabase/server";
 
 const DEFAULT_NEXT = "/dashboard";
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
@@ -49,23 +46,6 @@ function hasStrongPassword(value: string) {
     /\d/.test(value) &&
     /[^A-Za-z0-9]/.test(value)
   );
-}
-
-function getRequestOrigin(request: Request) {
-  const originHeader = request.headers.get("origin");
-  if (originHeader) {
-    try {
-      return new URL(originHeader).origin;
-    } catch {
-      // Fall through to request URL and configured origin.
-    }
-  }
-
-  try {
-    return new URL(request.url).origin;
-  } catch {
-    return getConfiguredSiteOrigin();
-  }
 }
 
 function getAuthErrorCode(error: unknown): string | undefined {
@@ -146,15 +126,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const supabase = await createServerSupabase();
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        emailRedirectTo: `${getRequestOrigin(request)}/auth/callback?next=${encodeURIComponent(
-          next
-        )}`,
-      },
+      email_confirm: true,
     });
 
     if (error) {
@@ -165,13 +140,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (data.session) {
-      await supabase.auth.signOut();
-    }
-
     return NextResponse.json({
       ok: true,
-      verificationNotice: SIGNUP_VERIFICATION_NOTICE,
+      next,
     });
   } catch (error) {
     const message =

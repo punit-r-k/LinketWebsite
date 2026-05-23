@@ -20,6 +20,7 @@ import ShareContactButton from "@/components/ShareContactButton";
 import { applyFreeLeadFormLimits } from "@/lib/lead-form";
 import { sanitizeThemeForPlan } from "@/lib/plan-access";
 import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
+import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 export const revalidate = 60;
 
@@ -135,11 +136,17 @@ export default async function PublicProfilePage({ params }: Props) {
           leadFormRow?.id ?? `form-${profile.user_id}`
         )
       : normalizedLeadForm;
-  const { data: vcardData } = await supabase
-    .from("vcard_profiles")
-    .select("email, phone")
-    .eq("user_id", account.user_id)
-    .maybeSingle();
+  const { data: vcardData } = isSupabaseAdminAvailable
+    ? await supabaseAdmin
+        .from("vcard_profiles")
+        .select("email, phone")
+        .eq("user_id", account.user_id)
+        .maybeSingle()
+    : await supabase
+        .from("vcard_profiles")
+        .select("email, phone")
+        .eq("user_id", account.user_id)
+        .maybeSingle();
   const hasContactDetails = Boolean(
     (vcardData as { email?: string | null; phone?: string | null } | null)?.email?.trim() ||
       (vcardData as { email?: string | null; phone?: string | null } | null)?.phone?.trim()

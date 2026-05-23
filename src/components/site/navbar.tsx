@@ -18,7 +18,6 @@ import {
   IdCard,
   Link2,
   LogOut,
-  MailWarning,
   Menu,
   MessageSquare,
   Plus,
@@ -49,7 +48,6 @@ type UserLite = {
   id: string;
   email: string | null;
   fullName?: string | null;
-  emailConfirmedAt?: string | null;
 } | null;
 
 const LANDING_LINKS = [
@@ -90,7 +88,6 @@ const PROFILE_SECTIONS = [
 
 const NOTIFICATIONS_POLL_INTERVAL_OPEN_MS = 30_000;
 const NOTIFICATIONS_POLL_INTERVAL_IDLE_MS = 120_000;
-const DASHBOARD_VERIFICATION_ENTRY = "/dashboard/overview";
 const NOTIFICATIONS_LAST_READ_STORAGE_KEY_PREFIX =
   "linket:dashboard-notifications:last-read-at";
 const NOTIFICATIONS_INBOX_RETENTION_MS = 2 * 24 * 60 * 60 * 1000;
@@ -108,7 +105,6 @@ function toUserLite(
     id: value.id,
     email: value.email ?? null,
     fullName: (value.user_metadata?.full_name as string | null) ?? null,
-    emailConfirmedAt: value.email_confirmed_at ?? null,
   };
 }
 
@@ -160,11 +156,6 @@ export function Navbar() {
   const [activeProfileSection, setActiveProfileSection] = useState<
     (typeof PROFILE_SECTIONS)[number]["id"] | null
   >(null);
-  const [verificationBannerDismissed, setVerificationBannerDismissed] =
-    useState(false);
-  const [verificationStatusRefreshing, setVerificationStatusRefreshing] =
-    useState(false);
-  const [verificationResending, setVerificationResending] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
   const [notificationsError, setNotificationsError] = useState<string | null>(
@@ -183,7 +174,6 @@ export function Navbar() {
     Record<string, true>
   >({});
   const notificationsButtonRef = useRef<HTMLButtonElement | null>(null);
-  const siteOrigin = getSiteOrigin();
 
   useEffect(() => {
     lockedSectionRef.current = lockedSection;
@@ -213,8 +203,6 @@ export function Navbar() {
   const isProfileEditor = pathname?.startsWith("/dashboard/profiles") ?? false;
   const isMarketingPage =
     isPublic && !isLandingPage && !isPublicProfile && !isAuthPage && !isLegalPage;
-  const userNeedsEmailVerification =
-    Boolean(user?.email) && !Boolean(user?.emailConfirmedAt);
   const shouldShowNotifications = Boolean(
     isDashboard && !isDashboardSetupRoute && user
   );
@@ -335,12 +323,6 @@ export function Navbar() {
       window.removeEventListener("linket:dashboard-sidebar-state", handleSidebarState);
     };
   }, [isDashboard]);
-
-  useEffect(() => {
-    if (!isDashboard || !user?.id || user.emailConfirmedAt) {
-      setVerificationBannerDismissed(false);
-    }
-  }, [isDashboard, user?.emailConfirmedAt, user?.id]);
 
   useEffect(() => {
     setNotificationsOpen(false);
@@ -677,112 +659,6 @@ export function Navbar() {
       setLoggingOut(false);
     }
   };
-
-  const refreshEmailVerificationStatus = useCallback(
-    async (showFeedback: boolean = true) => {
-      if (!isDashboard || !user?.id) return;
-      setVerificationStatusRefreshing(true);
-      try {
-        const {
-          data: { user: refreshedUser },
-          error,
-        } = await supabase.auth.getUser();
-        if (error) throw error;
-        if (!refreshedUser) return;
-
-        const nextUser = toUserLite(refreshedUser);
-        setUser(nextUser);
-
-        if (nextUser?.emailConfirmedAt) {
-          setVerificationBannerDismissed(false);
-          if (showFeedback) {
-            toast({
-              title: "Email verified",
-              description: "Your account is fully verified.",
-              variant: "success",
-            });
-          }
-          return;
-        }
-
-        if (showFeedback) {
-          toast({
-            title: "Still waiting on verification",
-            description: "Open your inbox and use the verification link first.",
-          });
-        }
-      } catch (error) {
-        if (showFeedback) {
-          const description =
-            error instanceof Error
-              ? error.message
-              : "Unable to refresh verification status.";
-          toast({
-            title: "Verification check failed",
-            description,
-            variant: "destructive",
-          });
-        }
-      } finally {
-        setVerificationStatusRefreshing(false);
-      }
-    },
-    [isDashboard, user?.id]
-  );
-
-  const handleResendVerificationEmail = useCallback(async () => {
-    if (!isDashboard || !user?.email) return;
-    setVerificationResending(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: user.email,
-        options: {
-          emailRedirectTo: `${siteOrigin}/auth/callback?next=${encodeURIComponent(
-            DASHBOARD_VERIFICATION_ENTRY
-          )}`,
-        },
-      });
-      if (error) throw error;
-      toast({
-        title: "Verification email sent",
-        description: "Check your inbox for the verification link.",
-        variant: "success",
-      });
-    } catch (error) {
-      const description =
-        error instanceof Error
-          ? error.message
-          : "Unable to resend verification email.";
-      toast({
-        title: "Couldn't resend email",
-        description,
-        variant: "destructive",
-      });
-    } finally {
-      setVerificationResending(false);
-    }
-  }, [isDashboard, siteOrigin, user?.email]);
-
-  useEffect(() => {
-    if (!isDashboard || !userNeedsEmailVerification) return;
-
-    const handleFocus = () => {
-      void refreshEmailVerificationStatus(false);
-    };
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        void refreshEmailVerificationStatus(false);
-      }
-    };
-
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [isDashboard, refreshEmailVerificationStatus, userNeedsEmailVerification]);
 
   const handleDashboardMenuToggle = () => {
     if (typeof window === "undefined") return;
@@ -1165,50 +1041,6 @@ export function Navbar() {
       <header
         className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
       >
-        {userNeedsEmailVerification &&
-        !verificationBannerDismissed &&
-        !isDashboardSetupRoute ? (
-          <div className="border-b border-amber-200/70 bg-amber-100/70 px-3 py-2">
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-2 text-xs font-semibold">
-                <MailWarning className="h-4 w-4" aria-hidden />
-                <span>
-                  You&apos;re already inside your dashboard. Verify your email to
-                  secure your account.
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-8 rounded-full bg-amber-900 text-xs text-amber-50 hover:bg-amber-950"
-                  onClick={() => void handleResendVerificationEmail()}
-                  disabled={verificationResending}
-                >
-                  {verificationResending ? "Sending..." : "Verify email"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full border-amber-300 bg-amber-50 text-xs text-amber-900 hover:bg-amber-100"
-                  onClick={() => void refreshEmailVerificationStatus(true)}
-                  disabled={verificationStatusRefreshing}
-                >
-                  {verificationStatusRefreshing ? "Checking..." : "I've verified"}
-                </Button>
-                <button
-                  type="button"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-amber-900 hover:bg-amber-200/70"
-                  aria-label="Dismiss email verification reminder"
-                  onClick={() => setVerificationBannerDismissed(true)}
-                >
-                  <X className="h-4 w-4" aria-hidden />
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
         <nav
           className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-2 py-3 text-foreground sm:px-3 md:px-6"
           aria-label="Dashboard"

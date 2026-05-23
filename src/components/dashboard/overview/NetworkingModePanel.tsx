@@ -8,7 +8,6 @@ import type {
   RealtimePostgresChangesPayload,
 } from "@supabase/supabase-js";
 
-import { useDashboardPlanAccess } from "@/components/dashboard/DashboardSessionContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,8 +47,7 @@ export default function NetworkingModePanel({
 }: {
   userId: string | null;
 }) {
-  const planAccess = useDashboardPlanAccess();
-  const canLabelLeads = planAccess.canLabelLeads;
+  const canLabelLeads = true;
   const [loading, setLoading] = useState(true);
   const [savingLeadIds, setSavingLeadIds] = useState<Record<string, boolean>>({});
   const [saveErrorLeadIds, setSaveErrorLeadIds] = useState<Record<string, boolean>>({});
@@ -511,7 +509,6 @@ export default function NetworkingModePanel({
             </div>
 
             {activeLead ? (
-              canLabelLeads ? (
                 <div className="space-y-3">
                   <div className="space-y-0.5 text-center sm:text-left">
                     <div className="text-base font-semibold leading-tight text-foreground">
@@ -649,16 +646,6 @@ export default function NetworkingModePanel({
                     </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/30 p-4 text-center sm:text-left">
-                  <p className="text-sm text-muted-foreground">
-                    Paid unlocks notes, reminders, status changes, and star ratings so context stays attached to the lead.
-                  </p>
-                  <Button asChild size="sm" variant="outline">
-                    <a href={planAccess.upgradeHref}>Unlock networking tools</a>
-                  </Button>
-                </div>
-              )
           ) : (
               <div className="rounded-2xl border border-dashed border-border/60 px-4 py-6 text-sm text-muted-foreground">
                 Click a lead to add the note, reminder, status, and rating.

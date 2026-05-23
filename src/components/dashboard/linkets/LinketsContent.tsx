@@ -8,6 +8,7 @@ import {
   ArrowRightLeft,
   Copy,
   ExternalLink,
+  Gift,
   Loader2,
   RefreshCcw,
   Tags,
@@ -75,12 +76,35 @@ const linketDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   hour: "numeric",
   minute: "2-digit",
 });
+const TRIAL_DISMISS_STORAGE_PREFIX = "linket:complimentary-trial:dismissed";
 
 function formatLinketTimestamp(value: string | null | undefined) {
   if (!value) return null;
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return null;
   return linketDateTimeFormatter.format(parsed);
+}
+
+function getTrialDismissStorageKey(userId: string, tagId: string) {
+  return `${TRIAL_DISMISS_STORAGE_PREFIX}:${userId}:${tagId}`;
+}
+
+function hasDismissedTrialOffer(userId: string | null, tagId: string) {
+  if (!userId || typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(getTrialDismissStorageKey(userId, tagId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function dismissTrialOffer(userId: string | null, tagId: string) {
+  if (!userId || typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(getTrialDismissStorageKey(userId, tagId), "1");
+  } catch {
+    // The card-level claim button remains available if local storage is unavailable.
+  }
 }
 
 export default function LinketsContent({ variant = "standalone" }: LinketsContentProps) {
@@ -110,6 +134,9 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
     null
   );
   const [acceptingTransfer, setAcceptingTransfer] = useState(false);
+  const [trialDialogAssignment, setTrialDialogAssignment] =
+    useState<TagAssignmentDetail | null>(null);
+  const [claimingTrialTagId, setClaimingTrialTagId] = useState<string | null>(null);
   const claimedAssignmentFromQuery =
     searchParams.get("claimedAssignment")?.trim() ?? "";
   const transferTokenFromQuery = searchParams.get("transfer")?.trim() ?? "";
@@ -167,10 +194,12 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       const profilesJson = (await profilesRes.json()) as ProfileWithLinks[];
       setLinkets(linketsJson);
       setProfiles(profilesJson);
+      return linketsJson;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to load Linkets";
       setError(message);
       toast({ title: "Linkets unavailable", description: message, variant: "destructive" });
+      return null;
     } finally {
       setLoading(false);
     }
@@ -254,6 +283,18 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       null
     );
   }, [claimedAssignmentFromQuery, linkets]);
+
+  useEffect(() => {
+    if (loading || !userId || trialDialogAssignment) return;
+    const claimableLinket = linkets.find(
+      (item) =>
+        item.complimentaryTrial?.claimable &&
+        !hasDismissedTrialOffer(userId, item.tag.id)
+    );
+    if (claimableLinket) {
+      setTrialDialogAssignment(claimableLinket);
+    }
+  }, [linkets, loading, trialDialogAssignment, userId]);
 
   async function handleAssign(assignmentId: string, profileId: string | null) {
     if (!userId) return;
@@ -386,7 +427,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
 
       toast({
         title: "Linket transferred",
-        description: "The Linket now belongs to your account and the complimentary window was granted.",
+        description: "The Linket now belongs to your account.",
         variant: "success",
       });
 
@@ -445,13 +486,86 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           scroll: false,
         });
       }
-      toast({ title: "Linket claimed", description: "Assign a profile below.", variant: "success" });
-      await loadData(userId);
+      const payload = (await response.json().catch(() => null)) as
+        | { assignmentId?: string | null }
+        | null;
+      toast({
+        title: "Linket claimed",
+        description: "Assign a profile below.",
+        variant: "success",
+      });
+      const refreshedLinkets = await loadData(userId);
+      const claimedLinket = payload?.assignmentId
+        ? refreshedLinkets?.find(
+            (item) => item.assignment.id === payload.assignmentId
+          )
+        : null;
+      if (claimedLinket?.complimentaryTrial?.claimable) {
+        setTrialDialogAssignment(claimedLinket);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to claim Linket";
       toast({ title: "Claim failed", description: message, variant: "destructive" });
     } finally {
       setClaiming(false);
+    }
+  }
+
+  function closeTrialOffer() {
+    if (trialDialogAssignment) {
+      dismissTrialOffer(userId, trialDialogAssignment.tag.id);
+    }
+    setTrialDialogAssignment(null);
+  }
+
+  async function claimComplimentaryTrial(item: TagAssignmentDetail) {
+    if (!userId) return;
+    setClaimingTrialTagId(item.tag.id);
+    try {
+      const response = await fetch("/api/linkets/complimentary-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tagId: item.tag.id,
+          assignmentId: item.assignment.id,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | {
+            error?: string;
+            status?: string;
+            trial?: { endsAt?: string | null };
+          }
+        | null;
+      if (!response.ok) {
+        throw new Error(
+          payload?.error || "Unable to claim complimentary trial."
+        );
+      }
+
+      const endsAtLabel = formatLinketTimestamp(payload?.trial?.endsAt);
+      toast({
+        title: "Free trial claimed",
+        description: endsAtLabel
+          ? `Complimentary Pro is active through ${endsAtLabel}.`
+          : "Complimentary Pro is active.",
+        variant: "success",
+      });
+      setTrialDialogAssignment(null);
+      await loadData(userId);
+      router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to claim complimentary trial.";
+      toast({
+        title: "Trial claim failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setClaimingTrialTagId(null);
     }
   }
 
@@ -800,6 +914,25 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                               <ExternalLink className="h-3 w-3" /> View
                             </Link>
                           ) : null}
+                          {item.complimentaryTrial?.claimable ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="w-full rounded-full border-primary/50 bg-primary/5 text-primary lg:w-auto"
+                              onClick={() => setTrialDialogAssignment(item)}
+                            >
+                              <Gift className="mr-2 h-3.5 w-3.5" />
+                              Claim 1 year free
+                            </Button>
+                          ) : item.complimentaryTrial?.claimedByCurrentUser ? (
+                            <span className="inline-flex w-full items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 lg:w-auto">
+                              Trial claimed
+                            </span>
+                          ) : item.complimentaryTrial?.claimed ? (
+                            <span className="inline-flex w-full items-center justify-center rounded-full border border-border/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground lg:w-auto">
+                              Trial already used
+                            </span>
+                          ) : null}
                           <Button
                             type="button"
                             variant="outline"
@@ -827,6 +960,69 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={Boolean(trialDialogAssignment)}
+        onOpenChange={(open) => {
+          if (!open) closeTrialOffer();
+        }}
+      >
+        <DialogContent className="w-[calc(100vw-1rem)] max-w-lg overflow-hidden rounded-[28px] border-border/60 bg-card/95 p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-foreground sm:text-2xl">
+              Congratulations
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              You connected your first Linket. This Linket includes a
+              complimentary 1 year Pro trial. Claim it now, or close this and
+              claim it later from your Linkets page.
+            </DialogDescription>
+          </DialogHeader>
+
+          {trialDialogAssignment ? (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4 text-sm">
+                <div className="font-semibold text-foreground">
+                  {trialDialogAssignment.assignment.nickname ||
+                    `Linket ${trialDialogAssignment.tag.chip_uid}`}
+                </div>
+                <p className="mt-1 text-muted-foreground">
+                  One complimentary Pro year can be claimed for this physical
+                  Linket.
+                </p>
+              </div>
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end sm:gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full rounded-full sm:w-auto"
+                  onClick={closeTrialOffer}
+                >
+                  Not now
+                </Button>
+                <Button
+                  type="button"
+                  className="w-full rounded-full sm:w-auto"
+                  disabled={claimingTrialTagId === trialDialogAssignment.tag.id}
+                  onClick={() => void claimComplimentaryTrial(trialDialogAssignment)}
+                >
+                  {claimingTrialTagId === trialDialogAssignment.tag.id ? (
+                    <span className="inline-flex items-center gap-2 text-sm">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Claiming...
+                    </span>
+                  ) : (
+                    <>
+                      <Gift className="mr-2 h-4 w-4" />
+                      Claim free trial
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={Boolean(transferDialogAssignment)}

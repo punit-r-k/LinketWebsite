@@ -11,9 +11,30 @@ export type TagAssignmentDetail = {
   assignment: TagAssignmentRecord;
   tag: HardwareTagRecord;
   profile: Pick<UserProfileRecord, "id" | "name" | "handle" | "is_active"> | null;
+  complimentaryTrial?: LinketComplimentaryTrialState;
 };
 
-function mapAssignmentRow(row: Record<string, unknown>): TagAssignmentDetail {
+export type LinketComplimentaryTrialState = {
+  claimable: boolean;
+  claimed: boolean;
+  claimedByCurrentUser: boolean;
+  acceptedAt: string | null;
+  startsAt: string | null;
+  endsAt: string | null;
+};
+
+type LinketComplimentaryTrialClaimRow = {
+  tag_id: string;
+  user_id: string;
+  accepted_at: string;
+  starts_at: string;
+  ends_at: string;
+};
+
+function mapAssignmentRow(
+  row: Record<string, unknown>,
+  complimentaryTrial?: LinketComplimentaryTrialState
+): TagAssignmentDetail {
   const assignment = {
     id: row.id as string,
     tag_id: row.tag_id as string,
@@ -52,7 +73,63 @@ function mapAssignmentRow(row: Record<string, unknown>): TagAssignmentDetail {
       };
     }
 
-  return { assignment, tag, profile };
+  return { assignment, tag, profile, complimentaryTrial };
+}
+
+function isMissingRelationError(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes("does not exist") ||
+    lowered.includes("relation") ||
+    lowered.includes("schema cache")
+  );
+}
+
+async function fetchComplimentaryTrialClaimsByTagIds(tagIds: string[]) {
+  if (tagIds.length === 0) return new Map<string, LinketComplimentaryTrialClaimRow>();
+
+  const { data, error } = await supabaseAdmin
+    .from("linket_complimentary_trial_claims")
+    .select("tag_id,user_id,accepted_at,starts_at,ends_at")
+    .in("tag_id", tagIds)
+    .returns<LinketComplimentaryTrialClaimRow[]>();
+
+  if (error) {
+    if (isMissingRelationError(error.message)) {
+      return new Map<string, LinketComplimentaryTrialClaimRow>();
+    }
+    throw new Error(error.message);
+  }
+
+  return new Map((data ?? []).map((row) => [row.tag_id, row]));
+}
+
+function buildComplimentaryTrialState(
+  userId: string,
+  tagId: string,
+  claimRowsByTagId: Map<string, LinketComplimentaryTrialClaimRow>
+): LinketComplimentaryTrialState {
+  const claim = claimRowsByTagId.get(tagId);
+  if (!claim) {
+    return {
+      claimable: true,
+      claimed: false,
+      claimedByCurrentUser: false,
+      acceptedAt: null,
+      startsAt: null,
+      endsAt: null,
+    };
+  }
+
+  const claimedByCurrentUser = claim.user_id === userId;
+  return {
+    claimable: false,
+    claimed: true,
+    claimedByCurrentUser,
+    acceptedAt: claim.accepted_at,
+    startsAt: claim.starts_at,
+    endsAt: claim.ends_at,
+  };
 }
 
 async function fetchAssignmentById(assignmentId: string): Promise<TagAssignmentDetail | null> {
@@ -87,7 +164,20 @@ export async function getAssignmentsForUser(userId: string): Promise<TagAssignme
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapAssignmentRow);
+  const rows = (data ?? []) as Array<Record<string, unknown>>;
+  const tagIds = rows
+    .map((row) => (typeof row.tag_id === "string" ? row.tag_id : null))
+    .filter((value): value is string => Boolean(value));
+  const trialClaimsByTagId = await fetchComplimentaryTrialClaimsByTagIds(tagIds);
+
+  return rows.map((row) =>
+    mapAssignmentRow(
+      row,
+      typeof row.tag_id === "string"
+        ? buildComplimentaryTrialState(userId, row.tag_id, trialClaimsByTagId)
+        : undefined
+    )
+  );
 }
 
 export async function assertOwnedProfileId(

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { findAuthUserByEmail } from "@/lib/auth-admin-users";
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { claimLinketComplimentaryTrial } from "@/lib/linket-complimentary-trials";
 import { grantLinketEntitlementToUser } from "@/lib/linket-entitlements";
 import { findLinketByLookup } from "@/lib/linket-tag-lookup";
 import { cancelPendingTransfersForTag } from "@/lib/linket-transfers";
@@ -70,6 +71,13 @@ export async function POST(req: NextRequest) {
         repair_mode: true,
       },
     });
+    const trialResult = await claimLinketComplimentaryTrial({
+      tagId: tag.id,
+      assignmentId: result.assignmentId,
+      user: recipient,
+      source: "admin_grant",
+      pauseSource: "admin_grant",
+    });
 
     return NextResponse.json({
       ok: true,
@@ -83,6 +91,11 @@ export async function POST(req: NextRequest) {
         claimCode: tag.claim_code,
       },
       assignmentId: result.assignmentId,
+      trial: {
+        status: trialResult.status,
+        startsAt: trialResult.claim.starts_at,
+        endsAt: trialResult.claim.ends_at,
+      },
     });
   } catch (error) {
     const message =
