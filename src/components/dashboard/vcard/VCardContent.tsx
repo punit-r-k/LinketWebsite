@@ -181,6 +181,7 @@ export default function VCardContent({
   const initialisedRef = useRef(false);
   const latestFieldsRef = useRef(fields);
   const persistPromiseRef = useRef<Promise<VCardFields | null> | null>(null);
+  const persistingFieldsRef = useRef<VCardFields | null>(null);
   const queuedPersistRef = useRef(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const photoFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -433,16 +434,20 @@ export default function VCardContent({
   const persist = useCallback(
     async (current: VCardFields) => {
       if (!userId) return null;
+      const safeCurrent = sanitizeVCardFields(current);
       if (persistPromiseRef.current) {
-        queuedPersistRef.current = true;
+        const pending = persistingFieldsRef.current;
+        if (!pending || !areVCardFieldsEqual(safeCurrent, pending)) {
+          queuedPersistRef.current = true;
+        }
         return persistPromiseRef.current;
       }
 
+      persistingFieldsRef.current = safeCurrent;
       const request = (async () => {
         try {
           setStatus("saving");
           setError(null);
-          const safeCurrent = sanitizeVCardFields(current);
           const response = await fetch("/api/vcard/profile", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -454,7 +459,7 @@ export default function VCardContent({
           }
           const payload = (await response.json()) as { fields: VCardFields };
           const savedFields = sanitizeVCardFields(payload.fields);
-          const latestFields = sanitizeVCardFields(latestFieldsRef.current);
+          let latestFields = sanitizeVCardFields(latestFieldsRef.current);
           if (!areVCardFieldsEqual(latestFieldsRef.current, latestFields)) {
             latestFieldsRef.current = latestFields;
             setFields(latestFields);
@@ -466,6 +471,8 @@ export default function VCardContent({
             areVCardFieldsEqual(latestFields, safeCurrent) &&
             !areVCardFieldsEqual(savedFields, safeCurrent)
           ) {
+            latestFields = savedFields;
+            latestFieldsRef.current = savedFields;
             setFields(savedFields);
             setPhotoPreview(savedFields.photoData);
           }
@@ -510,6 +517,7 @@ export default function VCardContent({
         return await request;
       } finally {
         persistPromiseRef.current = null;
+        persistingFieldsRef.current = null;
         if (queuedPersistRef.current) {
           queuedPersistRef.current = false;
           void persist(latestFieldsRef.current);
@@ -618,7 +626,11 @@ export default function VCardContent({
 
   useEffect(() => {
     if (!isDirty || !persistPromiseRef.current) return;
-    queuedPersistRef.current = true;
+    const pending = persistingFieldsRef.current;
+    const latestFields = sanitizeVCardFields(latestFieldsRef.current);
+    if (!pending || !areVCardFieldsEqual(latestFields, pending)) {
+      queuedPersistRef.current = true;
+    }
   }, [fields, isDirty]);
 
   useEffect(() => {
