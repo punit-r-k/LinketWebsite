@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { getSignedAvatarUrl } from "@/lib/avatar-server";
+import { getActiveProfileForUser } from "@/lib/profile-service";
 import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
@@ -40,6 +42,12 @@ const EMPTY_FIELDS: VCardFields = {
   photoData: null,
   photoName: null,
   photoRemoved: false,
+};
+
+type VCardProfileResponse = {
+  defaultPhotoName: string | null;
+  defaultPhotoUrl: string | null;
+  fields: VCardFields;
 };
 
 const vcardQuerySchema = z.object({
@@ -124,6 +132,49 @@ function parseAddress(value: string | null) {
   };
 }
 
+async function loadPublicProfileDefaults(userId: string) {
+  const supabase = await createServerSupabase();
+  const [activeProfile, accountResult] = await Promise.all([
+    getActiveProfileForUser(userId).catch(() => null),
+    supabase
+      .from("profiles")
+      .select("display_name,avatar_url,updated_at,avatar_original_file_name")
+      .eq("user_id", userId)
+      .maybeSingle(),
+  ]);
+  if (accountResult.error && accountResult.error.code !== "PGRST116") {
+    throw accountResult.error;
+  }
+
+  const account = accountResult.data;
+  const defaultPhotoUrl = await getSignedAvatarUrl(
+    account?.avatar_url ?? null,
+    account?.updated_at ?? null
+  ).catch(() => null);
+
+  return {
+    fullName:
+      activeProfile?.name?.trim() ||
+      account?.display_name?.trim() ||
+      "",
+    title: activeProfile?.headline?.trim() || "",
+    defaultPhotoName:
+      account?.avatar_original_file_name?.trim() || "profile-photo.jpg",
+    defaultPhotoUrl,
+  };
+}
+
+function applyPublicProfileDefaults(
+  fields: VCardFields,
+  defaults: Awaited<ReturnType<typeof loadPublicProfileDefaults>>
+): VCardFields {
+  return {
+    ...fields,
+    fullName: fields.fullName.trim() || defaults.fullName,
+    title: fields.title.trim() || defaults.title,
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const parsedQuery = validateSearchParams(
@@ -143,6 +194,7 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = await createServerSupabase();
+    const defaults = await loadPublicProfileDefaults(userId);
 
     const { data, error } = await supabase
       .from("vcard_profiles")
@@ -152,11 +204,17 @@ export async function GET(request: NextRequest) {
     if (error && error.code !== "PGRST116") throw error;
 
     if (!data) {
-      return NextResponse.json({ fields: EMPTY_FIELDS }, { status: 200 });
+      const fields = applyPublicProfileDefaults(EMPTY_FIELDS, defaults);
+      const response: VCardProfileResponse = {
+        fields,
+        defaultPhotoName: defaults.defaultPhotoName,
+        defaultPhotoUrl: defaults.defaultPhotoUrl,
+      };
+      return NextResponse.json(response, { status: 200 });
     }
 
     const photoData = sanitizeVCardPhotoData(data.photo_data ?? null);
-    const payload: VCardFields = {
+    const payload = applyPublicProfileDefaults({
       fullName: data.full_name ?? "",
       title: data.title ?? "",
       email: data.email ?? "",
@@ -167,9 +225,15 @@ export async function GET(request: NextRequest) {
       photoData,
       photoName: photoData ? data.photo_name ?? null : null,
       photoRemoved: !photoData && Boolean(data.photo_removed_at),
+    }, defaults);
+    const response: VCardProfileResponse = {
+      fields: payload,
+      defaultPhotoName: defaults.defaultPhotoName,
+      defaultPhotoUrl:
+        !photoData && !data.photo_removed_at ? defaults.defaultPhotoUrl : null,
     };
 
-    return NextResponse.json({ fields: payload }, { status: 200 });
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Load failed";
     return NextResponse.json({ error: message }, { status: 500 });

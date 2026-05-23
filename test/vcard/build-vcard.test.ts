@@ -17,7 +17,15 @@ test("embeds a saved contact-page photo data URL", () => {
   const photoData = "data:image/jpeg;base64,ZmFrZS1waG90bw==";
   const vcard = buildVCard(profileWithPhoto({ dataUrl: photoData }));
 
-  assert.match(vcard, /PHOTO;VALUE=uri:data:image\/jpeg;base64,ZmFrZS1waG90bw==/);
+  assert.match(vcard, /^VERSION:3\.0\r$/m);
+  assert.match(vcard, /PHOTO;ENCODING=b;TYPE=JPEG:ZmFrZS1waG90bw==/);
+});
+
+test("preserves supported embedded photo types", () => {
+  const photoData = "data:image/png;base64,ZmFrZS1waG90bw==";
+  const vcard = buildVCard(profileWithPhoto({ dataUrl: photoData }));
+
+  assert.match(vcard, /PHOTO;ENCODING=b;TYPE=PNG:ZmFrZS1waG90bw==/);
 });
 
 test("does not embed remote or inherited photo URLs", () => {

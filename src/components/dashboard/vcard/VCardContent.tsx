@@ -56,6 +56,12 @@ type VCardDraftCache = {
   updatedAt: string;
 };
 
+type VCardProfileResponse = {
+  defaultPhotoName?: string | null;
+  defaultPhotoUrl?: string | null;
+  fields: VCardFields;
+};
+
 const VCARD_DRAFT_STORAGE_PREFIX = "linket:vcard:draft";
 
 function hasVCardContent(fields: VCardFields) {
@@ -351,17 +357,37 @@ export default function VCardContent({
           const info = await response.json().catch(() => ({}));
           throw new Error(info?.error || `Unable to load vCard (${response.status})`);
         }
-        const payload = (await response.json()) as { fields: VCardFields };
+        const payload = (await response.json()) as VCardProfileResponse;
         if (cancelled) return;
         const localDraft = readVCardDraftCache(userId);
         const localHasUnsyncedChanges = hasUnsyncedVCardDraft(localDraft);
-        const nextFields = sanitizeVCardFields(
+        let nextFields = sanitizeVCardFields(
           localHasUnsyncedChanges && localDraft ? localDraft.fields : payload.fields
         );
         const nextSaved =
           localHasUnsyncedChanges && localDraft
             ? sanitizeVCardFields(localDraft.lastSaved ?? payload.fields)
             : sanitizeVCardFields(payload.fields);
+
+        if (
+          !localHasUnsyncedChanges &&
+          !nextFields.photoData &&
+          !nextFields.photoRemoved &&
+          payload.defaultPhotoUrl
+        ) {
+          const defaultPhotoData = await imageUrlToJpegDataUrl(
+            payload.defaultPhotoUrl
+          );
+          if (cancelled) return;
+          if (defaultPhotoData) {
+            nextFields = {
+              ...nextFields,
+              photoData: defaultPhotoData,
+              photoName: payload.defaultPhotoName ?? "profile-photo.jpg",
+              photoRemoved: false,
+            };
+          }
+        }
 
         setFields(nextFields);
         setPhotoPreview(nextFields.photoData);
@@ -1141,6 +1167,34 @@ async function cropToDataUrl(options: {
     return null;
   } catch (error) {
     console.error("cropToDataUrl failed", error);
+    return null;
+  }
+}
+
+async function imageUrlToJpegDataUrl(srcUrl: string): Promise<string | null> {
+  try {
+    const img = await loadImage(srcUrl);
+    const size = OUTPUT_SIZE;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, size, size);
+
+    const scale = Math.max(size / img.naturalWidth, size / img.naturalHeight);
+    const width = img.naturalWidth * scale;
+    const height = img.naturalHeight * scale;
+    ctx.drawImage(img, (size - width) / 2, (size - height) / 2, width, height);
+
+    const blob = await toJpegBlobWithLimit(canvas, 150 * 1024);
+    return blob ? await blobToDataUrl(blob) : null;
+  } catch (error) {
+    console.error("imageUrlToJpegDataUrl failed", error);
     return null;
   }
 }

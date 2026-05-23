@@ -20,6 +20,7 @@ type VCardRecord = {
   note: string | null;
   photo_data: string | null;
   photo_name: string | null;
+  photo_removed_at: string | null;
   updated_at: string | null;
 };
 
@@ -37,6 +38,7 @@ function buildContactProfile(
   handle: string,
   record: VCardRecord | null,
   fallbackName: string,
+  fallbackTitle: string,
   links: ProfileLinkRecord[],
   uid: string,
   updatedAt: string
@@ -45,12 +47,13 @@ function buildContactProfile(
   const { firstName, lastName } = splitName(name);
   const parsedAddress = parseAddress(record?.address ?? null);
   const photoData = sanitizeVCardPhotoData(record?.photo_data);
+  const title = record?.title?.trim() || fallbackTitle.trim();
   return {
     handle,
     firstName,
     lastName,
     org: record?.company ?? undefined,
-    title: record?.title ?? undefined,
+    title: title || undefined,
     emails: record?.email
       ? [{ value: record.email, type: "work", pref: true }]
       : undefined,
@@ -59,7 +62,10 @@ function buildContactProfile(
       : undefined,
     note: record?.note ?? undefined,
     address: parsedAddress ?? undefined,
-    photo: photoData ? { dataUrl: photoData } : undefined,
+    photo:
+      photoData && !record?.photo_removed_at
+        ? { dataUrl: photoData }
+        : undefined,
     links: links
       .map((link) => ({
         title: link.title || undefined,
@@ -129,7 +135,7 @@ async function fetchVCardRecord(userId: string) {
   if (!isSupabaseAdminAvailable) return null;
   const { data, error } = await supabaseAdmin
     .from("vcard_profiles")
-    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,updated_at")
+    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at,updated_at")
     .eq("user_id", userId)
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw error;
@@ -155,6 +161,7 @@ export async function GET(
     const { account, profile } = payload;
     const fallbackName =
       profile.name || account.display_name || profile.handle || handle;
+    const fallbackTitle = profile.headline?.trim() || "";
 
     const vcardRecord = await fetchVCardRecord(account.user_id);
     const displayedLinks = getDisplayedProfileLinks(profile.links);
@@ -168,6 +175,7 @@ export async function GET(
       handle,
       vcardRecord,
       fallbackName,
+      fallbackTitle,
       displayedLinks,
       `urn:uuid:${profile.id}`,
       updatedAt

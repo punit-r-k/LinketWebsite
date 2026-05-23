@@ -30,37 +30,40 @@ function normalizeTel(v: string): string {
 }
 
 function toTel(t: Phone): string {
-  const pref = t.pref ? ";PREF=1" : "";
-  const type = `;TYPE=${t.type.toUpperCase()}`;
+  const types = [t.type.toUpperCase(), t.pref ? "PREF" : null]
+    .filter(Boolean)
+    .join(",");
   const value = normalizeTel(t.value);
-  return `TEL${type}${pref}:${escapeText(value)}`;
+  return `TEL;TYPE=${types}:${escapeText(value)}`;
 }
 
 function toEmail(e: Email): string {
-  const pref = e.pref ? ";PREF=1" : "";
-  const type = `;TYPE=${e.type}`;
-  return `EMAIL${type}${pref}:${escapeText(e.value)}`;
+  const locationType = e.type === "personal" ? "HOME" : "WORK";
+  const types = ["INTERNET", locationType, e.pref ? "PREF" : null]
+    .filter(Boolean)
+    .join(",");
+  return `EMAIL;TYPE=${types}:${escapeText(e.value)}`;
+}
+
+function toVCardPhotoType(mime: string | undefined) {
+  const normalized = mime?.trim().toLowerCase();
+  if (normalized === "image/png") return "PNG";
+  if (normalized === "image/gif") return "GIF";
+  if (normalized === "image/webp") return "WEBP";
+  return "JPEG";
 }
 
 function toPhoto(p: ContactProfile): string | null {
   if (!p.photo) return null;
   const maxEmbeddedPhotoBytes = 500 * 1024;
   const trimmedDataUrl = p.photo.dataUrl?.trim() ?? "";
-  const mime =
-    p.photo.mime ||
-    (trimmedDataUrl.match(/^data:(.*?);base64,/i)?.[1] ?? undefined);
-  const base64 = trimmedDataUrl.split(",")[1];
-  if (
-    trimmedDataUrl.startsWith("data:") &&
-    base64 &&
-    base64.length * 0.75 <= maxEmbeddedPhotoBytes
-  ) {
-    return `PHOTO;VALUE=uri:${trimmedDataUrl}`;
-  }
-  if (base64 && base64.length * 0.75 <= maxEmbeddedPhotoBytes) {
-    return `PHOTO;VALUE=uri:data:${mime || "image/jpeg"};base64,${base64}`;
-  }
-  return null;
+  const dataUrlMatch = trimmedDataUrl.match(/^data:([^;,]+);base64,([\s\S]+)$/i);
+  const mime = p.photo.mime || dataUrlMatch?.[1] || undefined;
+  const base64 = (dataUrlMatch?.[2] ?? trimmedDataUrl).replace(/\s+/g, "");
+  if (!base64 || !/^[a-z0-9+/]+={0,2}$/i.test(base64)) return null;
+  if (base64.length * 0.75 > maxEmbeddedPhotoBytes) return null;
+  const type = toVCardPhotoType(mime);
+  return `PHOTO;ENCODING=b;TYPE=${type}:${base64}`;
 }
 
 function normalizeUrl(raw: string): string | null {
@@ -138,10 +141,9 @@ function deriveLinkLabel(rawTitle: string | undefined, normalizedUrl: string, in
 export function buildVCard(profile: ContactProfile): string {
   const lines: string[] = [];
   lines.push("BEGIN:VCARD");
-  lines.push("VERSION:4.0");
+  lines.push("VERSION:3.0");
   lines.push(`FN:${toFN(profile)}`);
   lines.push(`N:${toN(profile)}`);
-  lines.push("KIND:individual");
   if (profile.org) lines.push(`ORG:${escapeText(profile.org)}`);
   if (profile.title) lines.push(`TITLE:${escapeText(profile.title)}`);
   if (profile.role) lines.push(`ROLE:${escapeText(profile.role)}`);
