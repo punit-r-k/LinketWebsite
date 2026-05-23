@@ -1787,8 +1787,6 @@ function EditorPanel({
         <VCardContent
           variant="embedded"
           idPrefix="profile-contact"
-          defaultPhotoUrl={avatarUrl}
-          defaultPhotoName={avatarOriginalFileName}
           onFieldsChange={handleFieldsChange}
           onStatusChange={handleStatusChange}
         />

@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { UPLOADER_ACTION_BUTTON_CLASS } from "@/components/dashboard/uploaderActionButtonStyles";
 import { supabase } from "@/lib/supabase";
 import { confirmRemove } from "@/lib/confirm-remove";
-import { isMockupPhotoValue, sanitizeVCardPhotoData } from "@/lib/vcard/photo";
+import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
 
 const OUTPUT_SIZE = 256;
 const MIN_ZOOM = 1;
@@ -137,15 +137,11 @@ export default function VCardContent({
   onFieldsChange,
   onStatusChange,
   idPrefix,
-  defaultPhotoUrl,
-  defaultPhotoName,
 }: {
   variant?: "card" | "embedded";
   onFieldsChange?: (fields: VCardFields) => void;
   onStatusChange?: (payload: VCardStatusPayload) => void;
   idPrefix?: string;
-  defaultPhotoUrl?: string | null;
-  defaultPhotoName?: string | null;
 }) {
   const [fields, setFields] = useState<VCardFields>({
     fullName: "",
@@ -185,7 +181,6 @@ export default function VCardContent({
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [photoSourceUrl, setPhotoSourceUrl] = useState<string | null>(null);
   const [photoSourceName, setPhotoSourceName] = useState<string | null>(null);
-  const [photoRemoved, setPhotoRemoved] = useState(false);
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -222,14 +217,6 @@ export default function VCardContent({
     if (!imageMeta) return 1;
     return Math.max(cropSize / imageMeta.width, cropSize / imageMeta.height);
   }, [imageMeta, cropSize]);
-
-  const inheritedPhotoUrl = useMemo(
-    () =>
-      defaultPhotoUrl && !isMockupPhotoValue(defaultPhotoUrl)
-        ? defaultPhotoUrl
-        : null,
-    [defaultPhotoUrl]
-  );
 
   const previewScale = baseScale * zoom;
 
@@ -378,7 +365,6 @@ export default function VCardContent({
 
         setFields(nextFields);
         setPhotoPreview(nextFields.photoData);
-        setPhotoRemoved(nextFields.photoRemoved);
         lastSavedRef.current = nextSaved;
         initialisedRef.current = true;
         setSavedLocally(localHasUnsyncedChanges);
@@ -398,7 +384,6 @@ export default function VCardContent({
           const safeFields = sanitizeVCardFields(localDraft.fields);
           setFields(safeFields);
           setPhotoPreview(safeFields.photoData);
-          setPhotoRemoved(safeFields.photoRemoved);
           lastSavedRef.current = localDraft.lastSaved
             ? sanitizeVCardFields(localDraft.lastSaved)
             : null;
@@ -448,7 +433,6 @@ export default function VCardContent({
             latestFieldsRef.current = latestFields;
             setFields(latestFields);
             setPhotoPreview(latestFields.photoData);
-            setPhotoRemoved(latestFields.photoRemoved);
           }
 
           lastSavedRef.current = savedFields;
@@ -458,7 +442,6 @@ export default function VCardContent({
           ) {
             setFields(savedFields);
             setPhotoPreview(savedFields.photoData);
-            setPhotoRemoved(savedFields.photoRemoved);
           }
 
           const stillDirty = !areVCardFieldsEqual(latestFields, savedFields);
@@ -523,19 +506,18 @@ export default function VCardContent({
     };
     setFields(nextFields);
     setPhotoPreview(null);
-    setPhotoRemoved(true);
     if (userId && initialisedRef.current && !loading && status !== "saving") {
       void persist(nextFields);
     }
   }, [resetPhotoEditor, userId, loading, status, persist]);
 
   const handlePhotoReCrop = useCallback(() => {
-    const sourceUrl = fields.photoData ?? inheritedPhotoUrl;
+    const sourceUrl = fields.photoData;
     if (!sourceUrl) return;
     resetPhotoEditor();
     setPhotoSourceUrl(sourceUrl);
-    setPhotoSourceName(fields.photoName ?? defaultPhotoName ?? "profile-photo.jpg");
-  }, [defaultPhotoName, fields.photoData, fields.photoName, inheritedPhotoUrl, resetPhotoEditor]);
+    setPhotoSourceName(fields.photoName ?? "contact-photo.jpg");
+  }, [fields.photoData, fields.photoName, resetPhotoEditor]);
 
   const handlePhotoApply = useCallback(async () => {
     if (!photoSourceUrl || !imageMeta || !previewReady) return;
@@ -557,7 +539,6 @@ export default function VCardContent({
     };
     setFields(nextFields);
     setPhotoPreview(cropped);
-    setPhotoRemoved(false);
     resetPhotoEditor();
     if (userId && initialisedRef.current && !loading && status !== "saving") {
       void persist(nextFields);
@@ -753,13 +734,11 @@ export default function VCardContent({
     return "All changes saved";
   }, [error, isDirty, isOnline, loading, restoredLocalDraft, savedLocally, status]);
 
-  const inheritedPhotoPreview =
-    !photoRemoved && !fields.photoData && !photoSourceUrl ? inheritedPhotoUrl : null;
-  const visiblePhotoPreview = photoPreview ?? inheritedPhotoPreview;
+  const visiblePhotoPreview = photoPreview;
   const visiblePhotoName =
     photoSourceName ??
     fields.photoName ??
-    (inheritedPhotoPreview ? defaultPhotoName ?? "Profile photo" : "No image selected");
+    "No image selected";
 
   useEffect(() => {
     return () => {
@@ -877,7 +856,7 @@ export default function VCardContent({
                     size="sm"
                     className={UPLOADER_ACTION_BUTTON_CLASS}
                     onClick={handlePhotoReCrop}
-                    disabled={!fields.photoData && (!inheritedPhotoUrl || photoRemoved)}
+                    disabled={!fields.photoData}
                   >
                     Re-crop
                   </Button>
@@ -994,7 +973,7 @@ export default function VCardContent({
           )}
         </section>
         <p className="text-xs text-muted-foreground">
-          Include a friendly headshot or company logo. It will be embedded when you export your vCard.
+          This contact-page photo is the only image embedded in the downloaded vCard.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">

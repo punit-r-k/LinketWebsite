@@ -60,9 +60,6 @@ function toPhoto(p: ContactProfile): string | null {
   if (base64 && base64.length * 0.75 <= maxEmbeddedPhotoBytes) {
     return `PHOTO;VALUE=uri:data:${mime || "image/jpeg"};base64,${base64}`;
   }
-  if (p.photo.url?.trim()) {
-    return `PHOTO;VALUE=uri:${p.photo.url.trim()}`;
-  }
   return null;
 }
 

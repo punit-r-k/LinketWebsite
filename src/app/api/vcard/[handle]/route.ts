@@ -5,6 +5,7 @@ import type { ContactProfile } from "@/lib/profile.store";
 import { sanitizeAttachmentFilename } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
+import type { ProfileLinkRecord } from "@/types/db";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -19,6 +20,7 @@ type VCardRecord = {
   note: string | null;
   photo_data: string | null;
   photo_name: string | null;
+  updated_at: string | null;
 };
 
 function splitName(fullName: string) {
@@ -35,12 +37,9 @@ function buildContactProfile(
   handle: string,
   record: VCardRecord | null,
   fallbackName: string,
-  links: Array<{
-    title?: string | null;
-    url?: string | null;
-    is_active?: boolean | null;
-  }>,
-  uid: string
+  links: ProfileLinkRecord[],
+  uid: string,
+  updatedAt: string
 ): ContactProfile {
   const name = record?.full_name?.trim() || fallbackName;
   const { firstName, lastName } = splitName(name);
@@ -62,15 +61,36 @@ function buildContactProfile(
     address: parsedAddress ?? undefined,
     photo: photoData ? { dataUrl: photoData } : undefined,
     links: links
-      .filter((link) => link.is_active ?? true)
       .map((link) => ({
-        title: link.title ?? undefined,
-        url: link.url ?? "",
+        title: link.title || undefined,
+        url: link.url,
       }))
       .filter((link) => Boolean(link.url.trim())),
     uid,
-    updatedAt: new Date().toISOString(),
+    updatedAt,
   };
+}
+
+function getDisplayedProfileLinks(
+  links: ProfileLinkRecord[] | null | undefined
+) {
+  return (links ?? [])
+    .filter((link) => link.is_active && Boolean(link.url?.trim()))
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.order_index ?? 0) - (b.order_index ?? 0) ||
+        a.created_at.localeCompare(b.created_at)
+    );
+}
+
+function getLatestTimestamp(values: Array<string | null | undefined>) {
+  const latest = values.reduce((current, value) => {
+    if (!value) return current;
+    const timestamp = Date.parse(value);
+    return Number.isFinite(timestamp) ? Math.max(current, timestamp) : current;
+  }, 0);
+  return latest ? new Date(latest).toISOString() : new Date().toISOString();
 }
 
 function parseAddress(value: string | null) {
@@ -109,7 +129,7 @@ async function fetchVCardRecord(userId: string) {
   if (!isSupabaseAdminAvailable) return null;
   const { data, error } = await supabaseAdmin
     .from("vcard_profiles")
-    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name")
+    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,updated_at")
     .eq("user_id", userId)
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw error;
@@ -137,13 +157,20 @@ export async function GET(
       profile.name || account.display_name || profile.handle || handle;
 
     const vcardRecord = await fetchVCardRecord(account.user_id);
+    const displayedLinks = getDisplayedProfileLinks(profile.links);
+    const updatedAt = getLatestTimestamp([
+      vcardRecord?.updated_at,
+      profile.updated_at,
+      ...displayedLinks.map((link) => link.updated_at ?? link.created_at),
+    ]);
 
     const contactProfile = buildContactProfile(
       handle,
       vcardRecord,
       fallbackName,
-      profile.links ?? [],
-      `urn:uuid:${profile.id}`
+      displayedLinks,
+      `urn:uuid:${profile.id}`,
+      updatedAt
     );
     const vcard = buildVCard(contactProfile);
 
