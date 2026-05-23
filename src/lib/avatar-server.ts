@@ -4,6 +4,7 @@ import {
   appendVersion,
   extractAvatarPathFromUrl,
   isHttpUrl,
+  isMockupAssetValue,
   normalizeAvatarPath,
 } from "@/lib/avatar-utils";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
@@ -14,9 +15,10 @@ export async function getSignedAvatarUrl(
   expiresInSeconds = 3600
 ): Promise<string | null> {
   if (!path) return null;
+  if (isMockupAssetValue(path)) return null;
   if (isHttpUrl(path)) {
     const extracted = extractAvatarPathFromUrl(path);
-    if (!extracted) return appendVersion(path, version);
+    if (!extracted) return null;
     const { data, error } = await supabaseAdmin
       .storage
       .from("avatars")

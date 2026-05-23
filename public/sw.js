@@ -1,4 +1,4 @@
-const VERSION = "v3";
+const VERSION = "v4";
 const PAGE_CACHE = `linket-pages-${VERSION}`;
 const ASSET_CACHE = `linket-assets-${VERSION}`;
 const CACHE_ALLOWLIST = [PAGE_CACHE, ASSET_CACHE];
@@ -95,6 +95,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith("/mockups/")) return;
 
   if (event.request.mode === "navigate") {
     if (isPublicProfilePath(url)) {
@@ -108,10 +109,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (
-    url.pathname.startsWith("/mockups/") ||
-    ["style", "font", "image"].includes(event.request.destination)
-  ) {
+  if (["style", "font", "image"].includes(event.request.destination)) {
     event.respondWith(cacheFirst(event.request, ASSET_CACHE));
   }
 });

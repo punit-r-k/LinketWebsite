@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
 
 type VCardFields = {
   fullName: string;
@@ -151,6 +152,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ fields: EMPTY_FIELDS }, { status: 200 });
     }
 
+    const photoData = sanitizeVCardPhotoData(data.photo_data ?? null);
     const payload: VCardFields = {
       fullName: data.full_name ?? "",
       title: data.title ?? "",
@@ -159,8 +161,8 @@ export async function GET(request: NextRequest) {
       company: data.company ?? "",
       ...parseAddress(data.address ?? null),
       note: data.note ?? "",
-      photoData: data.photo_data ?? null,
-      photoName: data.photo_name ?? null,
+      photoData,
+      photoName: photoData ? data.photo_name ?? null : null,
     };
 
     return NextResponse.json({ fields: payload }, { status: 200 });
@@ -191,17 +193,24 @@ export async function POST(request: NextRequest) {
     const supabase = await createServerSupabase();
 
     const { fields } = body;
+    const photoData = sanitizeVCardPhotoData(fields.photoData);
+    const savedFields: VCardFields = {
+      ...fields,
+      photoData,
+      photoName: photoData ? fields.photoName : null,
+    };
+
     const payload = {
       user_id: body.userId,
-      full_name: fields.fullName?.trim() || null,
-      title: fields.title?.trim() || null,
-      email: fields.email?.trim() || null,
-      phone: fields.phone?.trim() || null,
-      company: fields.company?.trim() || null,
-      address: serializeAddress(fields),
-      note: fields.note?.trim() || null,
-      photo_data: fields.photoData ?? null,
-      photo_name: fields.photoName ?? null,
+      full_name: savedFields.fullName?.trim() || null,
+      title: savedFields.title?.trim() || null,
+      email: savedFields.email?.trim() || null,
+      phone: savedFields.phone?.trim() || null,
+      company: savedFields.company?.trim() || null,
+      address: serializeAddress(savedFields),
+      note: savedFields.note?.trim() || null,
+      photo_data: savedFields.photoData,
+      photo_name: savedFields.photoName,
       updated_at: new Date().toISOString(),
     };
 
@@ -210,7 +219,7 @@ export async function POST(request: NextRequest) {
       .upsert(payload, { onConflict: "user_id" });
     if (error) throw error;
 
-    return NextResponse.json({ fields }, { status: 200 });
+    return NextResponse.json({ fields: savedFields }, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Save failed";
     return NextResponse.json({ error: message }, { status: 500 });

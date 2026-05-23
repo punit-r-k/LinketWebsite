@@ -4,6 +4,7 @@ import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ContactProfile } from "@/lib/profile.store";
 import { sanitizeAttachmentFilename } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -44,6 +45,7 @@ function buildContactProfile(
   const name = record?.full_name?.trim() || fallbackName;
   const { firstName, lastName } = splitName(name);
   const parsedAddress = parseAddress(record?.address ?? null);
+  const photoData = sanitizeVCardPhotoData(record?.photo_data);
   return {
     handle,
     firstName,
@@ -58,7 +60,7 @@ function buildContactProfile(
       : undefined,
     note: record?.note ?? undefined,
     address: parsedAddress ?? undefined,
-    photo: record?.photo_data ? { dataUrl: record.photo_data } : undefined,
+    photo: photoData ? { dataUrl: photoData } : undefined,
     links: links
       .filter((link) => link.is_active ?? true)
       .map((link) => ({
