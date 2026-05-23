@@ -56,15 +56,72 @@ async function hasActivePaidBillingPeriod(userId: string) {
   return execute(supabase);
 }
 
+async function hasAdminAccess(userId: string) {
+  const execute = async (
+    db:
+      | typeof supabaseAdmin
+      | Awaited<ReturnType<typeof createServerSupabaseReadonly>>
+  ) => {
+    const { data, error } = await db
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", userId)
+      .limit(1);
+
+    if (error) {
+      if (isMissingRelationError(error.message)) return false;
+      throw new Error(error.message);
+    }
+
+    return Array.isArray(data) && data.length > 0;
+  };
+
+  if (isSupabaseAdminAvailable) {
+    return execute(supabaseAdmin);
+  }
+
+  const supabase = await createServerSupabaseReadonly();
+  return execute(supabase);
+}
+
+async function hasDatabasePaidAccess(userId: string) {
+  const execute = async (
+    db:
+      | typeof supabaseAdmin
+      | Awaited<ReturnType<typeof createServerSupabaseReadonly>>
+  ) => {
+    const { data, error } = await db.rpc("linket_user_has_paid_access", {
+      target_user_id: userId,
+    });
+
+    if (error) {
+      if (isMissingRelationError(error.message)) return false;
+      throw new Error(error.message);
+    }
+
+    return data === true;
+  };
+
+  if (isSupabaseAdminAvailable) {
+    return execute(supabaseAdmin);
+  }
+
+  const supabase = await createServerSupabaseReadonly();
+  return execute(supabase);
+}
+
 export async function getDashboardPlanAccessForUser(
   userId: string
 ): Promise<DashboardPlanAccess> {
-  const [complimentaryWindow, hasActivePaidPeriod] = await Promise.all([
+  const [isAdmin, complimentaryWindow, hasActivePaidPeriod] = await Promise.all([
+    hasAdminAccess(userId),
     getLinketBundleComplimentaryWindowForUser(userId),
     hasActivePaidBillingPeriod(userId),
   ]);
 
-  return buildDashboardPlanAccess(
-    complimentaryWindow.active || hasActivePaidPeriod
-  );
+  if (isAdmin || complimentaryWindow.active || hasActivePaidPeriod) {
+    return buildDashboardPlanAccess(true);
+  }
+
+  return buildDashboardPlanAccess(await hasDatabasePaidAccess(userId));
 }

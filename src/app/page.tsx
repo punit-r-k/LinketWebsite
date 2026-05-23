@@ -184,109 +184,16 @@ const RECENT_SALES = [
   { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "1 week ago" },
 ] as const;
 
-// Use a stable site URL for mock assets in environments without a public URL.
-const PUBLIC_SITE_URL = getConfiguredSiteOrigin();
-
-// Links rendered inside the public profile preview mock.
-const PUBLIC_PROFILE_PREVIEW_LINKS = [
-  {
-    id: "link-photo",
-    profile_id: "mock-profile",
-    user_id: "mock-user",
-    title: "Photography Website",
-    url: "https://www.peridotkonda.com",
-    order_index: 0,
-    is_active: true,
-    is_override: false,
-    click_count: 2,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: null,
-  },
-  {
-    id: "link-linkedin",
-    profile_id: "mock-profile",
-    user_id: "mock-user",
-    title: "LinkedIn",
-    url: "https://www.linkedin.com/in/punit-kothakonda",
-    order_index: 1,
-    is_active: true,
-    is_override: false,
-    click_count: 0,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: null,
-  },
-  {
-    id: "link-instagram",
-    profile_id: "mock-profile",
-    user_id: "mock-user",
-    title: "Instagram",
-    url: "https://www.instagram.com/peridotkonda",
-    order_index: 2,
-    is_active: true,
-    is_override: false,
-    click_count: 0,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: null,
-  },
-  {
-    id: "link-linket",
-    profile_id: "mock-profile",
-    user_id: "mock-user",
-    title: "Linket Connect",
-    url: "https://www.LinketConnect.com",
-    order_index: 3,
-    is_active: true,
-    is_override: false,
-    click_count: 0,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: null,
-  },
-] as const;
-
-// Full mock profile payload used when live profile data is unavailable.
-const MOCK_PUBLIC_PROFILE: ProfileWithLinks = {
-  id: "mock-profile",
-  user_id: "mock-user",
-  name: "Punit Kothakonda",
-  handle: "punit",
-  headline: "Engineer | Founder | Digital Media",
-  header_image_url: `${PUBLIC_SITE_URL}/mockups/phone.svg`,
-  header_image_updated_at: "2026-01-01T00:00:00.000Z",
-  header_image_original_file_name: "phone.svg",
-  logo_url: `${PUBLIC_SITE_URL}/logos/logo-1.svg`,
-  logo_updated_at: "2026-01-01T00:00:00.000Z",
-  logo_original_file_name: "logo-1.svg",
-  logo_shape: "circle",
-  logo_bg_white: false,
-  theme: "dark",
-  is_active: true,
-  created_at: "2026-01-01T00:00:00.000Z",
-  updated_at: "2026-01-01T00:00:00.000Z",
-  links: [...PUBLIC_PROFILE_PREVIEW_LINKS],
-};
-
-// Mock account record used alongside the mock profile preview.
-const MOCK_PUBLIC_ACCOUNT = {
-  handle: "punit",
-  displayName: "Punit Kothakonda",
-  avatarPath: `${PUBLIC_SITE_URL}/logos/avatar-1.svg`,
-  avatarUpdatedAt: "2026-01-01T00:00:00.000Z",
-};
+const FOUNDER_PUBLIC_HANDLE = "punit";
+const FOUNDER_PUBLIC_PROFILE_URL = "https://www.linketconnect.com/punit";
 
 // -----------------------------------------------------------------------------
-// Data loaders: attempt to pull live profile data, otherwise use mock data.
+// Data loaders: pull the live public profile when it is available.
 // -----------------------------------------------------------------------------
 async function loadPublicProfilePreview() {
-  const handle = "punit";
   try {
-    // Try to fetch a real public profile to keep the preview realistic.
-    const payload = await getActiveProfileForPublicHandle(handle);
-    if (!payload) {
-      return {
-        profile: MOCK_PUBLIC_PROFILE,
-        account: MOCK_PUBLIC_ACCOUNT,
-      };
-    }
+    const payload = await getActiveProfileForPublicHandle(FOUNDER_PUBLIC_HANDLE);
+    if (!payload) return null;
     const { account, profile } = payload;
     const previewAccount: PublicPreviewAccount = {
       handle: profile.handle || account.username,
@@ -296,11 +203,7 @@ async function loadPublicProfilePreview() {
     };
     return { profile, account: previewAccount };
   } catch {
-    // Any failure falls back to stable mock data for consistent rendering.
-    return {
-      profile: MOCK_PUBLIC_PROFILE,
-      account: MOCK_PUBLIC_ACCOUNT,
-    };
+    return null;
   }
 }
 
@@ -342,7 +245,7 @@ export default async function Home() {
   const siteUrl = getConfiguredSiteOrigin();
   const pricing = getPublicPricingSnapshot();
   const faq = buildFaq(pricing);
-  // Load the public profile preview (live if possible, mock if not).
+  // Load the live public profile preview when Supabase is available.
   const publicPreview = await loadPublicProfilePreview();
 
   // FAQ schema powers rich results for search engines.
@@ -429,8 +332,7 @@ export default async function Home() {
           {/* Product explainer + profile preview + pricing + customization + FAQ. */}
           <WhatIsLinketSection />
           <PublicProfilePreviewSection
-            profile={publicPreview.profile}
-            account={publicPreview.account}
+            preview={publicPreview}
           />
           <PricingSection pricing={pricing} />
           <ExperienceSection />
@@ -937,11 +839,12 @@ function ExperienceSection() {
 
 // Public profile preview: show the mobile layout customers will see.
 function PublicProfilePreviewSection({
-  profile,
-  account,
+  preview,
 }: {
-  profile: ProfileWithLinks;
-  account: PublicPreviewAccount;
+  preview: {
+    profile: ProfileWithLinks;
+    account: PublicPreviewAccount;
+  } | null;
 }) {
   return (
     <section
@@ -1011,14 +914,35 @@ function PublicProfilePreviewSection({
           <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-[19.5rem] sm:max-w-[24rem]">
             <div className="relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 shadow-[0_30px_70px_rgba(15,23,42,0.22)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[36px] sm:shadow-[0_45px_90px_rgba(15,23,42,0.25)]">
               <div className="landing-brand-preview h-[420px] w-full overflow-y-auto bg-[#0b1220] sm:h-[520px]">
-                <PublicProfilePreview
-                  profile={profile}
-                  account={account}
-                  handle={account.handle}
-                  layout="stacked"
-                  forceMobile
-                  themeOverride="light"
-                />
+                {preview ? (
+                  <PublicProfilePreview
+                    profile={preview.profile}
+                    account={preview.account}
+                    handle={preview.account.handle}
+                    layout="stacked"
+                    forceMobile
+                    themeOverride="light"
+                  />
+                ) : (
+                  <div className="flex min-h-full flex-col items-center justify-center gap-5 bg-white px-6 text-center text-slate-900">
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
+                        Live public page
+                      </p>
+                      <h3 className="landing-serif text-3xl font-normal tracking-[-0.03em]">
+                        Punit&apos;s profile is live
+                      </h3>
+                      <p className="text-sm leading-7 text-slate-600">
+                        Open the current public page directly.
+                      </p>
+                    </div>
+                    <Button asChild variant="landingPrimary" size="lg">
+                      <Link href={FOUNDER_PUBLIC_PROFILE_URL}>
+                        Open linketconnect.com/punit
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
