@@ -1,4 +1,5 @@
 import type { ContactProfile, Address, Email, Phone } from "@/lib/profile.store";
+import { normalizePublicLinkUrlInput } from "@/lib/public-link-url";
 import { escapeText } from "./escape";
 import { foldLine } from "./fold";
 
@@ -67,10 +68,11 @@ function toPhoto(p: ContactProfile): string | null {
 }
 
 function normalizeUrl(raw: string): string | null {
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed.replace(/^\/+/, "")}`;
+  const normalized = normalizePublicLinkUrlInput(raw, {
+    addDefaultWww: true,
+    emptyValue: "",
+  });
+  return normalized || null;
 }
 
 function normalizePhoneDigits(value: string): string {

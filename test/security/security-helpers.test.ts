@@ -45,7 +45,15 @@ test("unsafe public profile links are rejected", () => {
   assert.throws(() => sanitizePublicLinkUrl("https://"));
   assert.equal(
     sanitizePublicLinkUrl("https://example.com/path?q=1"),
-    "https://example.com/path?q=1"
+    "https://www.example.com/path?q=1"
+  );
+  assert.equal(
+    sanitizePublicLinkUrl("https://www.example.com/path?q=1"),
+    "https://www.example.com/path?q=1"
+  );
+  assert.equal(
+    sanitizePublicLinkUrl("https://shop.example.com/path?q=1"),
+    "https://shop.example.com/path?q=1"
   );
 });
 

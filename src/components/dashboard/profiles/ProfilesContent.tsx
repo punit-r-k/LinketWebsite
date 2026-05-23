@@ -27,6 +27,7 @@ import {
   getSiteHost,
   getSiteOrigin,
 } from "@/lib/site-url";
+import { normalizePublicLinkUrlInput } from "@/lib/public-link-url";
 
 const THEME_OPTIONS: Array<{
   id: ThemeName;
@@ -1373,13 +1374,7 @@ function cryptoRandom() {
 }
 
 function normalizeLinkUrl(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return "https://";
-  if (trimmed.startsWith("https://")) return trimmed;
-  if (trimmed.startsWith("http://")) {
-    return `https://${trimmed.slice("http://".length)}`;
-  }
-  return `https://${trimmed.replace(/^\/+/, "")}`;
+  return normalizePublicLinkUrlInput(value);
 }
 
 function stripLinkScheme(value: string) {

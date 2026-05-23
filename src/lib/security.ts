@@ -1,3 +1,5 @@
+import { addDefaultWwwToParsedUrl } from "@/lib/public-link-url";
+
 const DEV_FALLBACK_SECRET = "devsalt";
 const INTERNAL_SECRET = process.env.INTERNAL_SECRET?.trim() ?? "";
 
@@ -29,7 +31,7 @@ export function sanitizePublicLinkUrl(raw: string) {
   if (normalized === "http://" || normalized === "https://") {
     throw new Error("Incomplete URL");
   }
-  return normalized;
+  return addDefaultWwwToParsedUrl(new URL(normalized)).toString();
 }
 
 export function sanitizeAttachmentFilename(raw: string, fallback: string) {

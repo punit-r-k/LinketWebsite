@@ -44,6 +44,7 @@ import {
   getSiteOrigin,
   toPublicProfileUrl,
 } from "@/lib/site-url";
+import { normalizePublicLinkUrlInput } from "@/lib/public-link-url";
 import {
   isThemeAvailableForPlan,
   sanitizeThemeForPlan,
@@ -366,12 +367,10 @@ function buildSuggestedHandle(name: string, userId: string) {
 }
 
 function normalizeLinkUrlInput(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  if (/^https?:\/\//i.test(trimmed)) {
-    return trimmed.replace(/^http:\/\//i, "https://");
-  }
-  return `https://${trimmed.replace(/^\/+/, "")}`;
+  return normalizePublicLinkUrlInput(value, {
+    addDefaultWww: true,
+    emptyValue: "",
+  });
 }
 
 function normaliseLinkUrl(url: string | null | undefined) {
@@ -889,6 +888,8 @@ export default function DashboardSetupFlow({
   const queuedContactSaveRef = useRef(false);
   const profileRetryAttemptRef = useRef(0);
   const contactRetryAttemptRef = useRef(0);
+  const lastProfileThemeRef = useRef<ThemeName | null>(null);
+  const themeSaveTimerRef = useRef<number | null>(null);
   const startedTrackingRef = useRef(false);
   const lastStepViewRef = useRef<SetupStepId | null>(null);
   const currentStepIndexRef = useRef(currentStepIndex);
@@ -1761,6 +1762,45 @@ export default function DashboardSetupFlow({
       void saveProfileDraft({ quiet: true });
     }, 0);
   }, [loading, previewMode, saveProfileDraft, showLaunchHub, userId]);
+
+  useEffect(() => {
+    const currentTheme = profileDraft?.theme ?? null;
+    if (!currentTheme) {
+      lastProfileThemeRef.current = null;
+      return;
+    }
+    if (lastProfileThemeRef.current === null) {
+      lastProfileThemeRef.current = currentTheme;
+      return;
+    }
+    if (currentTheme === lastProfileThemeRef.current) return;
+
+    lastProfileThemeRef.current = currentTheme;
+    if (themeSaveTimerRef.current) {
+      window.clearTimeout(themeSaveTimerRef.current);
+    }
+    if (previewMode || loading || showLaunchHub || !userId) return;
+
+    themeSaveTimerRef.current = window.setTimeout(() => {
+      themeSaveTimerRef.current = null;
+      requestProfileSaveSoon();
+    }, 500);
+  }, [
+    loading,
+    previewMode,
+    profileDraft?.theme,
+    requestProfileSaveSoon,
+    showLaunchHub,
+    userId,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      if (themeSaveTimerRef.current) {
+        window.clearTimeout(themeSaveTimerRef.current);
+      }
+    };
+  }, []);
 
   const requestContactSaveSoon = useCallback(() => {
     if (typeof window === "undefined") return;
