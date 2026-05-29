@@ -813,7 +813,7 @@ export function Navbar() {
   };
 
   const mobilePanelClass = cn(
-    "fixed inset-x-3 top-[5.25rem] z-50 rounded-[20px] border p-3.5 shadow-[var(--shadow-grounded-lg)] sm:inset-x-4 sm:top-24 sm:p-5",
+    "fixed inset-x-0 bottom-0 top-auto z-50 rounded-t-[24px] border-x-0 border-b-0 border-t p-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-[0_-18px_42px_-28px_rgba(15,23,42,0.45)] sm:inset-x-4 sm:bottom-4 sm:rounded-[24px] sm:border sm:p-5",
     isDashboard
       ? "border-border/60 bg-background/95"
       : "border-slate-200 bg-white text-[#0b1220]"
@@ -831,7 +831,7 @@ export function Navbar() {
       href="/#pricing"
       aria-label="Buy Linket"
       onClick={() => setMobileOpen(false)}
-      className="inline-flex min-h-11 w-full items-center justify-between rounded-full bg-[linear-gradient(135deg,#f8d058_0%,#f8b878_58%,#68d8e0_100%)] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_18px_40px_rgba(88,192,224,0.2)] transition-[filter,box-shadow] duration-200 hover:brightness-[0.98]"
+      className="inline-flex min-h-12 w-full items-center justify-between rounded-2xl bg-[linear-gradient(135deg,#f8d058_0%,#f8b878_58%,#68d8e0_100%)] px-5 py-3 text-sm font-semibold text-[#0b1220] shadow-[0_18px_40px_rgba(88,192,224,0.2)] transition-[filter,box-shadow] duration-200 hover:brightness-[0.98]"
     >
       <span>Buy Linket</span>
       <ArrowUpRight className="h-4 w-4" aria-hidden />
@@ -842,7 +842,7 @@ export function Navbar() {
     <Link
       href="/dashboard/linkets"
       onClick={() => setMobileOpen(false)}
-      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[background-color,border-color] duration-200 hover:border-slate-300 hover:bg-slate-50"
+      className="inline-flex min-h-12 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[background-color,border-color] duration-200 hover:border-slate-300 hover:bg-slate-50"
       aria-label={`Go to ${brand.name} dashboard`}
     >
       <span className="inline-flex items-center gap-3">
@@ -864,7 +864,7 @@ export function Navbar() {
     <Link
       href="/auth?view=signin"
       onClick={() => setMobileOpen(false)}
-      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[background-color,border-color] duration-200 hover:border-slate-300 hover:bg-slate-50"
+      className="inline-flex min-h-12 w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[background-color,border-color] duration-200 hover:border-slate-300 hover:bg-slate-50"
       aria-label="Sign in"
     >
       <span>Sign in</span>
@@ -1334,7 +1334,7 @@ export function Navbar() {
             <button
               type="button"
               className={cn(
-                "inline-flex items-center justify-center rounded-full border p-2 transition lg:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
+                "inline-flex h-11 w-11 items-center justify-center rounded-full border transition lg:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
                 isDashboard
                   ? "border-border/60 bg-background/70 text-foreground"
                   : overlayMode
@@ -1363,14 +1363,17 @@ export function Navbar() {
           />
           <div className={mobilePanelClass}>
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-slate-200" aria-hidden />
-            <nav aria-label="Mobile primary" className="relative z-10 grid gap-3">
+            <nav
+              aria-label="Mobile primary"
+              className="relative z-10 grid max-h-[min(82svh,42rem)] gap-3 overflow-y-auto overscroll-contain pb-1"
+            >
               <div className="px-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
                   Menu
                 </p>
               </div>
               {isLandingPage ? (
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid gap-2">
                   {LANDING_LINKS.map((link, index) => {
                     const isActive = activeLandingId === link.id;
                     return (
@@ -1379,24 +1382,27 @@ export function Navbar() {
                         type="button"
                         onClick={() => handleDropdownSelect(link.id)}
                         className={cn(
-                          "group flex min-h-[4.75rem] flex-col justify-between rounded-[20px] border px-3.5 py-3 text-left transition-[border-color,background-color,box-shadow] duration-200",
+                          "group flex min-h-14 items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-[border-color,background-color,box-shadow] duration-200",
                           isActive
                             ? "border-[#20586e]/50 bg-[#eef8fb] text-[#20586e] shadow-[var(--shadow-grounded)]"
                             : "border-slate-200 bg-white text-[#0b1220] shadow-[var(--shadow-grounded)] hover:border-[#dbe6ee] hover:bg-slate-50"
                         )}
                         aria-label={`Go to ${link.label}`}
                       >
-                        <span
-                          className={cn(
-                            "text-[11px] font-semibold uppercase tracking-[0.18em]",
-                            isActive ? "text-[#b45309]/70" : "text-slate-400"
-                          )}
-                        >
-                          {String(index + 1).padStart(2, "0")}
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span
+                            className={cn(
+                              "text-[11px] font-semibold uppercase tracking-[0.16em]",
+                              isActive ? "text-[#b45309]/70" : "text-slate-400"
+                            )}
+                          >
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          <span className="truncate text-[15px] font-semibold leading-snug">
+                            {link.label}
+                          </span>
                         </span>
-                        <span className="text-[15px] font-semibold leading-snug">
-                          {link.label}
-                        </span>
+                        <ArrowUpRight className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
                       </button>
                     );
                   })}
@@ -1404,8 +1410,8 @@ export function Navbar() {
               ) : null}
               <div
                 className={cn(
-                  "grid gap-2.5",
-                  showBuyLinketCta ? "grid-cols-2" : "grid-cols-1"
+                  "sticky bottom-0 -mx-1 grid gap-2 rounded-2xl bg-white/95 p-1 pt-2 shadow-[0_-14px_28px_-28px_rgba(15,23,42,0.4)]",
+                  showBuyLinketCta ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"
                 )}
               >
                 {showBuyLinketCta ? (

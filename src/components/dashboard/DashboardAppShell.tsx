@@ -189,7 +189,7 @@ export default function DashboardAppShell({
           />
           <div
             className={cn(
-              "dashboard-sidebar-panel absolute inset-x-0 bottom-0 max-h-[80vh] w-full transform rounded-t-3xl border-t border-border/60 bg-background shadow-2xl transition-transform duration-500 ease-in-out will-change-transform",
+              "dashboard-sidebar-panel absolute inset-x-0 bottom-0 max-h-[min(82svh,44rem)] w-full transform rounded-t-3xl border-t border-border/60 bg-background pb-[env(safe-area-inset-bottom)] shadow-2xl transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] will-change-transform",
               sidebarOpen ? "translate-y-0" : "translate-y-full"
             )}
           >
@@ -200,7 +200,7 @@ export default function DashboardAppShell({
               <button
                 type="button"
                 onClick={() => setSidebarOpen(false)}
-                className="absolute right-4 rounded-full p-2 text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
+                className="absolute right-4 inline-flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]"
                 aria-label="Close navigation"
               >
                 <X className="h-4 w-4" aria-hidden />
@@ -209,7 +209,7 @@ export default function DashboardAppShell({
             <Sidebar
               onboardingState={effectiveOnboardingState}
               variant="mobile"
-              className="h-full w-full border-r-0 bg-transparent pb-4"
+              className="h-full w-full border-r-0 bg-transparent pb-[calc(env(safe-area-inset-bottom)+1rem)]"
               onNavigate={() => setSidebarOpen(false)}
             />
           </div>

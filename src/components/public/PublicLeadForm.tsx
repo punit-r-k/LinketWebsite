@@ -105,7 +105,7 @@ export default function PublicLeadForm({
       : "";
   const buttonClassName = cn(
     variant === "profile"
-      ? "w-fit rounded-full px-5 py-1.5 text-sm shadow-[0_10px_24px_-18px_var(--ring)]"
+      ? "w-full rounded-full px-5 py-3 text-sm shadow-[0_10px_24px_-18px_var(--ring)] sm:w-fit sm:py-1.5"
       : "rounded-2xl"
   );
   const submitButtonClassName = cn(
@@ -226,6 +226,16 @@ export default function PublicLeadForm({
     ).length;
     return Math.round((answered / fields.length) * 100);
   }, [answers, form]);
+  const submitStatusMessage =
+    submitPhase === "uploading"
+      ? "Uploading selected files before sending your response."
+      : submitPhase === "submitting"
+      ? "Sending your response now."
+      : null;
+  const submitShellClassName = cn(
+    "pt-2",
+    variant === "profile" && "mobile-sticky-action public-lead-form-submit-shell"
+  );
 
   if (!loading && (disabled || !hasFields)) {
     return null;
@@ -501,7 +511,7 @@ export default function PublicLeadForm({
           <select
             id={field.id}
             className={cn(
-              "h-10 w-full rounded-md border border-border bg-background px-3 text-sm",
+              "min-h-11 w-full rounded-md border border-border bg-background px-3 text-sm",
               inputClassName
             )}
             aria-invalid={hasError || undefined}
@@ -543,6 +553,7 @@ export default function PublicLeadForm({
                 }
                 placeholder={field.otherLabel || "Other"}
                 className={inputClassName}
+                enterKeyHint="next"
                 disabled={disabled || submitting}
               />
             </div>
@@ -555,7 +566,10 @@ export default function PublicLeadForm({
       return (
         <div className="space-y-2">
           {orderedOptions.map((option) => (
-            <label key={option.id} className="flex items-center gap-2 text-sm">
+            <label
+              key={option.id}
+              className="flex min-h-11 items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0"
+            >
               <input
                 type="radio"
                 name={field.id}
@@ -568,7 +582,7 @@ export default function PublicLeadForm({
             </label>
           ))}
           {field.allowOther ? (
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex min-h-11 items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
               <input
                 type="radio"
                 name={field.id}
@@ -587,6 +601,7 @@ export default function PublicLeadForm({
                     setAnswer(field.id, `${OTHER_PREFIX}${event.target.value}`)
                   }
                   className={cn("h-9", inputClassName)}
+                  enterKeyHint="next"
                   disabled={disabled || submitting}
                 />
               ) : null}
@@ -608,7 +623,10 @@ export default function PublicLeadForm({
       return (
         <div className="space-y-2">
           {orderedOptions.map((option) => (
-            <label key={option.id} className="flex items-center gap-2 text-sm">
+            <label
+              key={option.id}
+              className="flex min-h-11 items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0"
+            >
               <input
                 type="checkbox"
                 value={option.id}
@@ -625,7 +643,7 @@ export default function PublicLeadForm({
             </label>
           ))}
           {field.allowOther ? (
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex min-h-11 items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
               <input
                 type="checkbox"
                 value={OTHER_VALUE}
@@ -653,6 +671,7 @@ export default function PublicLeadForm({
                     ]);
                   }}
                   className={cn("h-9", inputClassName)}
+                  enterKeyHint="next"
                   disabled={disabled || submitting}
                 />
               ) : null}
@@ -673,7 +692,10 @@ export default function PublicLeadForm({
         {Array.from({ length: field.scale }, (_, index) => {
           const score = index + 1;
           return (
-            <label key={score} className="flex items-center gap-1 text-sm">
+            <label
+              key={score}
+              className="flex min-h-11 items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0"
+            >
               <input
                 type="radio"
                 name={field.id}
@@ -700,7 +722,10 @@ export default function PublicLeadForm({
       <div className="space-y-2">
         <div className="flex flex-wrap gap-2">
           {items.map((score) => (
-            <label key={score} className="flex items-center gap-1 text-sm">
+            <label
+              key={score}
+              className="flex min-h-11 items-center gap-2 rounded-xl border border-border/60 bg-background/70 px-3 py-2 text-sm sm:min-h-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0"
+            >
               <input
                 type="radio"
                 name={field.id}
@@ -725,36 +750,35 @@ export default function PublicLeadForm({
     const value = (getAnswer(field.id) as Record<string, unknown>) || {};
     const rows = field.rows;
     const columns = field.columns;
+    const updateGridCell = (
+      rowId: string,
+      columnId: string,
+      checked: boolean
+    ) => {
+      const rowValue = value?.[rowId];
+      if (field.type === "multiple_choice_grid") {
+        setAnswer(field.id, { ...value, [rowId]: columnId });
+        return;
+      }
+      const nextRow = Array.isArray(rowValue) ? rowValue.slice() : [];
+      const next = checked
+        ? [...nextRow, columnId]
+        : nextRow.filter((item) => item !== columnId);
+      setAnswer(field.id, { ...value, [rowId]: next });
+    };
+
     return (
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr>
-              <th
-                className="border-b border-border/60 p-2 text-left"
-                scope="col"
-                aria-hidden="true"
-              />
-              {columns.map((column) => (
-                <th
-                  key={column.id}
-                  className="border-b border-border/60 p-2 text-left font-medium"
-                  scope="col"
-                >
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr key={row.id}>
-                <th
-                  className="border-b border-border/60 p-2 text-left font-medium"
-                  scope="row"
-                >
-                  {row.label}
-                </th>
+      <div className="space-y-3">
+        <div className="space-y-3 sm:hidden">
+          {rows.map((row) => (
+            <fieldset
+              key={row.id}
+              className="rounded-2xl border border-border/60 bg-background/70 p-3"
+            >
+              <legend className="px-1 text-sm font-semibold">
+                {row.label}
+              </legend>
+              <div className="mt-2 grid gap-2">
                 {columns.map((column) => {
                   const rowValue = value?.[row.id];
                   const checked =
@@ -762,32 +786,83 @@ export default function PublicLeadForm({
                       ? rowValue === column.id
                       : Array.isArray(rowValue) && rowValue.includes(column.id);
                   return (
-                    <td key={column.id} className="border-b border-border/60 p-2 text-center">
+                    <label
+                      key={column.id}
+                      className="flex min-h-11 items-center gap-3 rounded-xl border border-border/60 bg-card/80 px-3 py-2 text-sm"
+                    >
                       <input
                         type={field.type === "multiple_choice_grid" ? "radio" : "checkbox"}
                         name={`${field.id}-${row.id}`}
                         value={column.id}
                         checked={checked}
-                        onChange={(event) => {
-                          if (field.type === "multiple_choice_grid") {
-                            setAnswer(field.id, { ...value, [row.id]: column.id });
-                            return;
-                          }
-                          const nextRow = Array.isArray(rowValue) ? rowValue.slice() : [];
-                          const next = event.target.checked
-                            ? [...nextRow, column.id]
-                            : nextRow.filter((item) => item !== column.id);
-                          setAnswer(field.id, { ...value, [row.id]: next });
-                        }}
+                        onChange={(event) =>
+                          updateGridCell(row.id, column.id, event.target.checked)
+                        }
                         disabled={disabled || submitting}
                       />
-                    </td>
+                      <span>{column.label}</span>
+                    </label>
                   );
                 })}
+              </div>
+            </fieldset>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto sm:block">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                <th
+                  className="border-b border-border/60 p-2 text-left"
+                  scope="col"
+                  aria-hidden="true"
+                />
+                {columns.map((column) => (
+                  <th
+                    key={column.id}
+                    className="border-b border-border/60 p-2 text-left font-medium"
+                    scope="col"
+                  >
+                    {column.label}
+                  </th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.id}>
+                  <th
+                    className="border-b border-border/60 p-2 text-left font-medium"
+                    scope="row"
+                  >
+                    {row.label}
+                  </th>
+                  {columns.map((column) => {
+                    const rowValue = value?.[row.id];
+                    const checked =
+                      field.type === "multiple_choice_grid"
+                        ? rowValue === column.id
+                        : Array.isArray(rowValue) && rowValue.includes(column.id);
+                    return (
+                      <td key={column.id} className="border-b border-border/60 p-2 text-center">
+                        <input
+                          type={field.type === "multiple_choice_grid" ? "radio" : "checkbox"}
+                          name={`${field.id}-${row.id}`}
+                          value={column.id}
+                          checked={checked}
+                          onChange={(event) =>
+                            updateGridCell(row.id, column.id, event.target.checked)
+                          }
+                          disabled={disabled || submitting}
+                        />
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     );
   }
@@ -866,8 +941,10 @@ export default function PublicLeadForm({
                 isPhoneField(field) ? formatPhoneNumber(nextValue) : nextValue
               );
             }}
-            type={isPhoneField(field) ? "tel" : isEmailField(field) ? "email" : "text"}
-            inputMode={isPhoneField(field) ? "tel" : undefined}
+            type={getShortTextInputType(field)}
+            inputMode={getShortTextInputMode(field)}
+            autoComplete={getShortTextAutoComplete(field)}
+            enterKeyHint="next"
             placeholder={field.helpText || undefined}
             className={inputClassName}
             aria-invalid={hasError || undefined}
@@ -883,6 +960,7 @@ export default function PublicLeadForm({
             onChange={(event) => setAnswer(field.id, event.target.value)}
             placeholder={field.helpText || undefined}
             className={textareaClassName}
+            enterKeyHint="done"
             aria-invalid={hasError || undefined}
             aria-describedby={describedBy}
             aria-required={field.required || undefined}
@@ -908,6 +986,7 @@ export default function PublicLeadForm({
             onChange={(event) => setAnswer(field.id, event.target.value)}
             placeholder={field.helpText || undefined}
             className={inputClassName}
+            enterKeyHint="next"
             aria-invalid={hasError || undefined}
             aria-describedby={describedBy}
             aria-required={field.required || undefined}
@@ -923,6 +1002,8 @@ export default function PublicLeadForm({
             className={inputClassName}
             min={field.mode === "duration" ? 0 : undefined}
             step={field.mode === "time_of_day" ? field.stepMinutes * 60 : field.stepMinutes}
+            inputMode={field.mode === "duration" ? "numeric" : undefined}
+            enterKeyHint="next"
             placeholder={
               field.helpText ||
               (field.mode === "duration" ? "Minutes" : undefined)
@@ -1112,7 +1193,7 @@ export default function PublicLeadForm({
             <div key={field.id}>{renderField(field)}</div>
           ))}
 
-          <div className="pt-2">
+          <div className={submitShellClassName}>
             <Button
               type="submit"
               disabled={disabled || submitting}
@@ -1125,15 +1206,13 @@ export default function PublicLeadForm({
                 ? "Submitting..."
                 : "Submit"}
             </Button>
-            {submitPhase !== "idle" ? (
+            {submitStatusMessage ? (
               <p
                 className="mt-2 text-xs text-muted-foreground"
                 role="status"
                 aria-live="polite"
               >
-                {submitPhase === "uploading"
-                  ? "Uploading selected files before sending your response."
-                  : "Sending your response now."}
+                {submitStatusMessage}
               </p>
             ) : null}
           </div>
@@ -1239,6 +1318,42 @@ function isEmailField(field: LeadFormField) {
   if (field.type !== "short_text") return false;
   if (field.validation?.rule === "email") return true;
   return field.label.toLowerCase().includes("email");
+}
+
+function isUrlField(field: LeadFormField) {
+  if (field.type !== "short_text") return false;
+  const label = field.label.toLowerCase();
+  return label.includes("website") || label.includes("url") || label.includes("link");
+}
+
+function getShortTextInputType(field: LeadFormField) {
+  if (isPhoneField(field)) return "tel";
+  if (isEmailField(field)) return "email";
+  if (isUrlField(field)) return "url";
+  return "text";
+}
+
+function getShortTextInputMode(field: LeadFormField) {
+  if (isPhoneField(field)) return "tel";
+  if (isEmailField(field)) return "email";
+  if (isUrlField(field)) return "url";
+  return undefined;
+}
+
+function getShortTextAutoComplete(field: LeadFormField) {
+  if (field.type !== "short_text") return undefined;
+  const label = field.label.toLowerCase();
+  if (isEmailField(field)) return "email";
+  if (isPhoneField(field)) return "tel";
+  if (label.includes("first") && label.includes("name")) return "given-name";
+  if (label.includes("last") && label.includes("name")) return "family-name";
+  if (label.includes("full name") || label === "name") return "name";
+  if (label.includes("company") || label.includes("organization")) {
+    return "organization";
+  }
+  if (label.includes("title") || label.includes("role")) return "organization-title";
+  if (isUrlField(field)) return "url";
+  return undefined;
 }
 
 function formatPhoneNumber(input: string) {

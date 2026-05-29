@@ -1041,7 +1041,7 @@ export default function VCardContent({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="dashboard-mobile-sticky-actions flex flex-wrap items-center justify-between gap-2">
           <span
             className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}${status === "saving" ? " dashboard-saving-indicator" : ""}`}
           >
@@ -1086,6 +1086,9 @@ function Field({
     onChange(id, nextValue);
   }
   const fieldId = idPrefix ? `${idPrefix}-${id}` : id;
+  const autoComplete = getVCardAutoComplete(id);
+  const inputMode = type === "tel" ? "tel" : type === "email" ? "email" : undefined;
+  const enterKeyHint = component === "textarea" || id === "note" ? "done" : "next";
 
   return (
     <div className="space-y-2">
@@ -1100,6 +1103,8 @@ function Field({
           onBlur={onBlur}
           required={required}
           disabled={disabled}
+          autoComplete={autoComplete}
+          enterKeyHint={enterKeyHint}
         />
       ) : (
         <Input
@@ -1111,10 +1116,41 @@ function Field({
           onBlur={onBlur}
           required={required}
           disabled={disabled}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          enterKeyHint={enterKeyHint}
         />
       )}
     </div>
   );
+}
+
+function getVCardAutoComplete(id: keyof VCardFields) {
+  switch (id) {
+    case "fullName":
+      return "name";
+    case "title":
+      return "organization-title";
+    case "email":
+      return "email";
+    case "phone":
+      return "tel";
+    case "company":
+      return "organization";
+    case "addressLine1":
+    case "addressLine2":
+      return "street-address";
+    case "addressCity":
+      return "address-level2";
+    case "addressRegion":
+      return "address-level1";
+    case "addressPostal":
+      return "postal-code";
+    case "addressCountry":
+      return "country-name";
+    default:
+      return undefined;
+  }
 }
 
 function areVCardFieldsEqual(a: VCardFields, b: VCardFields) {

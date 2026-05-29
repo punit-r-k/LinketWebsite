@@ -1210,7 +1210,7 @@ export default function PublicProfileEditorPage() {
 
   return (
     <div className="space-y-6" onBlurCapture={handleBlurCapture}>
-      <div className="md:hidden">
+      <div className="dashboard-mobile-section-switcher md:hidden">
         <Select
           value={activeSection}
           onValueChange={(value) => setActiveSection(value as SectionId)}
@@ -1235,7 +1235,7 @@ export default function PublicProfileEditorPage() {
         </Select>
       </div>
       <div
-        className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm shadow-[var(--shadow-grounded)] sm:flex-row sm:items-center sm:justify-between"
+        className="dashboard-mobile-status-strip flex flex-col gap-2 rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm shadow-[var(--shadow-grounded)] sm:flex-row sm:items-center sm:justify-between"
         aria-live="polite"
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -1634,7 +1634,11 @@ function EditorPanel({
     );
   }
   if (activeSection === "preview") {
-    return <div className="flex justify-center">{previewNode}</div>;
+    return (
+      <div className="dashboard-mobile-preview-shell flex justify-center">
+        {previewNode}
+      </div>
+    );
   }
   if (activeSection === "profile") {
     return (
@@ -1746,6 +1750,8 @@ function EditorPanel({
               value={draft?.name ?? ""}
               onChange={(event) => onProfileChange({ name: event.target.value })}
               disabled={loading || !userId}
+              autoComplete="name"
+              enterKeyHint="next"
               className="h-10 text-sm sm:h-9"
             />
           </div>
@@ -1762,6 +1768,7 @@ function EditorPanel({
               }
               disabled={loading || !userId}
               placeholder="I do things | other things & more things..."
+              enterKeyHint="next"
               className="min-h-20 text-sm sm:min-h-16"
             />
           </div>
@@ -1784,6 +1791,9 @@ function EditorPanel({
                 }}
                 className={`h-10 pl-40 text-sm sm:h-9 sm:pl-44${handleError ? " border-destructive focus-visible:ring-destructive" : ""}`}
                 disabled={loading || !userId}
+                autoComplete="username"
+                inputMode="url"
+                enterKeyHint="done"
               />
             </div>
             {handleError ? (
@@ -1828,10 +1838,11 @@ function EditorPanel({
               value={linkSearchQuery}
               onChange={(event) => setLinkSearchQuery(event.target.value)}
               placeholder="Search by label or URL"
+              enterKeyHint="search"
               className="h-9 text-sm"
             />
             <select
-              className="h-9 rounded-md border border-border/60 bg-background px-3 text-sm"
+              className="min-h-11 rounded-md border border-border/60 bg-background px-3 text-sm sm:min-h-9"
               value={linkSortMode}
               onChange={(event) =>
                 setLinkSortMode(event.target.value as "manual" | "label" | "clicks")
@@ -2010,12 +2021,15 @@ function EditorLinkItem({
               onUpdateLink(link.id, { label: event.target.value })
             }
             onKeyDown={handleCommitOnEnter}
+            autoComplete="off"
+            enterKeyHint="next"
             className="h-9 text-left text-sm"
           />
           <LinkUrlInput
             value={link.url}
             placeholder="www.website.com"
             className="h-9 text-sm"
+            enterKeyHint="done"
             onValueChange={(url) => onUpdateLink(link.id, { url })}
             onKeyDown={handleCommitOnEnter}
           />
@@ -2484,6 +2498,9 @@ function LinkUrlInput({
       <Input
         {...inputProps}
         value={inputValue}
+        type="url"
+        inputMode="url"
+        autoComplete="url"
         className={cn("pl-20 text-left", className)}
         onFocus={(event) => {
           setIsFocused(true);
@@ -2653,6 +2670,8 @@ function LinkModal({
                 value={link.label}
                 placeholder="New Link"
                 className="text-left"
+                autoComplete="off"
+                enterKeyHint="next"
                 onChange={(event) =>
                   onChange({ ...link, label: event.target.value })
                 }
@@ -2664,6 +2683,7 @@ function LinkModal({
                 id="link-url"
                 value={link.url}
                 placeholder="www.website.com"
+                enterKeyHint={mode === "add" ? "done" : "next"}
                 onValueChange={(url) => onChange({ ...link, url })}
                 onKeyDown={(event) => {
                   if (mode !== "add" || event.key !== "Enter" || event.nativeEvent.isComposing) {

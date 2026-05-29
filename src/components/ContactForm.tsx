@@ -65,6 +65,7 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const mounted = React.useRef(false);
   const [photo, setPhoto] = React.useState<ContactProfile["photo"]>(initial.photo ?? null);
+  const statusMessage = saving ? "Saving..." : savedAt ? "Saved" : "Changes auto-save";
 
   const buildPayload = React.useCallback(async (values: FormValues): Promise<ContactProfile | null> => {
     const parsed = Schema.safeParse(values);
@@ -124,30 +125,30 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
   }
 
   return (
-    <form className="grid gap-6 md:grid-cols-2" noValidate>
+    <form className="grid gap-6 pb-20 md:grid-cols-2 md:pb-0" noValidate>
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label>First name</Label>
-            <Input {...register("firstName")} />
+            <Input {...register("firstName")} autoComplete="given-name" enterKeyHint="next" />
           </div>
           <div>
             <Label>Last name</Label>
-            <Input {...register("lastName")} />
+            <Input {...register("lastName")} autoComplete="family-name" enterKeyHint="next" />
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div><Label>Middle</Label><Input {...register("middleName")} /></div>
-          <div><Label>Prefix</Label><Input {...register("prefix")} /></div>
-          <div><Label>Suffix</Label><Input {...register("suffix")} /></div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div><Label>Middle</Label><Input {...register("middleName")} autoComplete="additional-name" enterKeyHint="next" /></div>
+          <div><Label>Prefix</Label><Input {...register("prefix")} enterKeyHint="next" /></div>
+          <div><Label>Suffix</Label><Input {...register("suffix")} enterKeyHint="next" /></div>
         </div>
-        <div><Label>Organization</Label><Input {...register("org")} /></div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><Label>Title</Label><Input {...register("title")} /></div>
-          <div><Label>Role</Label><Input {...register("role")} /></div>
+        <div><Label>Organization</Label><Input {...register("org")} autoComplete="organization" enterKeyHint="next" /></div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div><Label>Title</Label><Input {...register("title")} autoComplete="organization-title" enterKeyHint="next" /></div>
+          <div><Label>Role</Label><Input {...register("role")} enterKeyHint="next" /></div>
         </div>
         <div className="space-y-1">
-          <Label>Website</Label><Input {...register("website")} placeholder="https://example.com" />
+          <Label>Website</Label><Input {...register("website")} type="url" inputMode="url" autoComplete="url" enterKeyHint="next" placeholder="https://example.com" />
         </div>
         <div className="space-y-1">
           <Label>Photo</Label>
@@ -160,17 +161,25 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">Emails</legend>
           {emails.fields.map((f, idx) => (
-            <div className="grid grid-cols-[1fr_7rem_5rem_2rem] items-center gap-2" key={f.id}>
-              <Input {...register(`emails.${idx}.value` as const)} placeholder="you@work.com" />
-              <select className="rounded-md border px-2 py-2" {...register(`emails.${idx}.type` as const)}>
+            <div className="grid gap-2 rounded-2xl border border-border/60 bg-card p-2 sm:grid-cols-[minmax(0,1fr)_7rem_5rem_auto] sm:items-center" key={f.id}>
+              <Input
+                {...register(`emails.${idx}.value` as const)}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                enterKeyHint="next"
+                placeholder="you@work.com"
+              />
+              <select className="min-h-11 rounded-md border px-2 py-2 sm:min-h-9" {...register(`emails.${idx}.type` as const)}>
                 <option value="work">work</option>
                 <option value="personal">personal</option>
               </select>
-              <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" {...register(`emails.${idx}.pref` as const)} /> Pref</label>
+              <label className="inline-flex min-h-11 items-center gap-2 text-xs sm:min-h-0"><input type="checkbox" {...register(`emails.${idx}.pref` as const)} /> Pref</label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                className="min-h-11 sm:min-h-9"
                 onClick={async () => {
                   if (
                     !(await confirmRemove({
@@ -195,17 +204,25 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">Phones</legend>
           {phones.fields.map((f, idx) => (
-            <div className="grid grid-cols-[1fr_7rem_5rem_2rem] items-center gap-2" key={f.id}>
-              <Input {...register(`phones.${idx}.value` as const)} type="tel" inputMode="tel" placeholder="+15551234567" />
-              <select className="rounded-md border px-2 py-2" {...register(`phones.${idx}.type` as const)}>
+            <div className="grid gap-2 rounded-2xl border border-border/60 bg-card p-2 sm:grid-cols-[minmax(0,1fr)_7rem_5rem_auto] sm:items-center" key={f.id}>
+              <Input
+                {...register(`phones.${idx}.value` as const)}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                enterKeyHint="next"
+                placeholder="+15551234567"
+              />
+              <select className="min-h-11 rounded-md border px-2 py-2 sm:min-h-9" {...register(`phones.${idx}.type` as const)}>
                 <option value="cell">cell</option>
                 <option value="work">work</option>
               </select>
-              <label className="inline-flex items-center gap-1 text-xs"><input type="checkbox" {...register(`phones.${idx}.pref` as const)} /> Pref</label>
+              <label className="inline-flex min-h-11 items-center gap-2 text-xs sm:min-h-0"><input type="checkbox" {...register(`phones.${idx}.pref` as const)} /> Pref</label>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
+                className="min-h-11 sm:min-h-9"
                 onClick={async () => {
                   if (
                     !(await confirmRemove({
@@ -229,27 +246,32 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
 
         <fieldset className="space-y-2">
           <legend className="text-sm font-medium">Work Address</legend>
-          <div className="grid grid-cols-2 gap-2">
-            <div><Label>PO Box</Label><Input {...register("address.pobox")} /></div>
-            <div><Label>Ext</Label><Input {...register("address.ext")} /></div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div><Label>PO Box</Label><Input {...register("address.pobox")} autoComplete="off" enterKeyHint="next" /></div>
+            <div><Label>Ext</Label><Input {...register("address.ext")} enterKeyHint="next" /></div>
           </div>
-          <div><Label>Street</Label><Input {...register("address.street")} /></div>
-          <div className="grid grid-cols-3 gap-2">
-            <div><Label>City</Label><Input {...register("address.city")} /></div>
-            <div><Label>Region</Label><Input {...register("address.region")} /></div>
-            <div><Label>Postcode</Label><Input {...register("address.postcode")} /></div>
+          <div><Label>Street</Label><Input {...register("address.street")} autoComplete="street-address" enterKeyHint="next" /></div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div><Label>City</Label><Input {...register("address.city")} autoComplete="address-level2" enterKeyHint="next" /></div>
+            <div><Label>Region</Label><Input {...register("address.region")} autoComplete="address-level1" enterKeyHint="next" /></div>
+            <div><Label>Postcode</Label><Input {...register("address.postcode")} autoComplete="postal-code" enterKeyHint="next" /></div>
           </div>
-          <div><Label>Country</Label><Input {...register("address.country")} /></div>
+          <div><Label>Country</Label><Input {...register("address.country")} autoComplete="country-name" enterKeyHint="next" /></div>
         </fieldset>
 
         <div className="space-y-1">
           <Label>Note</Label>
-          <Input {...register("note")} placeholder="Short note" />
+          <Input {...register("note")} enterKeyHint="done" placeholder="Short note" />
         </div>
 
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <span>{saving ? "Saving..." : savedAt ? "Saved" : ""}</span>
+        <div className="hidden items-center gap-3 text-xs text-muted-foreground md:flex">
+          <span>{statusMessage}</span>
         </div>
+      </div>
+      <div className="mobile-bottom-action-bar md:hidden" aria-live="polite">
+        <span className="text-xs font-medium text-muted-foreground">
+          {statusMessage}
+        </span>
       </div>
     </form>
   );

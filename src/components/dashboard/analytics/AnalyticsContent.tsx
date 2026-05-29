@@ -654,7 +654,7 @@ export default function AnalyticsContent() {
             Scans, captured contacts, conversion, and the links people choose.
           </p>
         </div>
-        <div className="dashboard-analytics-range flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
+        <div className="dashboard-analytics-range flex w-full max-w-full flex-nowrap items-center gap-1 overflow-x-auto rounded-full p-1 sm:w-auto sm:overflow-visible">
           {RANGES.map((option) => (
             <Button
               key={option.value}
@@ -1319,19 +1319,20 @@ function FreeAnalyticsView({
             contact capture, conversion, and link-performance analytics.
           </p>
         </div>
-        <div className="flex w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:w-auto sm:flex-wrap sm:overflow-visible sm:pb-0">
+        <div className="dashboard-analytics-range flex w-full max-w-full flex-nowrap items-center gap-1 overflow-x-auto rounded-full p-1 sm:w-auto sm:overflow-visible">
           {RANGES.map((option) => (
             <Button
               key={option.value}
               variant="outline"
               size="sm"
               className={cn(
-                "rounded-full transition",
+                "rounded-full dashboard-analytics-range-button transition",
                 range === option.value
                   ? "border-accent bg-accent text-accent-foreground"
                   : "border-border/60 text-muted-foreground",
               )}
               onClick={() => onRangeChange(option.value)}
+              data-selected={range === option.value ? "true" : "false"}
             >
               {option.label}
             </Button>

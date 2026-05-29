@@ -3212,3 +3212,101 @@ body.theme-forest .dashboard-forest-pin {
   background: var(--card);
   box-shadow: none;
 }
+
+@media (max-width: 640px) {
+  #dashboard-theme-scope .dashboard-scroll-area {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  #dashboard-theme-scope .dashboard-sidebar-panel {
+    max-height: min(82svh, 44rem);
+    border-radius: 1.5rem 1.5rem 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -22px 48px -34px rgba(15, 23, 42, 0.55);
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-status-strip {
+    position: sticky;
+    top: calc(var(--dashboard-nav-height, 64px) + 4.25rem);
+    z-index: 20;
+    margin-inline: -0.25rem;
+    border-color: var(--mobile-readable-border, var(--border));
+    background: color-mix(in srgb, var(--card) 96%, var(--background) 4%);
+    box-shadow: 0 12px 30px -26px rgba(15, 23, 42, 0.45);
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-section-switcher {
+    position: sticky;
+    top: calc(var(--dashboard-nav-height, 64px) + 0.5rem);
+    z-index: 21;
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-preview-shell {
+    max-height: calc(100svh - var(--dashboard-nav-height, 64px) - 5.5rem);
+    overflow: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    overscroll-behavior: contain;
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-preview-shell .public-profile-preview {
+    max-width: min(100%, 340px);
+  }
+
+  #dashboard-theme-scope .dashboard-mobile-sticky-actions {
+    position: sticky;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    z-index: 25;
+    border-radius: 1rem;
+    border: 1px solid var(--mobile-readable-border, var(--border));
+    background: color-mix(in srgb, var(--card) 96%, var(--background) 4%);
+    padding: 0.75rem;
+    box-shadow: 0 -18px 36px -30px rgba(15, 23, 42, 0.5);
+  }
+}
+
+/* Connected analytics controls: one slim rail instead of a blocky backing panel. */
+#dashboard-theme-scope .dashboard-analytics-range {
+  align-self: flex-start;
+  border: 1px solid color-mix(in srgb, var(--premium-border) 86%, var(--foreground) 14%);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--card) 76%, var(--background) 24%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--background) 62%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-analytics-range-button,
+#dashboard-theme-scope .dashboard-analytics-export-button {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+#dashboard-theme-scope .dashboard-analytics-range-button[data-selected="false"]:hover,
+#dashboard-theme-scope .dashboard-analytics-export-button:hover {
+  border-color: transparent !important;
+  background: color-mix(in srgb, var(--foreground) 7%, transparent) !important;
+}
+
+#dashboard-theme-scope .dashboard-analytics-range-button[data-selected="true"] {
+  border-color: color-mix(in srgb, var(--color-button-selected-border) 74%, transparent) !important;
+  background: var(--color-button-selected-bg) !important;
+  color: var(--color-button-selected-fg) !important;
+  box-shadow: 0 8px 18px -14px rgba(15, 23, 42, 0.42) !important;
+}
+
+#dashboard-theme-scope .dashboard-analytics-export-button {
+  color: var(--foreground);
+}
+
+@media (max-width: 640px) {
+  #dashboard-theme-scope .dashboard-analytics-range {
+    width: 100%;
+    gap: 0.125rem;
+    border-radius: 1.5rem;
+    padding: 0.25rem;
+  }
+
+  #dashboard-theme-scope .dashboard-analytics-range-button,
+  #dashboard-theme-scope .dashboard-analytics-export-button {
+    min-height: 2.5rem;
+  }
+}
