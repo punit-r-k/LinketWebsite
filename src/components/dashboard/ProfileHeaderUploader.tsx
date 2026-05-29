@@ -391,7 +391,14 @@ export default function ProfileHeaderUploader({
   const handleRemove = useCallback(async () => {
     if (loading) return;
     if (!latestHeaderUrl && !sourceUrl) return;
-    if (!confirmRemove("Are you sure you want to remove this header image?")) {
+    if (
+      !(await confirmRemove({
+        title: "Remove header image?",
+        description:
+          "The profile header will return to the theme background after this image is removed.",
+        confirmLabel: "Remove header",
+      }))
+    ) {
       return;
     }
     setError(null);

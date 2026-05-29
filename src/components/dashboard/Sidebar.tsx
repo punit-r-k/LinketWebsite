@@ -166,7 +166,7 @@ export default function Sidebar({
     <aside
       data-tour="dashboard-sidebar"
       className={cn(
-        "dashboard-sidebar h-full shrink-0 border-r bg-sidebar/70 backdrop-blur",
+        "dashboard-sidebar h-full shrink-0 border-r bg-sidebar",
         isCollapsed ? "w-[72px]" : "w-[200px]",
         className
       )}

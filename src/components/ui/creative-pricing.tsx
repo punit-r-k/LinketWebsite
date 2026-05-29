@@ -47,15 +47,15 @@ function CreativePricing({
       <div className="text-center">
         <span
           className={cn(
-            "inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] sm:px-4 sm:text-xs sm:tracking-[0.35em]",
+            "inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] shadow-[0_1px_0_rgba(15,23,42,0.04)] sm:px-4 sm:text-xs",
             businessTheme
               ? "border border-[#bfe7f2] text-[#34afcf]"
-              : "border border-[#f8ddba] text-[#e3a553]"
+              : "border border-slate-200 text-slate-600"
           )}
         >
           {tag}
         </span>
-        <h2 className="landing-serif mt-4 text-[1.9rem] font-normal tracking-[-0.03em] text-[#0f172a] sm:mt-5 sm:text-4xl">
+        <h2 className="mt-4 text-[1.9rem] font-semibold tracking-tight text-[#0f172a] sm:mt-5 sm:text-4xl">
           {title}
         </h2>
         <p className="mx-auto mt-3 max-w-[34rem] text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
@@ -76,12 +76,12 @@ function CreativePricing({
           <div
             key={tier.name}
             className={cn(
-              "relative flex flex-col gap-4 rounded-[24px] border bg-white/90 p-4 shadow-[0_18px_48px_rgba(15,23,42,0.1)] backdrop-blur sm:gap-6 sm:rounded-[32px] sm:p-6 sm:shadow-[0_25px_90px_rgba(15,23,42,0.12)]",
-              businessTheme ? "border-[#c8ebf3]" : "border-[#fde7cc]",
+              "relative flex flex-col gap-4 rounded-[20px] border bg-white p-4 shadow-[var(--shadow-grounded)] sm:gap-6 sm:p-6",
+              businessTheme ? "border-[#c8ebf3]" : "border-slate-200",
               tier.popular &&
                 (businessTheme
                   ? "border-[#58c0e0] bg-gradient-to-b from-white to-[#eefbfd]"
-                  : "border-[#f8b878] bg-gradient-to-b from-white to-[#fff6ec]")
+                  : "border-[#20586e] bg-gradient-to-b from-white to-[#f8fafc]")
             )}
           >
             {tier.popular && (
@@ -89,8 +89,8 @@ function CreativePricing({
                 className={cn(
                   "pointer-events-none absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold shadow-lg sm:px-3 sm:text-xs",
                   businessTheme
-                    ? "border-[#bfe7f2] bg-gradient-to-r from-[#68d8e0] to-[#58c0e0] text-[#0f172a] shadow-[0_10px_25px_rgba(88,192,224,0.35)]"
-                    : "border-[#f8ddba] bg-gradient-to-r from-[#f8d058] via-[#f8b878] to-[#f8b080] text-[#0f172a] shadow-[0_10px_25px_rgba(248,184,120,0.35)]"
+                    ? "border-[#bfe7f2] bg-gradient-to-r from-[#68d8e0] to-[#58c0e0] text-[#0f172a] shadow-[0_10px_25px_rgba(88,192,224,0.28)]"
+                    : "border-[#20586e] bg-[#0f172a] text-white shadow-[0_12px_26px_-18px_rgba(15,23,42,0.7)]"
                 )}
               >
                 <Star className="h-3.5 w-3.5" aria-hidden />
@@ -98,7 +98,7 @@ function CreativePricing({
               </div>
             )}
             <div className="flex items-start gap-3 pt-1 sm:items-center sm:gap-4 sm:pt-2">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f8d058] via-[#f8b878] to-[#58c0e0] text-[#0f172a]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-[#eef8fb] text-[#0f172a]">
                 {tier.icon}
               </div>
               <div className="min-w-0">
@@ -131,7 +131,7 @@ function CreativePricing({
                     "flex items-start gap-3 rounded-2xl border px-3 py-2 text-[#0f172a]",
                     businessTheme
                       ? "border-[#d3edf3] bg-[#f2fbfd]"
-                      : "border-[#fde7cc] bg-[#fff8f0]"
+                      : "border-slate-200 bg-[#f8fafc]"
                   )}
                 >
                   <Check
@@ -157,14 +157,14 @@ function CreativePricing({
                   asChild
                   variant={businessTheme ? "custom" : "landingPrimary"}
                   className={cn(
-                    "w-full rounded-2xl text-sm font-semibold transition hover:-translate-y-0.5 sm:text-base",
+                    "w-full rounded-2xl text-sm font-semibold transition-[filter,box-shadow] duration-200 hover:brightness-[0.98] sm:text-base",
                     businessTheme
                       ? "border border-[#c8ebf3] bg-white text-[#0f172a]"
                       : "",
                     tier.popular &&
                       (businessTheme
                         ? "border-transparent bg-gradient-to-r from-[#68d8e0] to-[#58c0e0] text-[#0f172a] shadow-[0_18px_45px_rgba(88,192,224,0.35)]"
-                        : "shadow-[0_18px_45px_rgba(248,184,120,0.35)]")
+                        : "shadow-[0_16px_32px_-24px_rgba(15,23,42,0.7)]")
                   )}
                 >
                   <Link
@@ -186,7 +186,7 @@ function CreativePricing({
                     asChild
                     variant={businessTheme ? "custom" : "landingSecondary"}
                     className={cn(
-                      "w-full rounded-2xl text-sm font-semibold transition hover:-translate-y-0.5 sm:text-base",
+                      "w-full rounded-2xl text-sm font-semibold transition-[filter,border-color] duration-200 hover:brightness-[0.98] sm:text-base",
                       businessTheme
                         ? "border border-[#c8ebf3] bg-white text-[#34afcf]"
                         : ""

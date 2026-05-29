@@ -63,6 +63,16 @@
   --color-button-selected-bg: var(--color-button-primary-bg);
   --color-button-selected-fg: var(--color-button-primary-fg);
   --color-button-selected-border: var(--color-button-primary-border);
+  --border-strong: color-mix(in srgb, var(--button-subtle-foreground) 58%, var(--card) 42%);
+  --input-strong: color-mix(in srgb, var(--button-subtle-foreground) 64%, var(--card) 36%);
+}
+
+.theme-dark,
+.theme-midnight,
+.theme-forest,
+.theme-gilded {
+  --border-strong: color-mix(in srgb, var(--button-subtle-foreground) 38%, var(--card) 62%);
+  --input-strong: color-mix(in srgb, var(--button-subtle-foreground) 46%, var(--card) 54%);
 }
 
 /* Light theme token mapping */

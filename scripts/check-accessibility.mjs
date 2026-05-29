@@ -40,9 +40,21 @@ function run() {
     .filter((audit) => audit && typeof audit.score === "number" && audit.score < 1);
 
   if (failingAudits.length > 0) {
-    console.warn("[a11y] Lighthouse has failing accessibility audits:");
-    for (const audit of failingAudits.slice(0, 10)) {
-      console.warn(`- ${audit.id}: ${audit.title}`);
+    const seriousFailingAudits = failingAudits.filter((audit) => {
+      const impact = audit?.details?.debugData?.impact;
+      return impact === "serious" || impact === "critical";
+    });
+    if (seriousFailingAudits.length > 0) {
+      failed = true;
+      console.error("[a11y] Lighthouse has serious accessibility failures:");
+      for (const audit of seriousFailingAudits.slice(0, 10)) {
+        console.error(`- ${audit.id}: ${audit.title}`);
+      }
+    } else {
+      console.warn("[a11y] Lighthouse has non-blocking accessibility warnings:");
+      for (const audit of failingAudits.slice(0, 10)) {
+        console.warn(`- ${audit.id}: ${audit.title}`);
+      }
     }
   }
 

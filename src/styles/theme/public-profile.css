@@ -1393,3 +1393,68 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent),
     0 14px 28px -24px rgba(15, 23, 42, 0.5);
 }
+
+/* Sturdier public profiles: simpler backdrops, solid content cards, and calmer interactions. */
+.public-profile-shell[class*="theme-"] {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--background) 96%, var(--card) 4%) 0%,
+    var(--background) 100%
+  );
+}
+
+.public-profile-shell .public-profile-backdrop-orb-left,
+.public-profile-shell .public-profile-backdrop-orb-right {
+  display: none;
+}
+
+.public-profile-shell .public-profile-backdrop-grid {
+  --public-profile-grid-opacity: 0.06;
+}
+
+.public-profile-shell .public-profile-card,
+.public-profile-shell .public-profile-link,
+.public-profile-shell #public-lead-form,
+.public-profile-preview {
+  border-color: color-mix(in srgb, var(--border) 86%, var(--foreground) 14%);
+  background: color-mix(in srgb, var(--card) 96%, var(--background) 4%);
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.05), 0 16px 34px -28px rgba(15, 23, 42, 0.5);
+  backdrop-filter: none;
+}
+
+.public-profile-shell .public-profile-card {
+  border-radius: 1.25rem;
+}
+
+.public-profile-preview {
+  border-radius: 1.25rem !important;
+}
+
+.public-profile-shell .public-profile-link {
+  border-radius: 1rem;
+}
+
+.public-profile-shell .public-profile-link:hover {
+  transform: none;
+  border-color: color-mix(in srgb, var(--ring) 38%, var(--border) 62%);
+  box-shadow: 0 1px 1px rgba(15, 23, 42, 0.06), 0 18px 36px -30px rgba(15, 23, 42, 0.55);
+}
+
+.public-profile-shell .public-profile-hero-body {
+  background: color-mix(in srgb, var(--card) 94%, var(--background) 6%);
+  backdrop-filter: none;
+}
+
+.public-profile-shell .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary),
+.public-profile-shell .public-profile-link-action {
+  box-shadow: none;
+}
+
+.public-profile-shell .public-profile-actions [data-slot=button]:not(.public-profile-cta-primary):hover,
+.public-profile-shell .public-profile-cta-primary:hover {
+  transform: none;
+}
+
+.public-profile-shell .public-profile-cta-primary {
+  box-shadow: 0 16px 34px -26px rgba(15, 23, 42, 0.62);
+}

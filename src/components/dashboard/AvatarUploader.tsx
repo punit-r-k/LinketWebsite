@@ -400,7 +400,14 @@ export default function AvatarUploader({
   const handleRemove = useCallback(async () => {
     if (loading) return;
     if (!latestAvatarUrl && !sourceUrl) return;
-    if (!confirmRemove("Are you sure you want to remove this profile photo?")) {
+    if (
+      !(await confirmRemove({
+        title: "Remove profile photo?",
+        description:
+          "Your public profile and contact card preview will stop showing this photo.",
+        confirmLabel: "Remove photo",
+      }))
+    ) {
       return;
     }
     setError(null);

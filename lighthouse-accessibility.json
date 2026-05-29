@@ -570,7 +570,7 @@
       "id": "label-content-name-mismatch",
       "title": "Elements with visible text labels do not have matching accessible names.",
       "description": "Visible text labels that do not match the accessible name can result in a confusing experience for screen reader users. [Learn more about accessible names](https://dequeuniversity.com/rules/axe/4.11/label-content-name-mismatch).",
-      "score": 0,
+      "score": 1,
       "scoreDisplayMode": "binary",
       "details": {
         "type": "table",
@@ -585,27 +585,7 @@
             "label": "Failing Elements"
           }
         ],
-        "items": [
-          {
-            "node": {
-              "type": "node",
-              "lhId": "1-0-A",
-              "path": "1,HTML,1,BODY,2,DIV,0,HEADER,0,NAV,1,DIV,0,A",
-              "selector": "header.top-0 > nav.mx-auto > div.flex > a.inline-flex",
-              "boundingRect": {
-                "top": 18,
-                "bottom": 58,
-                "left": 157,
-                "right": 240,
-                "width": 82,
-                "height": 40
-              },
-              "snippet": "<a class=\"inline-flex items-center justify-center whitespace-nowrap ring-offset-back…\" aria-label=\"Log in to Linket Connect\" href=\"/auth?view=signin\">",
-              "nodeLabel": "SIGN IN",
-              "explanation": "Fix any of the following:\n  Text inside the element is not included in the accessible name"
-            }
-          }
-        ],
+        "items": [],
         "debugData": {
           "type": "debugdata",
           "impact": "serious",

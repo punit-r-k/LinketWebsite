@@ -63,7 +63,6 @@ import {
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
-import { confirmRemove } from "@/lib/confirm-remove";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
 import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
@@ -911,7 +910,6 @@ export default function PublicProfileEditorPage() {
   }, []);
 
   const removeLink = useCallback((linkId: string) => {
-    if (!confirmRemove("Are you sure you want to remove this link?")) return;
     let removedLink: LinkItem | undefined;
     let removedIndex = -1;
     setDraft((prev) => {
@@ -930,7 +928,7 @@ export default function PublicProfileEditorPage() {
     if (!removedLink || removedIndex === -1) return;
     toast({
       title: "Link removed",
-      description: "Undo",
+      description: "Undo within a few seconds if this was accidental.",
       actionLabel: "Undo",
       onAction: () => {
         const link = removedLink;
@@ -1114,6 +1112,7 @@ export default function PublicProfileEditorPage() {
     vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
   );
 
+  const hasUnsavedChanges = Boolean(isDirty || vcardSnapshot.isDirty);
   const saveState = saveError || vcardSnapshot.status === "error"
     ? "failed"
     : saving || vcardSnapshot.status === "saving"
@@ -1134,7 +1133,7 @@ export default function PublicProfileEditorPage() {
           "border-foreground/20 bg-foreground/10 text-foreground dashboard-saving-indicator",
       };
     }
-    if (isDirty) {
+    if (hasUnsavedChanges) {
       return {
         label: "Unsaved changes",
         className: "border-amber-500/40 bg-amber-500/10 text-amber-700",
@@ -1145,14 +1144,16 @@ export default function PublicProfileEditorPage() {
       className:
         "border-emerald-500/55 bg-emerald-500/20 text-emerald-900 shadow-sm shadow-emerald-900/10 dark:border-emerald-400/45 dark:bg-emerald-400/18 dark:text-emerald-100",
     };
-  }, [isDirty, saveState, sidebarSavePulse]);
+  }, [hasUnsavedChanges, saveState, sidebarSavePulse]);
+  const liveStatusLabel = draft?.active ? "Live profile" : "Draft profile";
+  const saveDetail = saveError || vcardSnapshot.error || null;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     (window as Window & {
       __linketProfileEditorState?: { hasUnsavedChanges: boolean; saveFailed: boolean };
     }).__linketProfileEditorState = {
-      hasUnsavedChanges: Boolean(isDirty || vcardSnapshot.isDirty),
+      hasUnsavedChanges,
       saveFailed: Boolean(saveError || vcardSnapshot.status === "error"),
     };
     return () => {
@@ -1160,7 +1161,7 @@ export default function PublicProfileEditorPage() {
         __linketProfileEditorState?: { hasUnsavedChanges: boolean; saveFailed: boolean };
       }).__linketProfileEditorState;
     };
-  }, [isDirty, vcardSnapshot.isDirty, saveError, vcardSnapshot.status]);
+  }, [hasUnsavedChanges, saveError, vcardSnapshot.status]);
 
   useEffect(() => {
     writeLocalStorage(ACTIVE_PROFILE_SECTION_STORAGE_KEY, activeSection);
@@ -1206,7 +1207,6 @@ export default function PublicProfileEditorPage() {
   const profileDisplayName = draft?.name || "John Doe";
   const profileTagline =
     draft?.headline || "I do things | other things & more";
-  const isPublished = true;
 
   return (
     <div className="space-y-6" onBlurCapture={handleBlurCapture}>
@@ -1217,11 +1217,11 @@ export default function PublicProfileEditorPage() {
         >
           <SelectTrigger
             data-tour="profile-section-select"
-            className="relative mx-auto h-11 w-full max-w-[260px] justify-center rounded-full border-border/30 bg-gradient-to-r from-background/60 via-card/80 to-background/60 px-12 text-center text-sm font-semibold text-foreground shadow-[0_18px_40px_-26px_rgba(15,23,42,0.65)] ring-1 ring-border/30 backdrop-blur *:data-[slot=select-value]:justify-center [&_svg]:absolute [&_svg]:right-5"
+            className="relative mx-auto h-11 w-full max-w-[260px] justify-center rounded-full border-border/70 bg-card px-12 text-center text-sm font-semibold text-foreground shadow-[var(--shadow-grounded)] ring-1 ring-border/30 *:data-[slot=select-value]:justify-center [&_svg]:absolute [&_svg]:right-5"
           >
             <SelectValue placeholder="Section" />
           </SelectTrigger>
-          <SelectContent className="rounded-2xl border-border/40 bg-card/95 p-1 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.6)] backdrop-blur">
+          <SelectContent className="rounded-2xl border-border/70 bg-card p-1 shadow-[var(--shadow-grounded)]">
             {MOBILE_PROFILE_SECTIONS.map((section) => (
               <SelectItem
                 key={section.id}
@@ -1233,6 +1233,36 @@ export default function PublicProfileEditorPage() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+      <div
+        className="flex flex-col gap-2 rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm shadow-[var(--shadow-grounded)] sm:flex-row sm:items-center sm:justify-between"
+        aria-live="polite"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-foreground">
+            {liveStatusLabel}
+          </span>
+          <span
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+              saveStatusMeta.className
+            )}
+          >
+            {saveStatusMeta.label}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Not yet"}
+          </span>
+        </div>
+        {saveDetail ? (
+          <p className="text-xs text-destructive sm:max-w-md sm:text-right">
+            {saveDetail}
+          </p>
+        ) : (
+          <p className="text-xs text-muted-foreground sm:text-right">
+            Preview and public page use this same saved profile data.
+          </p>
+        )}
       </div>
         {/*
           On phones, the preview lives in its own "Preview" section.
@@ -1384,27 +1414,6 @@ export default function PublicProfileEditorPage() {
           {activeSection !== "preview" ? (
           <div className="hidden justify-end self-start pt-0 lg:flex">
             <div className="flex w-full max-w-[340px] flex-col items-center gap-3">
-              <div
-                className="w-full text-center text-xs text-muted-foreground"
-                aria-live="polite"
-              >
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                <span className="font-medium text-foreground">
-                  {isPublished ? "Published" : "Draft"}
-                </span>
-                <span
-                  className={cn(
-                    "rounded-full border px-2 py-1 text-[11px] font-semibold",
-                    saveStatusMeta.className
-                  )}
-                >
-                  {saveStatusMeta.label}
-                </span>
-                <span>
-                  Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Just now"}
-                </span>
-                </div>
-              </div>
               <div className="w-full max-w-[340px] origin-top-left scale-[1]">
               <PhonePreviewCard
                 profile={{ name: profileDisplayName, tagline: profileTagline }}

@@ -35,7 +35,7 @@ export function FeatureSteps({
   return (
     <div className={cn("p-4 sm:p-6 md:p-12", className)}>
       <div className="mx-auto w-full max-w-7xl">
-        <h2 className="landing-serif mb-8 text-center text-2xl font-normal tracking-[-0.03em] sm:mb-10 sm:text-3xl md:text-4xl lg:text-5xl">
+        <h2 className="mb-8 text-center text-2xl font-semibold tracking-tight sm:mb-10 sm:text-3xl md:text-4xl lg:text-5xl">
           {title}
         </h2>
 
@@ -52,18 +52,18 @@ export function FeatureSteps({
                     aria-pressed={isActive}
                     onClick={() => setCurrentFeature(index)}
                     className={cn(
-                      "group flex w-full items-start gap-4 rounded-[28px] border px-4 py-4 text-left transition-[transform,border-color,background-color,box-shadow] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none sm:gap-5 sm:px-5",
+                      "group flex w-full items-start gap-4 rounded-[20px] border px-4 py-4 text-left transition-[border-color,background-color,box-shadow] duration-200 ease-out sm:gap-5 sm:px-5",
                       isActive
-                        ? "border-[#ffb166]/70 bg-[#fff8f1] shadow-[0_18px_36px_rgba(15,23,42,0.08)]"
-                        : "border-transparent bg-transparent hover:border-[#f3dece] hover:bg-white/70 active:scale-[0.985]"
+                        ? "border-slate-300 bg-white shadow-[var(--shadow-grounded)]"
+                        : "border-transparent bg-transparent hover:border-slate-200 hover:bg-white"
                     )}
                   >
                     <span
                       className={cn(
                         "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border text-sm font-semibold transition-[transform,background-color,border-color,color] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none",
                         isActive
-                          ? "border-[#ffb166] bg-[#ffeddc] text-[#9a3412]"
-                          : "border-slate-200 bg-white text-slate-500 group-hover:-translate-y-0.5"
+                          ? "border-[#58c0e0] bg-[#eef8fb] text-[#20586e]"
+                          : "border-slate-200 bg-white text-slate-500 group-hover:border-slate-300"
                       )}
                     >
                       {index + 1}
@@ -87,7 +87,7 @@ export function FeatureSteps({
 
           <div
             className={cn(
-              "order-1 relative overflow-hidden rounded-[28px] border border-slate-200 bg-[#111317] shadow-[0_24px_60px_rgba(15,23,42,0.18)] md:order-2",
+              "order-1 relative overflow-hidden rounded-[20px] border border-slate-200 bg-[#111317] shadow-[var(--shadow-grounded-lg)] md:order-2",
               "h-[240px] sm:h-[300px] md:h-[360px] lg:h-[420px]",
               imageHeight
             )}
@@ -120,7 +120,7 @@ export function FeatureSteps({
               );
             })}
             <div className="absolute inset-x-0 bottom-0 z-10 p-4 sm:p-6">
-              <div className="max-w-sm rounded-[24px] border border-white/15 bg-slate-950/65 px-4 py-3 text-white shadow-[0_20px_45px_rgba(2,6,23,0.38)] backdrop-blur">
+              <div className="max-w-sm rounded-[16px] border border-white/15 bg-slate-950/90 px-4 py-3 text-white shadow-[0_20px_45px_rgba(2,6,23,0.38)]">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-white/55">
                   {activeFeature.step}
                 </p>

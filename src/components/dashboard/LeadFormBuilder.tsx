@@ -10,7 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from "lucide-react";
 
 import { useDashboardPlanAccess } from "@/components/dashboard/DashboardSessionContext";
 import { Button } from "@/components/ui/button";
@@ -462,7 +462,7 @@ export default function LeadFormBuilder({
     const fieldToRestore = removedField as LeadFormField;
     toast({
       title: "Field removed",
-      description: "Undo",
+      description: "Undo within a few seconds if this was accidental.",
       actionLabel: "Undo",
       onAction: () => {
         setForm((current) => {
@@ -502,6 +502,22 @@ export default function LeadFormBuilder({
     next.splice(targetIndex, 0, moved);
     updateForm({ fields: next });
   }, [form, updateForm]);
+
+  const moveField = useCallback(
+    (fieldId: string, direction: "up" | "down") => {
+      if (!form) return;
+      const currentIndex = form.fields.findIndex((field) => field.id === fieldId);
+      if (currentIndex === -1) return;
+      const nextIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+      if (nextIndex < 0 || nextIndex >= form.fields.length) return;
+      const nextFields = [...form.fields];
+      const [moved] = nextFields.splice(currentIndex, 1);
+      nextFields.splice(nextIndex, 0, moved);
+      updateForm({ fields: nextFields });
+      setSelectedFieldId(fieldId);
+    },
+    [form, updateForm]
+  );
 
   useEffect(() => {
     onRegisterReorder?.(reorderFields);
@@ -858,7 +874,7 @@ export default function LeadFormBuilder({
                 </p>
               ) : null}
               {form.fields.length ? (
-                form.fields.map((field) => (
+                form.fields.map((field, index) => (
                   <div
                     key={field.id}
                     className={cn(
@@ -894,6 +910,32 @@ export default function LeadFormBuilder({
                         size="icon"
                         onClick={(event) => {
                           event.stopPropagation();
+                          moveField(field.id, "up");
+                        }}
+                        disabled={index === 0}
+                        aria-label={`Move ${field.label || "field"} up`}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          moveField(field.id, "down");
+                        }}
+                        disabled={index === form.fields.length - 1}
+                        aria-label={`Move ${field.label || "field"} down`}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={(event) => {
+                          event.stopPropagation();
                           deleteField(field.id);
                         }}
                         aria-label="Delete field"
@@ -914,7 +956,7 @@ export default function LeadFormBuilder({
                   isExternalPreviewLayout && "xl:mt-auto"
                 )}
               >
-                Preview order follows this list. Drag to reorder, then use the editor panel for the active question.
+                Preview order follows this list. Use the arrow buttons or drag to reorder, then edit the active question in the panel.
               </div>
             </CardContent>
             </Card>
@@ -1510,8 +1552,17 @@ function OptionsEditor({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  if (!confirmRemove("Are you sure you want to remove this option?")) return;
+                onClick={async () => {
+                  if (
+                    !(await confirmRemove({
+                      title: "Remove option?",
+                      description:
+                        "This answer choice will be removed from the selected question.",
+                      confirmLabel: "Remove option",
+                    }))
+                  ) {
+                    return;
+                  }
                   updateOptions(options.filter((item) => item.id !== option.id));
                 }}
                 aria-label="Remove option"
@@ -1598,8 +1649,17 @@ function GridEditor({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                if (!confirmRemove("Are you sure you want to remove this row?")) return;
+              onClick={async () => {
+                if (
+                  !(await confirmRemove({
+                    title: "Remove row?",
+                    description:
+                      "This grid row will be removed from the selected question.",
+                    confirmLabel: "Remove row",
+                  }))
+                ) {
+                  return;
+                }
                 updateRows(rows.filter((item) => item.id !== row.id));
               }}
               aria-label="Remove row"
@@ -1636,8 +1696,17 @@ function GridEditor({
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => {
-                if (!confirmRemove("Are you sure you want to remove this column?")) return;
+              onClick={async () => {
+                if (
+                  !(await confirmRemove({
+                    title: "Remove column?",
+                    description:
+                      "This grid column will be removed from the selected question.",
+                    confirmLabel: "Remove column",
+                  }))
+                ) {
+                  return;
+                }
                 updateColumns(columns.filter((item) => item.id !== col.id));
               }}
               aria-label="Remove column"
@@ -1849,7 +1918,7 @@ function getValidationOptions(type: LeadFormFieldType) {
 
 function LockedFeatureOverlay({ upgradeHref }: { upgradeHref: string }) {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/78 p-4 text-center backdrop-blur-[2px]">
+    <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/95 p-4 text-center">
       <div className="max-w-sm space-y-3 rounded-2xl border border-primary/20 bg-card/95 p-4 shadow-lg">
         <div className="text-sm font-semibold text-foreground">
           Paid unlocks lead form customization

@@ -247,7 +247,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
       );
     }
     return (
-      <div className="grid w-full max-w-full grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-1.5 py-1.5 shadow-sm backdrop-blur sm:grid-cols-[2rem_minmax(0,1fr)_2rem] sm:gap-2 sm:px-2">
+      <div className="grid w-full max-w-full grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] items-center gap-1.5 rounded-xl border border-border/70 bg-card px-1.5 py-1.5 shadow-sm sm:grid-cols-[2rem_minmax(0,1fr)_2rem] sm:gap-2 sm:px-2">
         <Button
           type="button"
           variant="ghost"
@@ -291,7 +291,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   }
 
   return (
-    <div className="grid w-full max-w-full grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] items-center gap-1.5 rounded-xl border border-border/60 bg-card/80 px-1.5 py-1.5 shadow-sm backdrop-blur sm:grid-cols-[2rem_minmax(0,1fr)_2rem] sm:gap-2 sm:px-2">
+    <div className="grid w-full max-w-full grid-cols-[1.75rem_minmax(0,1fr)_1.75rem] items-center gap-1.5 rounded-xl border border-border/70 bg-card px-1.5 py-1.5 shadow-sm sm:grid-cols-[2rem_minmax(0,1fr)_2rem] sm:gap-2 sm:px-2">
       <Button
         type="button"
         variant="ghost"

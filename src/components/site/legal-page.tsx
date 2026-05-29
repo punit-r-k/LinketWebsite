@@ -81,12 +81,12 @@ export function LegalPage({
   children,
 }: LegalPageProps) {
   return (
-    <section className="landing-alt-font relative overflow-hidden bg-[#fff7ed] text-slate-900">
+    <section className="landing-page-shell landing-alt-font relative overflow-hidden text-slate-900">
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(circle at top left, rgba(248,184,120,0.2), transparent 42%), radial-gradient(circle at top right, rgba(88,192,224,0.16), transparent 38%), linear-gradient(180deg, #fff7ed 0%, #fffbf6 54%, #ffffff 100%)",
+            "linear-gradient(180deg, #f5f7fa 0%, #ffffff 100%)",
         }}
         aria-hidden
       />
@@ -106,7 +106,7 @@ export function LegalPage({
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_290px]">
           <div className="space-y-8">
             <header className="landing-fade-up space-y-6">
-              <div className="inline-flex items-center gap-3 rounded-full border border-[#f8ddba] bg-white/88 px-3 py-2 shadow-[0_14px_34px_-28px_rgba(248,184,120,0.5)] backdrop-blur">
+              <div className="landing-chip inline-flex items-center gap-3 px-3 py-2">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1d2334] shadow-[0_10px_26px_-18px_rgba(15,23,42,0.7)]">
                   <Image
                     src={brand.logomark}
@@ -126,16 +126,14 @@ export function LegalPage({
 
               <div className="space-y-4">
                 <h1 className="max-w-4xl text-[2.2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.08]">
-                  <span className="landing-serif font-normal tracking-[-0.04em]">
-                    {title}
-                  </span>
+                  {title}
                 </h1>
                 <p className="max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
                   {subtitle}
                 </p>
               </div>
 
-              <div className="rounded-[30px] border border-[#f2dfc6] bg-white/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] backdrop-blur sm:p-7">
+              <div className="landing-surface p-6 sm:p-7">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#e3a553]">
                   What This Page Covers
                 </p>
@@ -165,7 +163,7 @@ export function LegalPage({
                   {heroStats.map((stat) => (
                     <article
                       key={stat.label}
-                      className="rounded-[26px] border border-white/80 bg-white/86 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-transform duration-300 ease-out hover:-translate-y-1"
+                      className="landing-card p-5"
                     >
                       <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
                         {stat.label}
@@ -186,7 +184,7 @@ export function LegalPage({
           </div>
 
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-[28px] border border-[#f2dfc6] bg-white/88 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.07)] backdrop-blur">
+            <div className="landing-card p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">
                 Legal Pages
               </p>
@@ -198,10 +196,10 @@ export function LegalPage({
                       key={link.href}
                       href={link.href}
                       className={cn(
-                        "flex items-center justify-between rounded-2xl px-3 py-3 text-sm transition-[background-color,color,transform] duration-200 ease-out",
+                        "flex items-center justify-between rounded-2xl px-3 py-3 text-sm transition-[background-color,color] duration-200 ease-out",
                         active
                           ? "bg-[#1f2537] text-white shadow-[0_14px_30px_-24px_rgba(15,23,42,0.7)]"
-                          : "text-slate-700 hover:bg-[#fff7ed] hover:text-slate-900 hover:translate-x-0.5"
+                          : "text-slate-700 hover:bg-[#f8fafc] hover:text-slate-900"
                       )}
                       aria-current={active ? "page" : undefined}
                     >
@@ -219,7 +217,7 @@ export function LegalPage({
               </nav>
             </div>
 
-            <div className="rounded-[28px] border border-[#f2dfc6] bg-white/88 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.07)] backdrop-blur">
+            <div className="landing-card p-5">
               <p className="text-xs font-semibold uppercase tracking-[0.26em] text-slate-500">
                 Quick Facts
               </p>
@@ -277,7 +275,7 @@ export function LegalSection({
     <section
       id={id}
       className={cn(
-        "rounded-[30px] border border-white/80 bg-white/90 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:p-8",
+        "landing-surface p-6 sm:p-8",
         className
       )}
     >
@@ -312,7 +310,7 @@ export function LegalCardGrid({
       {items.map((item) => (
         <article
           key={`${item.title}-${item.eyebrow ?? ""}`}
-          className="rounded-[24px] border border-slate-200 bg-[#fffdfa] p-5 shadow-[0_16px_36px_rgba(15,23,42,0.05)] transition-transform duration-300 ease-out hover:-translate-y-1"
+          className="landing-card p-5"
         >
           {item.eyebrow ? (
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
@@ -337,7 +335,7 @@ export function LegalBulletList({ items, className }: LegalListProps) {
       {items.map((item) => (
         <li
           key={item}
-          className="rounded-2xl border border-slate-100 bg-[#fff7ed]/72 px-4 py-3 text-sm leading-6 text-slate-700"
+          className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm leading-6 text-slate-700"
         >
           {item}
         </li>
@@ -374,7 +372,7 @@ export function LegalCallout({
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-[#f2dfc6] bg-white/88 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.07)]",
+        "landing-card p-5",
         className
       )}
     >

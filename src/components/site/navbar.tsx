@@ -751,10 +751,10 @@ export function Navbar() {
     isDashboard && dashboardAuthResolved && !user;
 
   const headerClassName = cn(
-    "top-0 z-50 w-full border-b transition-[background-color,border-color,color,backdrop-filter] duration-200 ease-out",
+    "top-0 z-50 w-full border-b transition-[background-color,border-color,color] duration-200 ease-out",
     isDashboard || isMarketingPage
-      ? "sticky border-border/60 bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-      : "fixed border-white/70 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60",
+      ? "sticky border-border/80 bg-background/95"
+      : "fixed border-slate-200 bg-white/95",
     overlayMode &&
       "border-transparent bg-transparent text-white backdrop-blur-none supports-[backdrop-filter]:bg-transparent"
   );
@@ -813,10 +813,10 @@ export function Navbar() {
   };
 
   const mobilePanelClass = cn(
-    "fixed inset-x-3 top-[5.25rem] z-50 rounded-[26px] border p-3.5 shadow-[0_28px_70px_rgba(15,23,42,0.18)] backdrop-blur-xl sm:inset-x-4 sm:top-24 sm:p-5",
+    "fixed inset-x-3 top-[5.25rem] z-50 rounded-[20px] border p-3.5 shadow-[var(--shadow-grounded-lg)] sm:inset-x-4 sm:top-24 sm:p-5",
     isDashboard
       ? "border-border/60 bg-background/95"
-      : "border-[#e7dccb] bg-[linear-gradient(180deg,rgba(255,251,246,0.98),rgba(255,247,237,0.98))] text-[#0b1220]"
+      : "border-slate-200 bg-white text-[#0b1220]"
   );
 
   const mobileAvatarFrame = cn(
@@ -831,7 +831,7 @@ export function Navbar() {
       href="/#pricing"
       aria-label="Buy Linket"
       onClick={() => setMobileOpen(false)}
-      className="inline-flex min-h-11 w-full items-center justify-between rounded-full bg-[linear-gradient(135deg,#f8d058_0%,#f8b878_58%,#68d8e0_100%)] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_18px_40px_rgba(88,192,224,0.2)] transition-transform duration-300 hover:-translate-y-0.5"
+      className="inline-flex min-h-11 w-full items-center justify-between rounded-full bg-[linear-gradient(135deg,#f8d058_0%,#f8b878_58%,#68d8e0_100%)] px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_18px_40px_rgba(88,192,224,0.2)] transition-[filter,box-shadow] duration-200 hover:brightness-[0.98]"
     >
       <span>Buy Linket</span>
       <ArrowUpRight className="h-4 w-4" aria-hidden />
@@ -842,7 +842,7 @@ export function Navbar() {
     <Link
       href="/dashboard/linkets"
       onClick={() => setMobileOpen(false)}
-      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5 hover:bg-slate-50"
+      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-4 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[background-color,border-color] duration-200 hover:border-slate-300 hover:bg-slate-50"
       aria-label={`Go to ${brand.name} dashboard`}
     >
       <span className="inline-flex items-center gap-3">
@@ -864,7 +864,7 @@ export function Navbar() {
     <Link
       href="/auth?view=signin"
       onClick={() => setMobileOpen(false)}
-      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-transform duration-300 hover:-translate-y-0.5 hover:bg-slate-50"
+      className="inline-flex min-h-11 w-full items-center justify-between rounded-full border border-slate-200 bg-white px-5 text-sm font-semibold uppercase tracking-[0.12em] text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-[background-color,border-color] duration-200 hover:border-slate-300 hover:bg-slate-50"
       aria-label="Sign in"
     >
       <span>Sign in</span>
@@ -904,7 +904,7 @@ export function Navbar() {
       className={cn(
         "h-10 rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6 md:text-sm",
         isLandingPage
-          ? "backdrop-blur-sm"
+          ? ""
           : isDashboard
             ? "border border-foreground/20 bg-background text-foreground hover:bg-foreground/5"
             : overlayMode
@@ -953,7 +953,7 @@ export function Navbar() {
       variant="outline"
       size="sm"
       asChild
-      className="rounded-full border-border/60 bg-card/80 text-foreground hover:bg-card"
+      className="rounded-full border-border/70 bg-card text-foreground hover:bg-card"
     >
       <Link href="/auth?view=signin">Sign in</Link>
     </Button>
@@ -1022,7 +1022,7 @@ export function Navbar() {
         type="button"
         ref={notificationsButtonRef}
         onClick={handleNotificationsToggle}
-        className="dashboard-notifications-button relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-card/80 text-foreground transition hover:bg-card"
+        className="dashboard-notifications-button relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/70 bg-card text-foreground transition hover:bg-card"
         aria-label="Open notifications"
         aria-expanded={notificationsOpen}
         aria-haspopup="dialog"
@@ -1039,7 +1039,7 @@ export function Navbar() {
   if (isDashboard) {
     return (
       <header
-        className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/60 bg-background/90 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/70"
+        className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/80 bg-background text-foreground"
       >
         <nav
           className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-2 py-3 text-foreground sm:px-3 md:px-6"
@@ -1071,7 +1071,7 @@ export function Navbar() {
             {isProfileEditor ? (
               <>
                 <div className="hidden min-w-0 max-w-[550px] flex-1 md:ml-3 md:flex lg:ml-5">
-                  <div className="flex min-h-[52px] w-full items-center rounded-2xl border border-border/50 bg-card/70 px-3 py-2 shadow-[0_20px_40px_-32px_rgba(15,23,42,0.45)]">
+                  <div className="flex min-h-[52px] w-full items-center rounded-2xl border border-border/70 bg-card px-3 py-2 shadow-[var(--shadow-grounded)]">
                     <div className="flex w-full flex-nowrap items-center gap-2">
                       {PROFILE_SECTIONS.map((section) => {
                         const Icon = section.icon;
@@ -1192,7 +1192,7 @@ export function Navbar() {
             title={isDashboardSetupRoute ? undefined : "Account menu"}
           >
             <div className="dashboard-account-menu-content space-y-2 text-sm">
-              <div className="dashboard-account-menu-email rounded-lg border border-border/60 bg-card/80 px-3 py-2 text-xs text-muted-foreground">
+              <div className="dashboard-account-menu-email rounded-lg border border-border/70 bg-card px-3 py-2 text-xs text-muted-foreground">
                 {user?.email ?? "Not signed in"}
               </div>
               {!isDashboardSetupRoute ? (
@@ -1323,7 +1323,7 @@ export function Navbar() {
                 className={cn(
                   overlayMode
                     ? "border-white/40 bg-white/90 text-slate-900"
-                    : "border-foreground/10 bg-white/80"
+                    : "border-foreground/10 bg-white"
                 )}
               />
               {loginButton}
@@ -1339,7 +1339,7 @@ export function Navbar() {
                   ? "border-border/60 bg-background/70 text-foreground"
                   : overlayMode
                   ? "border-white/70 bg-white/90 text-slate-900 shadow-[0_10px_25px_rgba(15,15,30,0.2)]"
-                  : "border-foreground/10 bg-white/80 text-foreground"
+                  : "border-foreground/10 bg-white text-foreground"
               )}
               onClick={() => setMobileOpen((open) => !open)}
               aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
@@ -1357,15 +1357,12 @@ export function Navbar() {
         <div className="lg:hidden">
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-[rgba(15,23,42,0.16)] backdrop-blur-[3px]"
+            className="fixed inset-0 z-40 bg-[rgba(15,23,42,0.22)]"
             aria-label="Close navigation overlay"
             onClick={() => setMobileOpen(false)}
           />
           <div className={mobilePanelClass}>
-            <div
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(248,184,120,0.1),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(104,216,224,0.1),transparent_36%)]"
-              aria-hidden
-            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-slate-200" aria-hidden />
             <nav aria-label="Mobile primary" className="relative z-10 grid gap-3">
               <div className="px-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
@@ -1382,10 +1379,10 @@ export function Navbar() {
                         type="button"
                         onClick={() => handleDropdownSelect(link.id)}
                         className={cn(
-                          "group flex min-h-[4.75rem] flex-col justify-between rounded-[20px] border px-3.5 py-3 text-left transition-[transform,border-color,background-color,box-shadow] duration-300 hover:-translate-y-0.5",
+                          "group flex min-h-[4.75rem] flex-col justify-between rounded-[20px] border px-3.5 py-3 text-left transition-[border-color,background-color,box-shadow] duration-200",
                           isActive
-                            ? "border-[#ffb166]/70 bg-[#fff2e6] text-[#9a3412] shadow-[0_18px_40px_rgba(248,184,120,0.18)]"
-                            : "border-slate-200 bg-white text-[#0b1220] shadow-[0_10px_30px_rgba(15,23,42,0.08)] hover:border-[#dbe6ee] hover:bg-slate-50"
+                            ? "border-[#20586e]/50 bg-[#eef8fb] text-[#20586e] shadow-[var(--shadow-grounded)]"
+                            : "border-slate-200 bg-white text-[#0b1220] shadow-[var(--shadow-grounded)] hover:border-[#dbe6ee] hover:bg-slate-50"
                         )}
                         aria-label={`Go to ${link.label}`}
                       >

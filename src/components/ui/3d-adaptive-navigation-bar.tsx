@@ -18,8 +18,8 @@ interface AdaptiveNavPillProps {
 }
 
 /**
- * Minimal, glassy navigation bar used across the landing page.
- * Rebuilt to rely on simple CSS so only the active section stays highlighted.
+ * Minimal navigation bar used across the landing page.
+ * It relies on solid surfaces so the active section stays legible.
  */
 export function AdaptiveNavPill({
   items,
@@ -38,11 +38,7 @@ export function AdaptiveNavPill({
       <nav
         role="tablist"
         aria-label="Site sections"
-        className="relative grid w-full grid-cols-1 gap-3 rounded-full border border-[#f8ddba] bg-white/90 p-2 shadow-[0_25px_50px_rgba(248,184,120,0.2)] sm:grid-cols-2 lg:flex lg:items-center lg:gap-3"
-        style={{
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-        }}
+        className="relative grid w-full grid-cols-1 gap-2 rounded-full border border-slate-200 bg-white p-2 shadow-[var(--shadow-grounded)] sm:grid-cols-2 lg:flex lg:items-center"
       >
         {items.map((item) => {
           const isActive = Boolean(activeId && item.id === activeId);
@@ -60,15 +56,15 @@ export function AdaptiveNavPill({
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "relative flex h-12 items-center justify-center rounded-full px-5 text-sm font-semibold uppercase tracking-[0.08em] transition-[transform,color,background-color,box-shadow] duration-200 ease-out motion-reduce:transform-none motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#58c0e0] active:scale-[0.985]",
-                isActive ? "text-[#0b1220]" : "text-[#606b85] hover:-translate-y-0.5"
+                isActive ? "text-[#0b1220]" : "text-[#606b85] hover:text-[#0b1220]"
               )}
               style={{
                 backgroundImage: isActive ? accentGradient : undefined,
                 border: "none",
-                backgroundColor: isActive ? undefined : "rgba(255,255,255,0.8)",
+                backgroundColor: isActive ? undefined : "#ffffff",
                 boxShadow: isActive
                   ? accentShadow
-                  : "inset 0 0 0 1px rgba(238,240,249,0.8)",
+                  : "inset 0 0 0 1px rgba(217,224,234,0.95)",
                 minWidth: "120px",
               }}
               onClick={() => handleSectionClick(item.id)}

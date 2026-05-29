@@ -221,7 +221,7 @@ export default function ResetPasswordPage() {
   if (success) {
     return (
       <section className="flex min-h-screen items-center justify-center bg-[#fff7ed] px-4 py-16">
-        <Card className="w-full max-w-md border border-foreground/10 bg-card/80 shadow-xl backdrop-blur">
+        <Card className="w-full max-w-md border border-foreground/10 bg-card shadow-[var(--shadow-grounded-lg)]">
           <CardHeader className="text-center">
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
               <CheckCircle2 className="h-6 w-6 text-green-600" />
@@ -248,7 +248,7 @@ export default function ResetPasswordPage() {
 
   return (
     <section className="flex min-h-screen items-center justify-center bg-[#fff7ed] px-4 py-16">
-      <Card className="w-full max-w-md border border-foreground/10 bg-card/80 shadow-xl backdrop-blur">
+      <Card className="w-full max-w-md border border-foreground/10 bg-card shadow-[var(--shadow-grounded-lg)]">
         <CardHeader className="space-y-1">
           <div className="mb-2 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900 text-white">

@@ -28,7 +28,7 @@ export function MarketingPage({
   className,
 }: MarketingPageProps) {
   return (
-    <section className={cn("bg-background text-foreground", className)}>
+    <section className={cn("marketing-page bg-background text-foreground", className)}>
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:py-16">
         <header className="space-y-4">
           {kicker ? (

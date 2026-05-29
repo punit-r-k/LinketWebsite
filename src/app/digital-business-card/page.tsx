@@ -172,7 +172,7 @@ export default function DigitalBusinessCardPage() {
             <Link
               key={page.href}
               href={page.href}
-              className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-transform duration-300 hover:-translate-y-1"
+              className="rounded-3xl border border-slate-200 bg-white/85 p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)] transition-[border-color,box-shadow] duration-200 hover:border-slate-300 hover:shadow-[0_14px_32px_rgba(15,23,42,0.08)]"
             >
               <h3 className="text-base font-semibold text-slate-900">
                 {page.label}

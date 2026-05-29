@@ -432,8 +432,17 @@ export default function ProfilesContent() {
     );
   }
 
-  function removeLink(linkId: string) {
-    if (!confirmRemove("Are you sure you want to remove this link?")) return;
+  async function removeLink(linkId: string) {
+    if (
+      !(await confirmRemove({
+        title: "Remove link?",
+        description:
+          "This link will be removed from the profile after autosave completes.",
+        confirmLabel: "Remove link",
+      }))
+    ) {
+      return;
+    }
     setAutoSaveError(null);
     setDraft((prev) =>
       prev

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { toast } from "@/components/system/toaster";
 import { Button } from "@/components/ui/button";
+import { confirmRemove } from "@/lib/confirm-remove";
 import { CSRF_HEADER_NAME, getBrowserCsrfToken } from "@/lib/csrf";
 
 type RemovePaymentMethodButtonProps = {
@@ -22,11 +23,13 @@ export default function RemovePaymentMethodButton({
   async function handleClick() {
     if (pending) return;
 
-    const confirmed = window.confirm(
-      isDefault
-        ? "Remove this default card? Future renewals will use another saved card if available."
-        : "Remove this saved card?"
-    );
+    const confirmed = await confirmRemove({
+      title: isDefault ? "Remove default card?" : "Remove saved card?",
+      description: isDefault
+        ? "Future renewals will use another saved card if one is available."
+        : "This payment method will be removed from your billing profile.",
+      confirmLabel: "Remove card",
+    });
     if (!confirmed) return;
 
     setPending(true);

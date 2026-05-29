@@ -757,6 +757,35 @@ function summarizeByTheme(results) {
   }));
 }
 
+function withoutVolatileTimestamp(report) {
+  const clone = JSON.parse(JSON.stringify(report));
+  if (clone?.meta) {
+    delete clone.meta.audit_timestamp;
+  }
+  return JSON.stringify(clone);
+}
+
+function preserveTimestampIfReportMatches(report) {
+  if (!fs.existsSync(outputJsonPath)) return report;
+  try {
+    const previous = JSON.parse(fs.readFileSync(outputJsonPath, "utf8"));
+    if (withoutVolatileTimestamp(previous) === withoutVolatileTimestamp(report)) {
+      report.meta.audit_timestamp = previous.meta.audit_timestamp;
+    }
+  } catch {
+    // If the previous report cannot be parsed, write a fresh report below.
+  }
+  return report;
+}
+
+function writeFileIfChanged(filePath, content) {
+  if (fs.existsSync(filePath) && fs.readFileSync(filePath, "utf8") === content) {
+    return false;
+  }
+  fs.writeFileSync(filePath, content);
+  return true;
+}
+
 function run() {
   const rawThemes = collectThemes();
   const rootTheme = rawThemes.find((theme) => theme.selector === ":root");
@@ -821,6 +850,8 @@ function run() {
     },
   };
 
+  preserveTimestampIfReportMatches(jsonReport);
+
   const themeRows = themeSummary.map(
     (theme) =>
       `| ${theme.theme} | ${theme.total_checks} | ${theme.failing_checks} | ${theme.failing_components.length > 0 ? theme.failing_components.join(", ") : "None"} |`
@@ -860,15 +891,22 @@ node scripts/check-button-contrast.mjs
 \`\`\`
 `;
 
-  fs.writeFileSync(outputJsonPath, `${JSON.stringify(jsonReport, null, 2)}\n`);
-  fs.writeFileSync(outputMarkdownPath, `${markdown}\n`);
-
-  console.log(
-    `Generated ${path.relative(root, outputMarkdownPath)} and ${path.relative(
-      root,
-      outputJsonPath
-    )}.`
+  const wroteJson = writeFileIfChanged(
+    outputJsonPath,
+    `${JSON.stringify(jsonReport, null, 2)}\n`
   );
+  const wroteMarkdown = writeFileIfChanged(outputMarkdownPath, `${markdown}\n`);
+
+  if (wroteJson || wroteMarkdown) {
+    console.log(
+      `Generated ${path.relative(root, outputMarkdownPath)} and ${path.relative(
+        root,
+        outputJsonPath
+      )}.`
+    );
+  } else {
+    console.log("[button-contrast] Reports already up to date.");
+  }
 
   if (failingResults.length > 0) {
     process.exitCode = 1;

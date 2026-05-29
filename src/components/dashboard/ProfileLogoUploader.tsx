@@ -355,7 +355,14 @@ export default function ProfileLogoUploader({
   const handleRemove = useCallback(async () => {
     if (loading) return;
     if (!latestLogoUrl && !sourceUrl) return;
-    if (!confirmRemove("Are you sure you want to remove this logo image?")) {
+    if (
+      !(await confirmRemove({
+        title: "Remove logo?",
+        description:
+          "The logo badge will disappear from this public profile preview and live page.",
+        confirmLabel: "Remove logo",
+      }))
+    ) {
       return;
     }
     setError(null);

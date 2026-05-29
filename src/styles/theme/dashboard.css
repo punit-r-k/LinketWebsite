@@ -122,7 +122,6 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
     inset 0 -1px 0 rgba(140, 83, 23, 0.16),
     0 14px 26px -18px color-mix(in oklab, var(--ring) 22%, rgba(15, 23, 42, 0.35));
-  transform: translateY(-1px);
 }
 
 #dashboard-theme-scope .dashboard-leads-checkbox:checked,
@@ -174,7 +173,14 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 /* Component polish */
 [data-slot=card] { box-shadow: var(--shadow-ambient); }
-[data-slot=button] { transition: all var(--dashboard-interaction-duration) var(--dashboard-interaction-ease); }
+[data-slot=button] {
+  transition:
+    background-color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    border-color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    box-shadow var(--dashboard-interaction-duration) var(--dashboard-interaction-ease),
+    transform var(--dashboard-interaction-duration) var(--dashboard-interaction-ease);
+}
 [data-slot=input] { transition: color var(--dashboard-interaction-duration) var(--dashboard-interaction-ease), box-shadow var(--dashboard-interaction-duration) var(--dashboard-interaction-ease); }
 
 #dashboard-theme-scope .dashboard-datetime-input::-webkit-calendar-picker-indicator {
@@ -191,12 +197,13 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 /* Motion + micro-interactions */
 #dashboard-theme-scope [data-slot=card] {
-  transition: transform var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
+  transition:
+    border-color var(--duration-base) var(--ease-smooth),
+    box-shadow var(--duration-base) var(--ease-smooth);
 }
 
 #dashboard-theme-scope [data-slot=card]:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 22px 45px -30px rgba(15, 23, 42, 0.4);
+  box-shadow: 0 18px 36px -30px rgba(15, 23, 42, 0.34);
 }
 
 #dashboard-theme-scope [data-slot=card]:focus-within {
@@ -213,12 +220,13 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 #dashboard-theme-scope .dashboard-nav-link,
 .dashboard-nav-link {
-  transition: transform var(--duration-base) var(--ease-smooth), background-color var(--duration-base) var(--ease-smooth), box-shadow var(--duration-base) var(--ease-smooth);
+  transition:
+    background-color var(--duration-base) var(--ease-smooth),
+    box-shadow var(--duration-base) var(--ease-smooth);
 }
 
 #dashboard-theme-scope .dashboard-nav-link:hover,
 .dashboard-nav-link:hover {
-  transform: translateX(3px);
   box-shadow: 0 10px 24px -18px rgba(15, 23, 42, 0.35);
 }
 
@@ -228,13 +236,12 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 }
 
 #dashboard-theme-scope .dashboard-drag-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 36px -28px rgba(15, 23, 42, 0.4);
+  box-shadow: 0 14px 28px -26px rgba(15, 23, 42, 0.34);
 }
 
 #dashboard-theme-scope .dashboard-analytics-tile:hover,
 #dashboard-theme-scope .dashboard-metric-row:hover {
-  transform: translateY(-2px);
+  box-shadow: 0 14px 28px -26px rgba(15, 23, 42, 0.3);
 }
 
 /* Dashboard motion primitives */
@@ -980,13 +987,12 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
   animation: dashboard-modal-out var(--duration-fast) var(--ease-smooth);
 }
 
-/* Button hover physics */
+/* Button press feedback */
 #dashboard-theme-scope [data-slot=button] {
   will-change: transform, box-shadow;
 }
 
 #dashboard-theme-scope [data-slot=button]:not(:disabled):not([aria-disabled="true"]):hover {
-  transform: translateY(-1px);
   box-shadow: 0 8px 18px -12px rgba(15, 23, 42, 0.3);
 }
 
@@ -1018,12 +1024,12 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
 
   #dashboard-theme-scope .dashboard-navbar-inner,
   .dashboard-navbar-inner {
-    transition: transform var(--duration-base) var(--ease-smooth);
+    transition: box-shadow var(--duration-base) var(--ease-smooth);
   }
 
   #dashboard-theme-scope .dashboard-navbar:hover .dashboard-navbar-inner,
   .dashboard-navbar:hover .dashboard-navbar-inner {
-    transform: translateY(-1px);
+    transform: none;
   }
 
   #dashboard-theme-scope .dashboard-nav-link,
@@ -1044,25 +1050,22 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
       color-mix(in srgb, var(--ring) 22%, transparent) 48%,
       transparent 70%
     );
-    transform: translateX(-120%);
-    transition: transform 560ms var(--ease-smooth);
+    display: none;
   }
 
   #dashboard-theme-scope .dashboard-nav-link:hover::after,
   .dashboard-nav-link:hover::after {
-    transform: translateX(120%);
+    transform: none;
   }
 
   #dashboard-theme-scope .dashboard-new-linket-button,
   .dashboard-new-linket-button {
-    transition: transform var(--duration-base) var(--ease-smooth),
-      box-shadow var(--duration-base) var(--ease-smooth),
+    transition: box-shadow var(--duration-base) var(--ease-smooth),
       filter var(--duration-base) var(--ease-smooth);
   }
 
   #dashboard-theme-scope .dashboard-new-linket-button:hover,
   .dashboard-new-linket-button:hover {
-    transform: translateY(-2px) scale(1.015);
     box-shadow: 0 24px 44px -28px rgba(0, 0, 0, 0.62), 0 0 0 1px color-mix(in srgb, var(--primary) 40%, transparent), var(--premium-inset);
   }
 
@@ -1073,14 +1076,12 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
 
   #dashboard-theme-scope .dashboard-profile-section-pill,
   .dashboard-profile-section-pill {
-    transition: transform var(--duration-base) var(--ease-smooth),
-      box-shadow var(--duration-base) var(--ease-smooth),
+    transition: box-shadow var(--duration-base) var(--ease-smooth),
       background-color var(--duration-base) var(--ease-smooth);
   }
 
   #dashboard-theme-scope .dashboard-profile-section-pill:hover,
   .dashboard-profile-section-pill:hover {
-    transform: translateY(-2px);
     box-shadow: 0 10px 22px -18px rgba(15, 23, 42, 0.5);
   }
 
@@ -1091,30 +1092,26 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
 
   #dashboard-theme-scope .dashboard-profile-section-pill:hover svg,
   .dashboard-profile-section-pill:hover svg {
-    transform: translateY(-1px) scale(1.05);
+    transform: none;
   }
 
   #dashboard-theme-scope [data-slot=card] {
-    transition: transform var(--duration-base) var(--ease-smooth),
-      box-shadow var(--duration-base) var(--ease-smooth),
+    transition: box-shadow var(--duration-base) var(--ease-smooth),
       border-color var(--duration-base) var(--ease-smooth);
   }
 
   #dashboard-theme-scope [data-slot=card]:hover {
-    transform: translateY(-4px) scale(1.005);
     border-color: color-mix(in srgb, var(--premium-border) 72%, transparent);
-    box-shadow: 0 26px 52px -34px rgba(15, 23, 42, 0.45), var(--premium-inset);
+    box-shadow: 0 20px 42px -34px rgba(15, 23, 42, 0.38), var(--premium-inset);
   }
 
   #dashboard-theme-scope .dashboard-drag-item:hover {
-    transform: translateY(-3px) scale(1.004);
-    box-shadow: 0 24px 40px -30px rgba(15, 23, 42, 0.42);
+    box-shadow: 0 16px 32px -30px rgba(15, 23, 42, 0.34);
   }
 
   #dashboard-theme-scope .dashboard-analytics-tile:hover,
   #dashboard-theme-scope .dashboard-metric-row:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 18px 32px -26px rgba(15, 23, 42, 0.42);
+    box-shadow: 0 14px 28px -26px rgba(15, 23, 42, 0.3);
   }
 }
 
@@ -3089,7 +3086,129 @@ body.theme-forest .dashboard-forest-pin {
     min-width: 0;
   }
 
-  #dashboard-theme-scope .dashboard-lead-card .dashboard-leads-checkbox {
+#dashboard-theme-scope .dashboard-lead-card .dashboard-leads-checkbox {
     margin-top: 0.1rem;
   }
+}
+
+/* Sturdy dashboard pass: solid surfaces, tighter radii, and quieter motion. */
+#dashboard-theme-scope {
+  background: var(--premium-gradient);
+}
+
+#dashboard-theme-scope .dashboard-topbar,
+#dashboard-theme-scope .dashboard-navbar,
+.dashboard-navbar {
+  background: var(--premium-topbar-gradient);
+  border-color: var(--premium-border);
+  box-shadow: var(--shadow-grounded);
+  backdrop-filter: none;
+}
+
+#dashboard-theme-scope .dashboard-navbar,
+.dashboard-navbar {
+  animation: none;
+}
+
+#dashboard-theme-scope .dashboard-navbar::before,
+#dashboard-theme-scope .dashboard-navbar::after,
+.dashboard-navbar::before,
+.dashboard-navbar::after {
+  display: none;
+}
+
+#dashboard-theme-scope .dashboard-brand,
+#dashboard-theme-scope .dashboard-nav-links,
+#dashboard-theme-scope .dashboard-navbar-cta,
+.dashboard-brand,
+.dashboard-nav-links,
+.dashboard-navbar-cta {
+  border-color: var(--premium-border);
+  background: var(--card);
+  box-shadow: none;
+}
+
+#dashboard-theme-scope .dashboard-brand:hover,
+#dashboard-theme-scope .dashboard-nav-links:hover,
+#dashboard-theme-scope .dashboard-navbar-cta:hover,
+.dashboard-brand:hover,
+.dashboard-nav-links:hover,
+.dashboard-navbar-cta:hover {
+  transform: none;
+  box-shadow: var(--shadow-grounded);
+}
+
+#dashboard-theme-scope .dashboard-nav-link,
+.dashboard-nav-link {
+  will-change: auto;
+}
+
+#dashboard-theme-scope .dashboard-nav-link[data-active="true"],
+.dashboard-nav-link[data-active="true"] {
+  animation: none;
+  background: color-mix(in srgb, var(--primary) 18%, var(--card) 82%);
+  border-color: color-mix(in srgb, var(--ring) 44%, var(--premium-border) 56%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ring) 12%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-nav-link[data-active="true"]:hover,
+#dashboard-theme-scope .dashboard-nav-link[data-active="false"]:hover,
+.dashboard-nav-link[data-active="true"]:hover,
+.dashboard-nav-link[data-active="false"]:hover {
+  transform: none;
+}
+
+#dashboard-theme-scope [data-slot=card],
+#dashboard-theme-scope .dashboard-analytics-card,
+#dashboard-theme-scope .dashboard-overview-section-card,
+#dashboard-theme-scope .dashboard-leads-results,
+#dashboard-theme-scope .dashboard-leads-toolbar {
+  border-color: var(--premium-border);
+  border-radius: var(--radius-panel);
+  background: var(--premium-card-gradient);
+  box-shadow: var(--shadow-grounded);
+}
+
+#dashboard-theme-scope [data-slot=card]:hover,
+#dashboard-theme-scope .dashboard-analytics-card:hover,
+#dashboard-theme-scope .dashboard-overview-section-card:hover,
+#dashboard-theme-scope .dashboard-leads-results:hover,
+#dashboard-theme-scope .dashboard-leads-toolbar:hover {
+  transform: none;
+  box-shadow: var(--shadow-grounded);
+}
+
+#dashboard-theme-scope .dashboard-metric-row,
+#dashboard-theme-scope .dashboard-overview-checklist-item,
+#dashboard-theme-scope .dashboard-drag-item,
+#dashboard-theme-scope .dashboard-lead-card,
+#dashboard-theme-scope .dashboard-analytics-tile,
+#dashboard-theme-scope .dashboard-metric-row,
+#dashboard-theme-scope .dashboard-account-menu-email {
+  border-color: var(--premium-border);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--card) 94%, var(--background) 6%);
+  box-shadow: none;
+}
+
+#dashboard-theme-scope .dashboard-drag-item:hover,
+#dashboard-theme-scope .dashboard-lead-card:hover,
+#dashboard-theme-scope .dashboard-analytics-tile:hover,
+#dashboard-theme-scope .dashboard-metric-row:hover {
+  transform: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ring) 10%, transparent);
+}
+
+#dashboard-theme-scope .dashboard-sidebar,
+#dashboard-theme-scope .dashboard-sidebar-panel {
+  background: color-mix(in srgb, var(--background) 96%, var(--card) 4%);
+  backdrop-filter: none;
+}
+
+#dashboard-theme-scope .dashboard-date-pill,
+#dashboard-theme-scope .dashboard-analytics-range,
+#dashboard-theme-scope .dashboard-analytics-range-button {
+  border-color: var(--premium-border);
+  background: var(--card);
+  box-shadow: none;
 }

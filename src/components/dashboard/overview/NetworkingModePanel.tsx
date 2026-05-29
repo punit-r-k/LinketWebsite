@@ -423,7 +423,7 @@ export default function NetworkingModePanel({
   return (
     <Card className="min-w-0 w-full overflow-hidden rounded-[2rem] border border-border/70 bg-gradient-to-br from-primary/5 via-card to-background text-foreground shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
       <CardContent className="grid min-w-0 gap-4 px-5 sm:px-7">
-          <section className="order-2 min-w-0 space-y-3 rounded-[1.75rem] border border-border/60 bg-background/70 p-4 text-center backdrop-blur sm:text-left">
+          <section className="order-2 min-w-0 space-y-3 rounded-[1.25rem] border border-border/70 bg-background p-4 text-center sm:text-left">
             <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
               <div className="space-y-1">
                 <div className="text-sm font-semibold text-foreground">Live lead stream</div>

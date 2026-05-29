@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,7 @@ type Props = {
 type AnswerMap = Record<string, { value: unknown }>;
 type PendingUploadMap = Record<string, File[]>;
 type ErrorMap = Record<string, string>;
+type SubmitPhase = "idle" | "uploading" | "submitting";
 
 const OTHER_VALUE = "__other__";
 const OTHER_PREFIX = "other:";
@@ -72,10 +73,12 @@ export default function PublicLeadForm({
   const [errors, setErrors] = useState<ErrorMap>({});
   const [loading, setLoading] = useState(!initialForm);
   const [submitting, setSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<SubmitPhase>("idle");
   const [responseId, setResponseId] = useState<string | null>(null);
   const [responseToken, setResponseToken] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [editingResponse, setEditingResponse] = useState(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
 
   const disabled = !form || form.status !== "published";
   const hasFields = Boolean(form?.fields?.length);
@@ -238,6 +241,25 @@ export default function PublicLeadForm({
     });
   }
 
+  function focusFirstInvalidField(fieldId: string) {
+    window.requestAnimationFrame(() => {
+      const fieldContainer = formRef.current?.querySelector<HTMLElement>(
+        `[data-lead-field-id="${fieldId}"]`
+      );
+      const target =
+        document.getElementById(fieldId) ||
+        fieldContainer?.querySelector<HTMLElement>(
+          "input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])"
+        ) ||
+        fieldContainer;
+
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (target && "focus" in target) {
+        target.focus({ preventScroll: true });
+      }
+    });
+  }
+
   function getAnswer(fieldId: string) {
     return answers[fieldId]?.value;
   }
@@ -342,6 +364,7 @@ export default function PublicLeadForm({
         ...prev,
         [emailField.id]: "Email is required.",
       }));
+      focusFirstInvalidField(emailField.id);
       return;
     }
 
@@ -352,6 +375,7 @@ export default function PublicLeadForm({
         nextErrors[err.fieldId] = err.message;
       });
       setErrors(nextErrors);
+      focusFirstInvalidField(validationErrors[0].fieldId);
       toast({
         title: "Missing info",
         description: "Please fix the highlighted fields.",
@@ -361,12 +385,14 @@ export default function PublicLeadForm({
     }
 
     setSubmitting(true);
+    setSubmitPhase(hasPendingUploads(pendingUploads) ? "uploading" : "submitting");
     setErrors({});
     try {
       const { nextAnswers, uploadedFieldIds } = await prepareAnswersForSubmit(
         form,
         formId
       );
+      setSubmitPhase("submitting");
       if (uploadedFieldIds.length > 0) {
         setAnswers(nextAnswers);
         setPendingUploads((prev) => {
@@ -444,6 +470,7 @@ export default function PublicLeadForm({
       toast({ title: "Submit failed", description: message, variant: "destructive" });
     } finally {
       setSubmitting(false);
+      setSubmitPhase("idle");
     }
   }
 
@@ -821,7 +848,7 @@ export default function PublicLeadForm({
       : {};
 
     return (
-      <div className="space-y-2" {...groupProps}>
+      <div className="space-y-2" data-lead-field-id={field.id} {...groupProps}>
         {label}
         {helpText ? (
           <p id={helpId} className="sr-only">
@@ -995,7 +1022,7 @@ export default function PublicLeadForm({
         style={cardStyle}
       >
         <CardHeader>
-          <CardTitle>Thanks</CardTitle>
+          <CardTitle>Response sent</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground" style={mutedStyle}>
@@ -1014,6 +1041,9 @@ export default function PublicLeadForm({
               Edit response
             </Button>
           ) : null}
+          <p className="text-xs text-muted-foreground" style={mutedStyle}>
+            You can continue browsing this profile.
+          </p>
         </CardContent>
       </Card>
     );
@@ -1072,7 +1102,12 @@ export default function PublicLeadForm({
             </div>
           </div>
         ) : null}
-        <form className="space-y-5" onSubmit={handleSubmit}>
+        <form
+          ref={formRef}
+          className="space-y-5"
+          onSubmit={handleSubmit}
+          aria-busy={submitting || undefined}
+        >
           {orderedFields.map((field) => (
             <div key={field.id}>{renderField(field)}</div>
           ))}
@@ -1084,8 +1119,23 @@ export default function PublicLeadForm({
               variant={appearance?.buttonVariant ?? "default"}
               className={submitButtonClassName}
             >
-              {submitting ? "Submitting..." : "Submit"}
+              {submitPhase === "uploading"
+                ? "Uploading files..."
+                : submitPhase === "submitting"
+                ? "Submitting..."
+                : "Submit"}
             </Button>
+            {submitPhase !== "idle" ? (
+              <p
+                className="mt-2 text-xs text-muted-foreground"
+                role="status"
+                aria-live="polite"
+              >
+                {submitPhase === "uploading"
+                  ? "Uploading selected files before sending your response."
+                  : "Sending your response now."}
+              </p>
+            ) : null}
           </div>
         </form>
       </CardContent>
@@ -1103,6 +1153,10 @@ function getFileAnswerNames(value: unknown) {
       return typeof maybeFile.name === "string" ? maybeFile.name.trim() : "";
     })
     .filter(Boolean);
+}
+
+function hasPendingUploads(pendingUploads: PendingUploadMap) {
+  return Object.values(pendingUploads).some((files) => files.length > 0);
 }
 
 function toAcceptAttribute(acceptedTypes: string[]) {

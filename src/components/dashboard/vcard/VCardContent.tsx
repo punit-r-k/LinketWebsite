@@ -527,8 +527,15 @@ export default function VCardContent({
     [userId]
   );
 
-  const handlePhotoRemove = useCallback(() => {
-    if (!confirmRemove("Are you sure you want to remove this profile photo?")) {
+  const handlePhotoRemove = useCallback(async () => {
+    if (
+      !(await confirmRemove({
+        title: "Remove contact photo?",
+        description:
+          "People who save your contact card will no longer receive this photo.",
+        confirmLabel: "Remove photo",
+      }))
+    ) {
       return;
     }
     resetPhotoEditor();

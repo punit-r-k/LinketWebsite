@@ -171,8 +171,17 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  if (!confirmRemove("Are you sure you want to remove this email?")) return;
+                onClick={async () => {
+                  if (
+                    !(await confirmRemove({
+                      title: "Remove email?",
+                      description:
+                        "This email will be removed from the saved contact card.",
+                      confirmLabel: "Remove email",
+                    }))
+                  ) {
+                    return;
+                  }
                   emails.remove(idx);
                 }}
               >
@@ -197,8 +206,17 @@ export default function ContactForm({ initial, onSave }: { initial: ContactProfi
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  if (!confirmRemove("Are you sure you want to remove this phone number?")) return;
+                onClick={async () => {
+                  if (
+                    !(await confirmRemove({
+                      title: "Remove phone number?",
+                      description:
+                        "This phone number will be removed from the saved contact card.",
+                      confirmLabel: "Remove phone",
+                    }))
+                  ) {
+                    return;
+                  }
                   phones.remove(idx);
                 }}
               >

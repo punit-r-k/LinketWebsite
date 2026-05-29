@@ -3610,7 +3610,7 @@ export default function DashboardSetupFlow({
                     ) : null}
 
                     <div className="hidden sm:block">
-                      <div className="sticky bottom-4 z-10 flex items-center justify-between gap-4 rounded-[24px] border border-border/60 bg-card/95 px-4 py-3 shadow-[0_18px_40px_-28px_rgba(15,23,42,0.35)] backdrop-blur">
+                      <div className="sticky bottom-4 z-10 flex items-center justify-between gap-4 rounded-[20px] border border-border/70 bg-card px-4 py-3 shadow-[var(--shadow-grounded)]">
                         <div className="flex min-w-0 items-center gap-3">
                           {currentStepIndex > 0 ? (
                             <Button
@@ -3766,7 +3766,7 @@ export default function DashboardSetupFlow({
       </Dialog>
 
       {!showLaunchHub ? (
-        <div className="dashboard-setup-mobile-footer fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 shadow-[0_-18px_42px_-32px_rgba(15,23,42,0.4)] backdrop-blur sm:hidden">
+        <div className="dashboard-setup-mobile-footer fixed inset-x-0 bottom-0 z-40 border-t border-border/70 bg-background px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-3 shadow-[0_-14px_30px_-26px_rgba(15,23,42,0.35)] sm:hidden">
           <div className="mx-auto max-w-7xl">
             <div className="flex gap-3 max-[359px]:flex-col">
             {currentStepIndex > 0 ? (

@@ -12,18 +12,23 @@
   --brand-slate: #0f172a;
 
   /* Warm neutral scale for surfaces */
-  --neutral-25: #fffdf9;
-  --neutral-50: #fff7ed;
-  --neutral-100: #f6eadb;
-  --neutral-200: #ead9c5;
-  --neutral-300: #d6c2a7;
-  --neutral-400: #b7a286;
-  --neutral-500: #8c7660;
-  --neutral-700: #4f4032;
-  --neutral-900: #17120c;
+  --neutral-25: #ffffff;
+  --neutral-50: #f6f7f9;
+  --neutral-100: #edf1f5;
+  --neutral-200: #d9e0ea;
+  --neutral-300: #bac6d4;
+  --neutral-400: #8f9daf;
+  --neutral-500: #647286;
+  --neutral-700: #344154;
+  --neutral-900: #101827;
 
   /* Motion + shadows for depth */
-  --shadow-ambient: 0 1px 2px rgba(15, 23, 42, 0.08), 0 16px 40px -24px rgba(15, 23, 42, 0.35);
+  --shadow-ambient: 0 1px 1px rgba(15, 23, 42, 0.06), 0 12px 30px -24px rgba(15, 23, 42, 0.34);
+  --shadow-grounded: 0 1px 1px rgba(15, 23, 42, 0.05), 0 10px 22px -18px rgba(15, 23, 42, 0.28);
+  --shadow-grounded-lg: 0 1px 1px rgba(15, 23, 42, 0.05), 0 18px 44px -30px rgba(15, 23, 42, 0.34);
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --radius-panel: 1.25rem;
   --duration-fast: 160ms;
   --duration-base: 220ms;
   --duration-slow: 360ms;
@@ -75,6 +80,8 @@
   --button-subtle-foreground-hover: #184558;
   --button-subtle-border: rgba(32, 88, 110, 0.34);
   --button-solid-outline: rgba(32, 88, 110, 0.42);
+  --border-strong: color-mix(in srgb, var(--button-subtle-foreground) 58%, var(--card) 42%);
+  --input-strong: color-mix(in srgb, var(--button-subtle-foreground) 64%, var(--card) 36%);
   --color-button-focus-ring: color-mix(in srgb, var(--button-subtle-foreground) 78%, var(--ring) 22%);
   --color-button-focus-offset: color-mix(in srgb, var(--card) 88%, var(--background) 12%);
   --color-button-primary-bg: var(--primary);
@@ -123,18 +130,16 @@
   --color-button-selected-border: var(--color-button-primary-border);
 
   /* Premium dashboard surfaces */
-  --premium-gradient: radial-gradient(120% 120% at 16% 0%, rgba(88, 192, 224, 0.16) 0%, transparent 60%),
-    radial-gradient(120% 120% at 84% 0%, rgba(248, 184, 120, 0.14) 0%, transparent 55%),
-    linear-gradient(180deg, #fffdf9 0%, #fff7ed 100%);
-  --premium-card-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 248, 237, 0.96) 100%);
-  --premium-topbar-gradient: linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 246, 231, 0.95) 52%, rgba(240, 250, 252, 0.94) 100%);
-  --premium-input-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 247, 235, 0.94) 100%);
-  --premium-button-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(255, 243, 229, 0.92) 100%);
-  --premium-border: rgba(32, 88, 110, 0.12);
-  --premium-shadow: 0 18px 45px -30px rgba(31, 41, 55, 0.36);
-  --premium-glow: 0 0 0 1px rgba(255, 255, 255, 0.75);
-  --premium-hairline: rgba(255, 255, 255, 0.65);
-  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.45) inset;
+  --premium-gradient: linear-gradient(180deg, #f8fafc 0%, #edf1f5 100%);
+  --premium-card-gradient: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+  --premium-topbar-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(249, 250, 251, 0.98) 100%);
+  --premium-input-gradient: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --premium-button-gradient: linear-gradient(180deg, #ffffff 0%, #f3f6f9 100%);
+  --premium-border: rgba(52, 65, 84, 0.18);
+  --premium-shadow: var(--shadow-grounded);
+  --premium-glow: 0 0 0 1px rgba(15, 23, 42, 0.04);
+  --premium-hairline: rgba(15, 23, 42, 0.08);
+  --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.68) inset;
 
   /* Chart defaults */
   --chart-1: var(--brand-blue);
@@ -180,6 +185,8 @@
   --button-subtle-foreground-hover: #baf3f7;
   --button-subtle-border: rgba(255, 247, 237, 0.34);
   --button-solid-outline: rgba(255, 247, 237, 0.44);
+  --border-strong: color-mix(in srgb, var(--button-subtle-foreground) 38%, var(--card) 62%);
+  --input-strong: color-mix(in srgb, var(--button-subtle-foreground) 46%, var(--card) 54%);
   --premium-gradient: radial-gradient(120% 120% at 16% 0%, rgba(104, 216, 224, 0.2) 0%, transparent 60%),
     radial-gradient(120% 120% at 84% 0%, rgba(248, 208, 88, 0.14) 0%, transparent 55%),
     linear-gradient(180deg, #0f172a 0%, #101827 100%);
@@ -313,6 +320,97 @@
   --button-subtle-foreground-hover: #184558;
   --button-subtle-border: rgba(32, 88, 110, 0.34);
   --button-solid-outline: rgba(32, 88, 110, 0.42);
+}
+
+.landing-page-shell {
+  --landing-bg: #f5f7fa;
+  --landing-bg-strong: #eef2f6;
+  --landing-surface: #ffffff;
+  --landing-surface-muted: #f8fafc;
+  --landing-border: #d9e0ea;
+  --landing-border-strong: #b8c4d2;
+  --landing-ink: #0f172a;
+  --landing-muted: #526071;
+  background: var(--landing-bg);
+  color: var(--landing-ink);
+}
+
+.landing-section-bg {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
+    var(--landing-bg);
+}
+
+.landing-surface {
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-panel);
+  background: var(--landing-surface);
+  box-shadow: var(--shadow-grounded-lg);
+}
+
+.landing-card {
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-card);
+  background: var(--landing-surface);
+  box-shadow: var(--shadow-grounded);
+}
+
+.landing-card-muted {
+  background: var(--landing-surface-muted);
+}
+
+.landing-chip {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  border-radius: 999px;
+  border: 1px solid var(--landing-border);
+  background: #ffffff;
+  color: var(--landing-muted);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.landing-product-rail {
+  border: 1px solid var(--landing-border);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: var(--shadow-grounded-lg);
+}
+
+.landing-product-asset {
+  border: 1px solid var(--landing-border);
+  border-radius: 1rem;
+  background: #f8fafc;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+}
+
+.marketing-page {
+  background: var(--landing-bg, #f5f7fa) !important;
+}
+
+.marketing-page :is(article, a[href][class*="rounded-"], div[class*="rounded-[28px]"]) {
+  border-color: var(--landing-border, #d9e0ea) !important;
+  border-radius: var(--radius-card) !important;
+  background: #ffffff !important;
+  box-shadow: var(--shadow-grounded) !important;
+}
+
+.marketing-page :is(article, a[href][class*="rounded-"], div[class*="rounded-[28px]"]):hover {
+  border-color: var(--landing-border-strong, #b8c4d2) !important;
+  box-shadow: var(--shadow-grounded) !important;
+}
+
+.landing-ring-float-a,
+.landing-ring-float-b,
+.landing-ring-float-c {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .landing-card:hover,
+  .landing-surface:hover {
+    border-color: var(--landing-border-strong);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

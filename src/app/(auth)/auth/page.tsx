@@ -312,17 +312,15 @@ function AuthPageContent() {
   }, [email]);
 
   return (
-    <div className="min-h-screen bg-[#fff7ed] text-slate-900">
+    <div className="landing-page-shell min-h-screen text-slate-900">
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute -top-48 left-[-20%] h-[520px] w-[520px] rounded-full bg-[#ffe1c7] blur-[130px] opacity-70" />
-          <div className="absolute right-[-15%] top-[10%] h-[560px] w-[560px] rounded-full bg-[#d9f2ff] blur-[150px] opacity-70" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.85),_transparent_55%)]" />
+          <div className="landing-section-bg absolute inset-0" />
         </div>
 
         <section className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-28 lg:pb-20 lg:pt-32">
           <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-            <section className="w-full rounded-[32px] border border-white/70 bg-white/80 p-8 shadow-[0_28px_70px_-55px_rgba(15,23,42,0.45)] backdrop-blur">
+            <section className="landing-surface w-full p-8">
               <div className="text-xs uppercase tracking-[0.3em] text-slate-400">
                 <span className="font-display text-sm font-semibold text-slate-900">
                   Linket
@@ -330,7 +328,7 @@ function AuthPageContent() {
               </div>
 
               <header className="mt-6 space-y-2">
-                <h1 className="text-3xl font-display font-semibold tracking-tight sm:text-4xl">
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                   {isSignUp ? "Create your account" : "Welcome back"}
                 </h1>
                 <p className="text-sm text-slate-600">
@@ -421,7 +419,7 @@ function AuthPageContent() {
                 <button
                   type="submit"
                   disabled={pending}
-                  className="w-full rounded-2xl bg-gradient-to-r from-[#ff9776] via-[#ffb866] to-[#5dd6f7] py-3 text-sm font-semibold text-slate-900 shadow-[0_16px_40px_rgba(255,151,118,0.35)] transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="w-full rounded-2xl bg-slate-950 py-3 text-sm font-semibold text-white shadow-[0_16px_32px_-24px_rgba(15,23,42,0.7)] transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {pending
                     ? isSignUp
@@ -504,12 +502,12 @@ function AuthPageContent() {
               )}
             </section>
 
-            <aside className="hidden flex-col gap-6 rounded-[32px] border border-white/70 bg-white/70 p-8 shadow-[0_28px_70px_-55px_rgba(15,23,42,0.35)] backdrop-blur lg:flex">
+            <aside className="landing-surface hidden flex-col gap-6 p-8 lg:flex">
               <div className="space-y-3">
                 <p className="text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">
                   Linket dashboard
                 </p>
-                <h2 className="text-3xl font-display font-semibold leading-tight text-slate-900">
+                <h2 className="text-3xl font-semibold leading-tight text-slate-900">
                   A premium workspace for your links, profiles, and brand.
                 </h2>
                 <p className="text-sm text-slate-600">
@@ -533,7 +531,7 @@ function AuthPageContent() {
                 ].map((item) => (
                   <div
                     key={item.title}
-                    className="rounded-2xl border border-white/70 bg-white/80 px-5 py-4 shadow-[0_12px_30px_rgba(15,23,42,0.08)]"
+                    className="landing-card px-5 py-4"
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">
                       {item.title}
@@ -554,13 +552,13 @@ function AuthPageContent() {
 
 function AuthPageFallback() {
   return (
-    <div className="min-h-screen bg-[#fff7ed] text-slate-900">
+    <div className="landing-page-shell min-h-screen text-slate-900">
       <div className="relative overflow-hidden">
         <section className="relative mx-auto w-full max-w-6xl px-6 pb-16 pt-28 lg:pb-20 lg:pt-32">
           <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
-            <section className="w-full rounded-[32px] border border-white/70 bg-white/80 p-8 shadow-[0_28px_70px_-55px_rgba(15,23,42,0.45)] backdrop-blur">
+            <section className="landing-surface w-full p-8">
               <header className="space-y-2">
-                <h1 className="text-3xl font-display font-semibold tracking-tight sm:text-4xl">
+                <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                   Loading
                 </h1>
                 <p className="text-sm text-slate-600">

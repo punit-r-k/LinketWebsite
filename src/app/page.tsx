@@ -136,8 +136,8 @@ const DASHBOARD_TABS = ["Overview", "Linkets", "Profiles", "Leads"] as const;
 
 // Dashboard summary stats for the hero mock.
 const DASHBOARD_STATS = [
-  { label: "Leads collected", value: "128", delta: "+32 vs last quarter" },
-  { label: "Scans", value: "842", delta: "+19% vs last quarter" },
+  { label: "Qualified leads", value: "128", delta: "+32 vs last quarter" },
+  { label: "Verified taps", value: "842", delta: "+19% vs last quarter" },
   {
     label: "Conversion rate",
     value: "15.2%",
@@ -173,15 +173,15 @@ const DASHBOARD_TREND = [
 
 // Recent activity list shown in the mock dashboard.
 const RECENT_SALES = [
-  { name: "Olivia Martin", email: "olivia.martin@email.com", amount: "New" },
-  { name: "Jackson Lee", email: "jackson.lee@email.com", amount: "Yesterday" },
+  { name: "Maya Chen", email: "maya@northstar.studio", amount: "Qualified" },
+  { name: "Jordan Lee", email: "jordan@campusfounders.org", amount: "Follow up" },
   {
-    name: "Isabella Nguyen",
-    email: "isabella.nguyen@email.com",
-    amount: "3 days ago",
+    name: "Isabel Nguyen",
+    email: "isabel@launchlab.co",
+    amount: "Demo booked",
   },
-  { name: "William Kim", email: "will.kim@email.com", amount: "Followed up" },
-  { name: "Sofia Davis", email: "sofia.davis@email.com", amount: "1 week ago" },
+  { name: "Will Kim", email: "will@fieldteam.io", amount: "Saved" },
+  { name: "Sofia Davis", email: "sofia@eventops.co", amount: "New" },
 ] as const;
 
 const FOUNDER_PUBLIC_HANDLE = "punit";
@@ -286,13 +286,13 @@ export default async function Home() {
 
   return (
     // Page wrapper keeps the landing background consistent across sections.
-    <div className="relative overflow-hidden bg-[#fff7ed] text-foreground">
+    <div className="landing-page-shell relative overflow-hidden text-foreground">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[#fff7ed]" />
+        <div className="landing-section-bg absolute inset-0" />
       </div>
       <div className="relative z-0 overflow-hidden">
         <div className="pointer-events-none absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[#fff7ed]" />
+          <div className="landing-section-bg absolute inset-0" />
         </div>
         <div className="pointer-events-none absolute inset-0 z-[1] hidden overflow-hidden lg:block landing-decoration-fade landing-delay-2" aria-hidden>
           <div className="landing-ring-float-b absolute -left-24 top-8 h-52 w-52 rounded-full border-[5px] border-[#f8b878]/54 bg-transparent" />
@@ -317,7 +317,7 @@ export default async function Home() {
       </div>
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[#fff7ed]" />
+          <div className="landing-section-bg absolute inset-0" />
         </div>
         <div className="pointer-events-none absolute inset-0 z-[1] hidden overflow-hidden lg:block landing-decoration-fade landing-delay-3" aria-hidden>
           <div className="landing-ring-float-b absolute left-[-6rem] top-24 h-52 w-52 rounded-full border-[5px] border-[#f8b878]/34 bg-transparent" />
@@ -367,12 +367,10 @@ function HeroSection() {
       <div className="relative z-10 flex min-h-[calc(100svh-3.5rem)] flex-col items-center px-4 pb-6 pt-6 text-center sm:min-h-screen sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl py-8 sm:py-12">
           {/* Primary headline + brand callout. */}
-          <h1 className="landing-fade-up landing-delay-1 mt-6 text-[1.95rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
-            <span className="landing-serif font-normal tracking-[-0.04em]">
-              Don&apos;t just share it...
-            </span>{" "}
-            <span className="block bg-[linear-gradient(100deg,_#f8d058_0%,_#f8b878_34%,_#68d8e0_70%,_#58c0e0_100%)] bg-clip-text text-[3.35rem] font-black italic leading-[0.94] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
-              LINKET!
+          <h1 className="landing-fade-up landing-delay-1 mt-6 text-[2.4rem] font-semibold leading-tight tracking-tight text-slate-950 sm:mt-10 sm:text-6xl lg:text-[4.75rem] lg:leading-[1.03]">
+            <span className="block">Linket Connect</span>
+            <span className="mx-auto mt-3 block max-w-3xl text-[1.35rem] font-medium leading-snug text-slate-600 sm:text-3xl lg:text-[2.25rem]">
+              NFC hardware, live profiles, and lead capture in one system.
             </span>
           </h1>
           {/* Supporting value proposition. */}
@@ -387,7 +385,7 @@ function HeroSection() {
               asChild
               variant="landingPrimary"
               size="lg"
-              className="w-full max-w-[15rem] rounded-full px-7 py-5 text-sm font-semibold transition-transform duration-300 hover:-translate-y-1 sm:w-auto sm:max-w-none sm:px-10 sm:py-6 sm:text-base"
+              className="w-full max-w-[15rem] rounded-full px-7 py-5 text-sm font-semibold transition-[background-color,border-color,box-shadow,transform] duration-200 active:scale-[0.985] sm:w-auto sm:max-w-none sm:px-10 sm:py-6 sm:text-base"
             >
               <Link
                 href="/auth"
@@ -399,10 +397,61 @@ function HeroSection() {
             </Button>
           </div>
         </div>
+        <HeroProductOverview />
         {/* Hero mock dashboard. */}
         <HeroDashboardPreview />
       </div>
     </section>
+  );
+}
+
+function HeroProductOverview() {
+  return (
+    <div className="landing-fade-up landing-delay-4 landing-product-rail mb-4 grid w-full max-w-5xl gap-3 p-3 text-left sm:mb-5 sm:grid-cols-[1fr_1fr_auto] sm:p-4">
+      <div className="landing-product-asset flex min-h-[8.5rem] items-center gap-4 overflow-hidden p-4">
+        <Image
+          src="/mockups/keychain.svg"
+          alt="Linket NFC keychain hardware mockup"
+          width={240}
+          height={180}
+          className="h-28 w-36 shrink-0 object-contain sm:h-32"
+          priority
+        />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Physical Linket
+          </p>
+          <p className="mt-2 text-sm font-semibold text-slate-950">
+            NFC + QR hardware that keeps pointing to your latest profile.
+          </p>
+        </div>
+      </div>
+      <div className="landing-product-asset flex min-h-[8.5rem] items-center gap-4 overflow-hidden p-4">
+        <Image
+          src="/mockups/phone.svg"
+          alt="Live Linket public profile phone preview"
+          width={128}
+          height={220}
+          className="h-32 w-20 shrink-0 object-contain"
+          priority
+        />
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Live profile
+          </p>
+          <p className="mt-2 text-sm font-semibold text-slate-950">
+            Contact save, key links, and lead capture in one mobile page.
+          </p>
+        </div>
+      </div>
+      <div className="landing-card landing-card-muted flex min-h-[8.5rem] flex-col justify-center px-4 py-3 sm:w-44">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+          Current flow
+        </p>
+        <p className="mt-2 text-3xl font-semibold text-slate-950">Tap</p>
+        <p className="text-sm text-slate-600">Save, submit, follow up.</p>
+      </div>
+    </div>
   );
 }
 
@@ -435,11 +484,11 @@ function HeroDashboardPreview() {
   } 110 L ${trendPoints[0].x} 110 Z`;
 
   return (
-    <div className="landing-fade-up landing-delay-4 relative w-full max-w-6xl rounded-[24px] border border-[#f8ddba]/80 bg-white/90 p-3 text-left text-slate-900 shadow-[0_24px_70px_rgba(248,184,120,0.2)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6 sm:shadow-[0_45px_120px_rgba(248,184,120,0.34)]">
+    <div className="landing-fade-up landing-delay-5 landing-surface relative w-full max-w-6xl p-3 text-left text-slate-900 sm:p-5">
       {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
       <div className="flex flex-col gap-3 border-b border-[#f8edd7] pb-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex max-w-full items-center gap-3 rounded-[20px] border border-[#f8ddba] bg-[#fff9f0] px-3 py-2 sm:rounded-full sm:px-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#cfeef2] text-sm font-semibold text-slate-900">
+        <div className="flex max-w-full items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 sm:rounded-full sm:px-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dff3f7] text-sm font-semibold text-slate-900">
             PK
           </div>
           <div className="min-w-0">
@@ -452,7 +501,7 @@ function HeroDashboardPreview() {
               <span
                 key={tab}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-transform duration-300 hover:-translate-y-0.5 sm:px-4 sm:text-sm",
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-[background-color,border-color,color] duration-200 sm:px-4 sm:text-sm",
                   index > 0 && "hidden sm:inline-flex",
                   index === 0
                     ? "border-[#f8b878] bg-[#f8b878] text-[#0f172a]"
@@ -478,7 +527,7 @@ function HeroDashboardPreview() {
               <Calendar className="h-4 w-4 text-slate-400" aria-hidden />
               <span>{dateRange}</span>
             </div>
-            <button className="hidden items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-transform duration-300 hover:-translate-y-0.5 sm:inline-flex">
+            <button className="hidden items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-[background-color,box-shadow,transform] duration-200 active:scale-[0.985] sm:inline-flex">
               <Download className="h-4 w-4" aria-hidden />
               Download
             </button>
@@ -491,7 +540,7 @@ function HeroDashboardPreview() {
           {DASHBOARD_STATS.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-3.5 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] sm:p-4"
+              className="landing-card landing-card-muted p-3.5 sm:p-4"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-slate-600 sm:tracking-[0.35em]">
                 {stat.label}
@@ -505,14 +554,14 @@ function HeroDashboardPreview() {
         </div>
         {/* Trend chart + recent activity. */}
         <div className="grid gap-4 lg:grid-cols-[1.4fr_0.6fr]">
-          <div className="relative hidden justify-center overflow-hidden rounded-3xl border border-slate-200 bg-[#fff7ef] p-3 transition-transform duration-500 hover:-translate-y-1 md:flex">
+          <div className="landing-card landing-card-muted relative hidden justify-center overflow-hidden p-3 md:flex">
             <div className="relative space-y-5">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
                 </div>
               </div>
               <div className="grid w-full max-w-[640px] gap-4 lg:grid-cols-1">
-                <div className="flex min-h-[320px] flex-col rounded-2xl border border-slate-100 bg-white/90 p-5">
+                <div className="flex min-h-[320px] flex-col rounded-2xl border border-slate-200 bg-white p-5">
                   <div className="flex items-center justify-between text-xs text-slate-600">
                     <span className="uppercase tracking-[0.35em]">
                       Scans trend
@@ -578,7 +627,7 @@ function HeroDashboardPreview() {
               </div>
             </div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-4 transition-transform duration-500 hover:-translate-y-1 sm:p-5">
+          <div className="landing-card p-4 sm:p-5">
             <p className="text-lg font-semibold text-slate-900">Recent leads</p>
             <p className="text-xs text-slate-600">
               You made {RECENT_SALES.length} new connections this period.
@@ -597,7 +646,7 @@ function HeroDashboardPreview() {
                   <div
                     key={sale.email}
                     className={cn(
-                      "flex min-w-0 items-center justify-between gap-2 transition-transform duration-300 hover:-translate-y-0.5 sm:gap-3",
+                      "flex min-w-0 items-center justify-between gap-2 sm:gap-3",
                       index >= 3 && "hidden sm:flex"
                     )}
                   >
@@ -665,8 +714,8 @@ function WhatIsLinketSection() {
         <div className="landing-ring-float-c absolute right-[18%] bottom-8 h-14 w-14 rounded-full border-[4px] border-[#58c0e0]/32 bg-transparent" />
       </div>
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="landing-fade-up relative overflow-hidden rounded-[28px] border border-white/70 bg-white/90 p-5 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[32px] sm:p-8 lg:p-10">
-          <div className="pointer-events-none absolute inset-0 z-0 hidden lg:block landing-decoration-fade landing-delay-3" aria-hidden>
+        <div className="landing-fade-up landing-surface relative overflow-hidden p-5 sm:p-8 lg:p-10">
+          <div className="pointer-events-none absolute inset-0 z-0 hidden" aria-hidden>
             <svg
               className="absolute inset-0 h-full w-full"
               viewBox="0 0 1200 640"
@@ -710,14 +759,14 @@ function WhatIsLinketSection() {
 
           <div className="relative z-10">
             <div className="mx-auto max-w-4xl text-center">
-              <span className="inline-flex items-center rounded-full border border-[#f8ddba] bg-[#fff8ee] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
+              <span className="landing-chip px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em]">
                 What Is Linket?
               </span>
-              <h2 className="landing-serif mt-4 text-[1.9rem] font-normal tracking-[-0.03em] text-slate-900 sm:mt-5 sm:text-4xl">
-                Interactive networking made seamless
+              <h2 className="mt-4 text-[1.9rem] font-semibold tracking-tight text-slate-950 sm:mt-5 sm:text-4xl">
+                Interactive networking with a real handoff
               </h2>
               <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
-                Linket combines your physical tap-to-share hardware to your live page, keeping your leads organized.
+                Linket connects physical tap-to-share hardware to a live page and keeps the leads organized.
 
                 Instead of handing over a static card, Linket gives you a physical
                 product that opens a living digital introduction. The person you
@@ -731,7 +780,7 @@ function WhatIsLinketSection() {
               {pillars.map((pillar) => (
                 <div
                   key={pillar.step}
-                  className="rounded-[24px] border border-slate-100 bg-[#fffdfa] p-4 shadow-[0_12px_30px_rgba(15,23,42,0.05)] sm:rounded-[28px] sm:p-5"
+                  className="landing-card p-4 sm:p-5"
                 >
                   <span
                     className={cn(
@@ -777,12 +826,12 @@ function ExperienceSection() {
       />
       <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 sm:gap-10 sm:px-6 lg:flex-row lg:items-center">
         <div className="landing-fade-up space-y-5 sm:space-y-6 lg:w-3/5">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/60 sm:tracking-[0.4em]">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-white/60">
             Custom orders
           </p>
           {/* Section headline + explanation. */}
           <div>
-            <p className="landing-serif text-[1.9rem] font-normal tracking-[-0.03em] sm:text-4xl">
+            <p className="text-[1.9rem] font-semibold tracking-tight sm:text-4xl">
               <span className="text-white/80">
                 Work with us to design custom made Linkets for your{" "}
               </span>
@@ -806,7 +855,7 @@ function ExperienceSection() {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-2xl border border-white/10 bg-white/5 p-3.5 transition-transform duration-300 hover:-translate-y-1 hover:border-white/30 sm:p-4"
+                className="rounded-2xl border border-white/15 bg-white/[0.08] p-3.5 transition-[border-color,background-color] duration-200 hover:border-white/30 sm:p-4"
               >
                 {item}
               </div>
@@ -814,7 +863,7 @@ function ExperienceSection() {
           </div>
         </div>
         {/* Contact form card. */}
-        <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-3xl border border-white/10 bg-white/5 p-4 shadow-[0_24px_60px_rgba(5,5,20,0.4)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:p-8 sm:shadow-[0_30px_80px_rgba(5,5,20,0.45)]">
+        <div className="landing-fade-up landing-delay-2 w-full max-w-md rounded-[20px] border border-white/15 bg-[#0b1020] p-4 shadow-[0_24px_60px_rgba(5,5,20,0.4)] transition-[border-color,box-shadow] duration-200 hover:border-white/25 sm:p-8">
           <div className="flex items-center gap-3">
             <Image
               src={brand.logomark}
@@ -866,16 +915,16 @@ function PublicProfilePreviewSection({
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="grid items-start gap-5 sm:gap-8 lg:grid-cols-[1.18fr_0.82fr] lg:items-stretch">
           <div className="landing-fade-up h-full text-slate-900">
-            <div className="flex h-full w-full max-w-none flex-col rounded-[28px] border border-white/70 bg-white p-5 shadow-[0_20px_50px_rgba(15,23,42,0.08)] sm:rounded-[32px] sm:p-8 lg:min-h-[520px]">
+            <div className="landing-surface flex h-full w-full max-w-none flex-col p-5 sm:p-8 lg:min-h-[520px]">
               <div className="relative flex h-full flex-col justify-between gap-5 pt-0 sm:gap-6 sm:pt-5">
-                <span className="inline-flex items-center rounded-full border border-[#f8ddba] bg-[#fff8ee] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
+                <span className="landing-chip px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em]">
                   Public Page
                 </span>
                 <div className="space-y-5 sm:space-y-6">
                   <div className="space-y-4">
-                    <h2 className="landing-serif text-[1.9rem] font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+                    <h2 className="text-[1.9rem] font-semibold tracking-tight text-slate-950 sm:text-4xl">
                       This is the founder&apos;s{" "}
-                      <span className="text-[#e6aa5c]">live page</span>
+                      <span className="text-[#20586e]">live page</span>
                     </h2>
                     <p className="max-w-xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
                       A public page is the live profile people see after they tap
@@ -885,7 +934,7 @@ function PublicProfilePreviewSection({
                     </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.06)]">
+                    <div className="landing-card p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#e3a553]">
                         What Lives Here
                       </p>
@@ -895,7 +944,7 @@ function PublicProfilePreviewSection({
                         knows exactly where to go next.
                       </p>
                     </div>
-                    <div className="rounded-[24px] border border-slate-100 bg-white p-4 shadow-[0_10px_26px_rgba(15,23,42,0.06)]">
+                    <div className="landing-card p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#34afcf]">
                         Why It Matters
                       </p>
@@ -912,7 +961,7 @@ function PublicProfilePreviewSection({
           </div>
           {/* Mobile preview shell with live data. */}
           <div className="landing-fade-up landing-delay-2 relative mx-auto w-full max-w-[19.5rem] sm:max-w-[24rem]">
-            <div className="relative overflow-hidden rounded-[28px] border border-white/60 bg-white/70 shadow-[0_30px_70px_rgba(15,23,42,0.22)] backdrop-blur transition-transform duration-500 hover:-translate-y-2 sm:rounded-[36px] sm:shadow-[0_45px_90px_rgba(15,23,42,0.25)]">
+            <div className="landing-surface relative overflow-hidden p-2">
               <div className="landing-brand-preview h-[420px] w-full overflow-y-auto bg-[#0b1220] sm:h-[520px]">
                 {preview ? (
                   <PublicProfilePreview
@@ -929,7 +978,7 @@ function PublicProfilePreviewSection({
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
                         Live public page
                       </p>
-                      <h3 className="landing-serif text-3xl font-normal tracking-[-0.03em]">
+                      <h3 className="text-3xl font-semibold tracking-tight">
                         Punit&apos;s profile is live
                       </h3>
                       <p className="text-sm leading-7 text-slate-600">
@@ -992,7 +1041,7 @@ function FAQSection({ items }: { items: FaqItem[] }) {
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:tracking-[0.35em]">
           FAQ
         </span>
-        <h2 className="landing-serif mt-4 text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
+        <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-4xl">
           Answers before you tap
         </h2>
         <p className="mt-4 text-sm text-muted-foreground sm:text-base">
@@ -1005,7 +1054,7 @@ function FAQSection({ items }: { items: FaqItem[] }) {
           <AccordionItem
             key={item.question}
             value={`faq-${index}`}
-            className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-4 transition-transform duration-300 hover:-translate-y-0.5 sm:px-5"
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 transition-[border-color,background-color] duration-200 hover:border-slate-300 sm:px-5"
           >
             <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:no-underline sm:text-base">
               {item.question}

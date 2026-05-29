@@ -665,15 +665,11 @@ export default function LeadsList({ userId }: { userId: string }) {
   function deleteLead(id: string) {
     const index = leads.findIndex((lead) => lead.id === id);
     if (index === -1) return;
-    if (!window.confirm("Delete this lead? This cannot be undone.")) return;
     scheduleLeadDelete([{ lead: leads[index], index }]);
   }
 
   function deleteSelected() {
     if (selectedIds.size === 0) return;
-    if (!window.confirm(`Delete ${selectedIds.size} lead(s)? This cannot be undone.`)) {
-      return;
-    }
     const selected = new Set(selectedIds);
     const entries = leads
       .map((lead, index) => ({ lead, index }))
@@ -834,7 +830,7 @@ export default function LeadsList({ userId }: { userId: string }) {
             </div>
           </div>
         ) : null}
-        <div className="dashboard-leads-toolbar sticky top-2 z-20 rounded-[1.25rem] border border-border/60 bg-card/95 p-2 shadow-[0_18px_42px_-34px_rgba(15,23,42,0.4)] backdrop-blur sm:top-4 sm:rounded-[1.75rem] sm:p-4">
+        <div className="dashboard-leads-toolbar sticky top-2 z-20 rounded-[1.25rem] border border-border/70 bg-card p-2 shadow-[var(--shadow-grounded)] sm:top-4 sm:rounded-[1.25rem] sm:p-4">
           <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
             <div className="min-w-0 flex-1">
               <Input
@@ -892,7 +888,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                   Export
                 </Button>
                 {exportMenuOpen ? (
-                  <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[220px] rounded-2xl border border-border/60 bg-popover/95 p-2 shadow-[0_22px_50px_-28px_rgba(15,23,42,0.48)] backdrop-blur">
+                  <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 min-w-[220px] rounded-2xl border border-border/70 bg-popover p-2 shadow-[var(--shadow-grounded)]">
                     <button
                       type="button"
                       className="flex w-full rounded-xl px-3 py-2 text-left text-sm hover:bg-muted/60"

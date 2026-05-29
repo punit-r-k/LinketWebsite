@@ -221,7 +221,7 @@ function ForgotPasswordPageContent() {
 
   return (
     <section className="flex min-h-screen items-center justify-center bg-[#fff7ed] px-4 py-16">
-      <Card className="w-full max-w-md border border-foreground/10 bg-card/80 shadow-xl backdrop-blur">
+      <Card className="w-full max-w-md border border-foreground/10 bg-card shadow-[var(--shadow-grounded-lg)]">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-semibold text-foreground">
             {step === "email" ? "Reset your password" : "Enter reset code"}
@@ -371,7 +371,7 @@ function ForgotPasswordPageContent() {
 function ForgotPasswordPageFallback() {
   return (
     <section className="flex min-h-screen items-center justify-center bg-[#fff7ed] px-4 py-16">
-      <Card className="w-full max-w-md border border-foreground/10 bg-card/80 shadow-xl backdrop-blur">
+      <Card className="w-full max-w-md border border-foreground/10 bg-card shadow-[var(--shadow-grounded-lg)]">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-semibold text-foreground">
             Reset your password

@@ -16,6 +16,7 @@ import ServiceWorkerRegister from "@/components/system/ServiceWorkerRegister";
 import DebugErrorOverlay from "@/components/system/DebugErrorOverlay";
 import GlobalErrorLogger from "@/components/system/GlobalErrorLogger";
 import AnalyticsBinder from "@/components/system/AnalyticsBinder";
+import ConfirmDialogHost from "@/components/system/ConfirmDialogHost";
 import "@/styles/theme.css";
 import Script from "next/script";
 import { brand } from "@/config/brand";
@@ -198,6 +199,7 @@ export default async function RootLayout({
           <ServiceWorkerRegister />
           <GlobalErrorLogger />
           <DebugErrorOverlay />
+          <ConfirmDialogHost />
           <Toaster />
         </LocaleProvider>
       </body>
