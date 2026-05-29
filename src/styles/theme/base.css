@@ -400,12 +400,6 @@
   box-shadow: var(--shadow-grounded) !important;
 }
 
-.landing-ring-float-a,
-.landing-ring-float-b,
-.landing-ring-float-c {
-  display: none;
-}
-
 @media (hover: hover) and (pointer: fine) {
   .landing-card:hover,
   .landing-surface:hover {

@@ -3264,26 +3264,42 @@ body.theme-forest .dashboard-forest-pin {
   }
 }
 
-/* Connected analytics controls: one slim rail instead of a blocky backing panel. */
+/* Connected analytics controls: individual pills joined by a hairline connector. */
 #dashboard-theme-scope .dashboard-analytics-range {
+  position: relative;
+  isolation: isolate;
   align-self: flex-start;
-  border: 1px solid color-mix(in srgb, var(--premium-border) 86%, var(--foreground) 14%);
-  border-radius: 9999px;
-  background: color-mix(in srgb, var(--card) 76%, var(--background) 24%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--background) 62%, transparent);
+  padding-block: 0.125rem;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#dashboard-theme-scope .dashboard-analytics-range::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset-inline: 1.25rem;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: color-mix(in srgb, var(--premium-border) 78%, var(--foreground) 22%);
+  pointer-events: none;
 }
 
 #dashboard-theme-scope .dashboard-analytics-range-button,
 #dashboard-theme-scope .dashboard-analytics-export-button {
-  border-color: transparent !important;
-  background: transparent !important;
+  position: relative;
+  z-index: 1;
+  border-color: color-mix(in srgb, var(--premium-border) 84%, var(--foreground) 16%) !important;
+  background: color-mix(in srgb, var(--card) 96%, var(--background) 4%) !important;
   box-shadow: none !important;
 }
 
 #dashboard-theme-scope .dashboard-analytics-range-button[data-selected="false"]:hover,
 #dashboard-theme-scope .dashboard-analytics-export-button:hover {
-  border-color: transparent !important;
-  background: color-mix(in srgb, var(--foreground) 7%, transparent) !important;
+  border-color: color-mix(in srgb, var(--ring) 34%, var(--premium-border) 66%) !important;
+  background: color-mix(in srgb, var(--card) 84%, var(--foreground) 16%) !important;
 }
 
 #dashboard-theme-scope .dashboard-analytics-range-button[data-selected="true"] {
@@ -3300,9 +3316,12 @@ body.theme-forest .dashboard-forest-pin {
 @media (max-width: 640px) {
   #dashboard-theme-scope .dashboard-analytics-range {
     width: 100%;
-    gap: 0.125rem;
-    border-radius: 1.5rem;
-    padding: 0.25rem;
+    gap: 0.5rem;
+    padding-block: 0.125rem;
+  }
+
+  #dashboard-theme-scope .dashboard-analytics-range::before {
+    inset-inline: 1rem;
   }
 
   #dashboard-theme-scope .dashboard-analytics-range-button,

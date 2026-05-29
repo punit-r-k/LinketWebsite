@@ -113,10 +113,10 @@ function TestimonialSlider({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[20px] border p-6 shadow-[var(--shadow-grounded-lg)]",
+        "overflow-hidden rounded-[40px] p-6 shadow-[0_35px_80px_rgba(14,34,56,0.25)] backdrop-blur",
         isLight
-          ? "border-slate-200 bg-white text-slate-900"
-          : "border-white/10 bg-[#0b1020] text-white",
+          ? "border border-[#ffe4d6] bg-gradient-to-br from-[#fffaf5] via-white to-[#ffe9d6] text-slate-900"
+          : "bg-white/5 text-white",
         className
       )}
     >
@@ -206,14 +206,15 @@ function TestimonialSlider({
                     ? "md:w-1/2"
                     : "w-full"
                 )}
+                whileHover={{ y: -6 }}
                 transition={{ type: "spring", stiffness: 150, damping: 15 }}
               >
                 <div
                   className={cn(
-                    "relative h-full rounded-[16px] border p-6 text-left shadow-[var(--shadow-grounded)]",
+                    "relative h-full rounded-3xl border p-6 text-left shadow-[0_25px_65px_rgba(8,12,32,0.25)] backdrop-blur",
                     isLight
-                      ? "border-slate-200 bg-white text-slate-900"
-                      : "border-white/10 bg-white/[0.08] text-white"
+                      ? "border-[#ffe4d6] bg-white text-slate-900"
+                      : "border-white/10 bg-white/5 text-white"
                   )}
                 >
                   <Quote

@@ -654,7 +654,7 @@ export default function AnalyticsContent() {
             Scans, captured contacts, conversion, and the links people choose.
           </p>
         </div>
-        <div className="dashboard-analytics-range flex w-full max-w-full flex-nowrap items-center gap-1 overflow-x-auto rounded-full p-1 sm:w-auto sm:overflow-visible">
+        <div className="dashboard-analytics-range flex w-full max-w-full flex-nowrap items-center gap-2 overflow-x-auto sm:w-auto sm:overflow-visible">
           {RANGES.map((option) => (
             <Button
               key={option.value}
@@ -1319,7 +1319,7 @@ function FreeAnalyticsView({
             contact capture, conversion, and link-performance analytics.
           </p>
         </div>
-        <div className="dashboard-analytics-range flex w-full max-w-full flex-nowrap items-center gap-1 overflow-x-auto rounded-full p-1 sm:w-auto sm:overflow-visible">
+        <div className="dashboard-analytics-range flex w-full max-w-full flex-nowrap items-center gap-2 overflow-x-auto sm:w-auto sm:overflow-visible">
           {RANGES.map((option) => (
             <Button
               key={option.value}
