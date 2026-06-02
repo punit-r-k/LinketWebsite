@@ -824,7 +824,7 @@ export default function LeadFormBuilder({
               (columns === 3
                 ? "lg:grid-cols-[0.92fr_1.06fr_0.98fr]"
                 : isExternalPreviewLayout
-                ? "md:grid-cols-2 lg:grid-cols-[minmax(260px,0.82fr)_minmax(0,1.18fr)]"
+                ? "md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
                 : "md:grid-cols-2")
           )}
         >
