@@ -1203,6 +1203,8 @@ function LeadFormQuestionItem({
   } = useSortable({ id: field.id });
   const canMoveUp = index > 0;
   const canMoveDown = index < fieldCount - 1;
+  const hasBothMoveActions = canMoveUp && canMoveDown;
+  const hasMoveAction = canMoveUp || canMoveDown;
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -1238,42 +1240,41 @@ function LeadFormQuestionItem({
         onClick={(event) => event.stopPropagation()}
         onPointerDown={(event) => event.stopPropagation()}
       >
-        <div
-          className="lead-form-question-reorder-actions"
-          role="group"
-          aria-label={`Reorder ${field.label || "field"}`}
-        >
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="lead-form-question-action lead-form-question-action-split"
-            onClick={() => onMove(field.id, "up")}
-            disabled={!canMoveUp}
-            aria-label={`Move ${field.label || "field"} up`}
+        {hasMoveAction ? (
+          <div
+            className={cn(
+              "lead-form-question-reorder-actions",
+              !hasBothMoveActions && "lead-form-question-reorder-actions-single"
+            )}
+            role="group"
+            aria-label={`Reorder ${field.label || "field"}`}
           >
             {canMoveUp ? (
-              <ArrowUp className="h-3.5 w-3.5" />
-            ) : (
-              <span className="h-3.5 w-3.5" aria-hidden />
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="lead-form-question-action lead-form-question-action-split"
-            onClick={() => onMove(field.id, "down")}
-            disabled={!canMoveDown}
-            aria-label={`Move ${field.label || "field"} down`}
-          >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="lead-form-question-action lead-form-question-action-split"
+                onClick={() => onMove(field.id, "up")}
+                aria-label={`Move ${field.label || "field"} up`}
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
             {canMoveDown ? (
-              <ArrowDown className="h-3.5 w-3.5" />
-            ) : (
-              <span className="h-3.5 w-3.5" aria-hidden />
-            )}
-          </Button>
-        </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="lead-form-question-action lead-form-question-action-split"
+                onClick={() => onMove(field.id, "down")}
+                aria-label={`Move ${field.label || "field"} down`}
+              >
+                <ArrowDown className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
         <Button
           type="button"
           variant="ghost"

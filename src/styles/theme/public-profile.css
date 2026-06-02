@@ -52,6 +52,15 @@
   background: var(--background);
 }
 
+.public-profile-preview {
+  --profile-contact-button-bg: var(--color-button-primary-bg);
+  --profile-contact-button-bg-hover: var(--color-button-primary-bg-hover);
+  --profile-contact-button-bg-active: var(--color-button-primary-bg-active);
+  --profile-contact-button-fg: var(--color-button-primary-fg);
+  --profile-contact-button-border: var(--color-button-primary-border);
+  --profile-contact-button-preview-shadow: 0 12px 28px -18px var(--ring);
+}
+
 .public-profile-backdrop-entrance {
   opacity: 0;
   animation: public-profile-fade-in 920ms var(--public-profile-load-ease) 40ms forwards;

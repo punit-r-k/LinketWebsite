@@ -447,6 +447,7 @@ export default function PublicProfileEditorPage() {
       const mapped = mapProfile(active);
       setDraft(mapped);
       setSavedProfile(mapped);
+      setLastSavedAt(mapped.updatedAt);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Unable to load profile";
@@ -1146,6 +1147,7 @@ export default function PublicProfileEditorPage() {
     };
   }, [hasUnsavedChanges, saveState, sidebarSavePulse]);
   const liveStatusLabel = draft?.active ? "Live profile" : "Draft profile";
+  const displayedLastSavedAt = lastSavedAt ?? savedProfile?.updatedAt ?? null;
   const saveDetail = saveError || vcardSnapshot.error || null;
 
   useEffect(() => {
@@ -1251,7 +1253,7 @@ export default function PublicProfileEditorPage() {
             {saveStatusMeta.label}
           </span>
           <span className="text-xs text-muted-foreground">
-            Last saved: {lastSavedAt ? formatShortDate(lastSavedAt) : "Not yet"}
+            Last saved: {displayedLastSavedAt ? formatShortDate(displayedLastSavedAt) : "Not yet"}
           </span>
         </div>
         {saveDetail ? (
