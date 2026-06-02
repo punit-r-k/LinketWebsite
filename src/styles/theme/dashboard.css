@@ -360,6 +360,59 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
   background: var(--premium-gradient);
 }
 
+#dashboard-theme-scope.theme-burnt-orange {
+  --dashboard-canvas-foreground: #fff8f2;
+  --dashboard-canvas-muted-foreground: rgba(255, 248, 242, 0.96);
+}
+
+#dashboard-theme-scope.theme-maroon {
+  --dashboard-canvas-foreground: #fff5f6;
+  --dashboard-canvas-muted-foreground: rgba(255, 245, 246, 0.84);
+}
+
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon)
+  .dashboard-content
+  > :not([data-slot=card], .dashboard-setup-page)
+  > header
+  > :first-child
+  :is(h1, h2, h3, h4, .text-foreground),
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon)
+  .dashboard-content
+  > :not([data-slot=card], .dashboard-setup-page)
+  > header
+  > :is(h1, h2, h3, h4, .text-foreground),
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon)
+  .dashboard-overview-page:not(.dashboard-setup-page)
+  > .dashboard-overview-header
+  > .dashboard-overview-intro
+  :is(h1, h2, h3, h4, .text-foreground) {
+  color: var(--dashboard-canvas-foreground);
+}
+
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon)
+  .dashboard-content
+  > :not([data-slot=card], .dashboard-setup-page)
+  > header
+  > :first-child
+  :is(p, .text-muted-foreground),
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon)
+  .dashboard-content
+  > :not([data-slot=card], .dashboard-setup-page)
+  > header
+  > :is(p, .text-muted-foreground),
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon)
+  .dashboard-overview-page:not(.dashboard-setup-page)
+  > .dashboard-overview-header
+  > .dashboard-overview-intro
+  :is(p, .text-muted-foreground),
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon)
+  .dashboard-leads-page
+  > .dashboard-leads-header
+  > :first-child
+  :is(p, .text-muted-foreground) {
+  color: var(--dashboard-canvas-muted-foreground);
+}
+
 #dashboard-theme-scope .dashboard-topbar,
 #dashboard-theme-scope .dashboard-navbar,
 .dashboard-navbar {
