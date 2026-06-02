@@ -3214,6 +3214,7 @@ body.theme-forest .dashboard-forest-pin {
 
 #dashboard-theme-scope .lead-form-question-actions {
   display: flex;
+  flex-direction: column;
   width: fit-content;
   max-width: 100%;
   align-items: center;
@@ -3235,6 +3236,30 @@ body.theme-forest .dashboard-forest-pin {
   background: transparent;
   box-shadow: none;
   color: var(--foreground);
+}
+
+#dashboard-theme-scope .lead-form-question-reorder-actions {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  width: 2.125rem;
+  height: 2.125rem;
+  border: 1px solid color-mix(in srgb, var(--premium-border) 88%, transparent);
+  border-radius: 0.7rem;
+  background: transparent;
+}
+
+#dashboard-theme-scope .lead-form-question-action-split {
+  min-height: 0;
+  height: 100%;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+
+#dashboard-theme-scope .lead-form-question-action-split:first-child {
+  border-bottom: 1px solid color-mix(in srgb, var(--premium-border) 88%, transparent);
 }
 
 #dashboard-theme-scope .lead-form-question-action:hover {
