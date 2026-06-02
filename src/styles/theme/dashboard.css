@@ -1333,17 +1333,13 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
 #dashboard-theme-scope.theme-forest::before {
   opacity: 0.26;
   background-image:
-    radial-gradient(122% 88% at 50% -8%, rgba(221, 177, 146, 0.15) 0%, transparent 70%),
-    var(--forest-tree-pattern);
+    radial-gradient(122% 88% at 50% -8%, rgba(221, 177, 146, 0.15) 0%, transparent 70%);
   background-size:
-    125% 100%,
-    var(--forest-tree-size-x) var(--forest-tree-size-y);
+    125% 100%;
   background-position:
-    center top,
-    center calc(100% + var(--forest-tree-offset-y));
+    center top;
   background-repeat:
-    no-repeat,
-    repeat-x;
+    no-repeat;
 }
 
 #dashboard-theme-scope.theme-forest::after {
@@ -3214,6 +3210,56 @@ body.theme-forest .dashboard-forest-pin {
 #dashboard-theme-scope .dashboard-metric-row:hover {
   transform: none;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ring) 10%, transparent);
+}
+
+#dashboard-theme-scope .lead-form-question-actions {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: auto;
+  border: 1px solid var(--premium-border);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--card) 82%, var(--background) 18%);
+  padding: 0.25rem;
+  box-shadow: var(--premium-inset);
+}
+
+#dashboard-theme-scope .lead-form-question-action {
+  min-height: 2.125rem;
+  height: 2.125rem;
+  width: 2.125rem;
+  border-color: transparent;
+  border-radius: 0.7rem;
+  background: transparent;
+  box-shadow: none;
+  color: var(--foreground);
+}
+
+#dashboard-theme-scope .lead-form-question-action:hover {
+  border-color: color-mix(in srgb, var(--ring) 24%, transparent);
+  background: color-mix(in srgb, var(--ring) 10%, var(--card) 90%);
+}
+
+#dashboard-theme-scope .lead-form-question-action:active {
+  transform: scale(0.96);
+}
+
+#dashboard-theme-scope .lead-form-question-action:disabled {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: color-mix(in srgb, var(--muted-foreground) 58%, transparent);
+}
+
+#dashboard-theme-scope .lead-form-question-action-danger {
+  color: color-mix(in srgb, var(--danger) 70%, var(--foreground) 30%);
+}
+
+#dashboard-theme-scope .lead-form-question-action-danger:hover {
+  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+  background: color-mix(in srgb, var(--danger) 12%, var(--card) 88%);
 }
 
 #dashboard-theme-scope .dashboard-sidebar,

@@ -743,22 +743,18 @@
   background-image:
     radial-gradient(124% 90% at 50% -10%, rgba(199, 156, 126, 0.2) 0%, transparent 70%),
     linear-gradient(180deg, rgba(70, 89, 74, 0.08) 0%, rgba(39, 53, 41, 0.11) 56%, rgba(27, 18, 21, 0.14) 100%),
-    var(--forest-tree-pattern),
     linear-gradient(180deg, #44584a 0%, #273529 58%, #1b1215 100%);
   background-size:
     auto,
     100% 100%,
-    var(--forest-tree-size-x) var(--forest-tree-size-y),
     100% 100%;
   background-position:
     center top,
     center,
-    center calc(100% + var(--forest-tree-offset-y)),
     center;
   background-repeat:
     no-repeat,
     no-repeat,
-    repeat-x,
     no-repeat;
 }
 
@@ -1261,18 +1257,82 @@
 }
 
 .public-profile-preview .public-profile-preview-contact-button {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   border: 1px solid var(--profile-contact-button-border);
   background: var(--profile-contact-button-bg);
   color: var(--profile-contact-button-fg);
-  box-shadow: var(--profile-contact-button-preview-shadow);
+  box-shadow:
+    0 24px 46px -30px rgba(15, 23, 42, 0.6),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent);
+  letter-spacing: 0.01em;
+  transform: translateZ(0);
+  transition:
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 220ms ease,
+    border-color 220ms ease;
+}
+
+.public-profile-preview .public-profile-preview-contact-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 28%,
+    rgba(255, 255, 255, 0.36) 50%,
+    transparent 72%
+  );
+  transform: translateX(-130%);
+  transition:
+    opacity 300ms ease,
+    transform 560ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.public-profile-preview .public-profile-preview-contact-button::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, #ffffff 34%, transparent);
+  opacity: 0.5;
 }
 
 .public-profile-preview .public-profile-preview-contact-button:hover {
   background: var(--profile-contact-button-bg-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    0 30px 52px -32px rgba(15, 23, 42, 0.64),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 36%, transparent);
+}
+
+.public-profile-preview .public-profile-preview-contact-button:hover::before,
+.public-profile-preview .public-profile-preview-contact-button:focus-visible::before {
+  opacity: 1;
+  transform: translateX(130%);
+}
+
+.public-profile-preview .public-profile-preview-contact-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-button-focus-offset),
+    0 0 0 5px var(--color-button-focus-ring),
+    0 26px 50px -30px rgba(15, 23, 42, 0.62),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 38%, transparent);
 }
 
 .public-profile-preview .public-profile-preview-contact-button:active {
   background: var(--profile-contact-button-bg-active);
+  transform: translateY(0);
+  box-shadow:
+    0 20px 38px -28px rgba(15, 23, 42, 0.58),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent);
 }
 
 .public-profile-link {

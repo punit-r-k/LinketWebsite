@@ -304,15 +304,12 @@
   --premium-gradient: linear-gradient(180deg, #334539 0%, #1d2b20 58%, #100c0e 100%);
   --premium-card-gradient: linear-gradient(180deg, rgba(60, 79, 66, 0.98) 0%, rgba(31, 44, 35, 0.96) 100%);
   --premium-topbar-gradient: linear-gradient(90deg, rgba(44, 61, 50, 0.98) 0%, rgba(29, 43, 32, 0.97) 52%, rgba(16, 12, 14, 0.95) 100%);
+  --premium-input-gradient: linear-gradient(180deg, rgba(58, 77, 64, 0.98) 0%, rgba(44, 61, 50, 0.96) 100%);
   --premium-border: rgba(221, 177, 146, 0.34);
   --premium-shadow: 0 18px 45px -30px rgba(15, 4, 7, 0.68);
   --premium-glow: 0 0 0 1px rgba(221, 177, 146, 0.32);
   --premium-hairline: rgba(221, 177, 146, 0.4);
   --premium-inset: 0 1px 0 rgba(251, 244, 232, 0.08) inset;
-  --forest-tree-pattern: url("/illustrations/forest-trees.svg");
-  --forest-tree-size-x: 960px;
-  --forest-tree-size-y: 460px;
-  --forest-tree-offset-y: -8px;
 }
 
 /* Forest theme border emphasis */

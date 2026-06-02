@@ -878,7 +878,7 @@ export default function LeadFormBuilder({
                   <div
                     key={field.id}
                     className={cn(
-                      "dashboard-drag-item lead-form-drag-item flex items-start gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
+                      "dashboard-drag-item lead-form-drag-item grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
                       selectedFieldId === field.id && "ring-2 ring-primary/20",
                       draggingFieldId === field.id && "is-dragging"
                     )}
@@ -896,52 +896,62 @@ export default function LeadFormBuilder({
                     }}
                   >
                     <GripVertical className="mt-1 h-4 w-4 text-muted-foreground" />
-                    <div className="flex-1 space-y-1">
-                      <div className="text-sm font-semibold">{field.label}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {fieldTypeLabel(field.type)}
-                        {field.required ? " - required" : ""}
+                    <div className="min-w-0 space-y-3">
+                      <div className="min-w-0 space-y-1">
+                        <div className="break-words text-sm font-semibold leading-snug">
+                          {field.label}
+                        </div>
+                        <div className="text-xs leading-snug text-muted-foreground">
+                          {fieldTypeLabel(field.type)}
+                          {field.required ? " - required" : ""}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          moveField(field.id, "up");
-                        }}
-                        disabled={index === 0}
-                        aria-label={`Move ${field.label || "field"} up`}
+                      <div
+                        className="lead-form-question-actions"
+                        onClick={(event) => event.stopPropagation()}
                       >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          moveField(field.id, "down");
-                        }}
-                        disabled={index === form.fields.length - 1}
-                        aria-label={`Move ${field.label || "field"} down`}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          deleteField(field.id);
-                        }}
-                        aria-label="Delete field"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="lead-form-question-action"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            moveField(field.id, "up");
+                          }}
+                          disabled={index === 0}
+                          aria-label={`Move ${field.label || "field"} up`}
+                        >
+                          <ArrowUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="lead-form-question-action"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            moveField(field.id, "down");
+                          }}
+                          disabled={index === form.fields.length - 1}
+                          aria-label={`Move ${field.label || "field"} down`}
+                        >
+                          <ArrowDown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="lead-form-question-action lead-form-question-action-danger"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            deleteField(field.id);
+                          }}
+                          aria-label="Delete field"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))
