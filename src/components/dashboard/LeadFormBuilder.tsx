@@ -10,6 +10,26 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  restrictToParentElement,
+  restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from "lucide-react";
 
 import { useDashboardPlanAccess } from "@/components/dashboard/DashboardSessionContext";
@@ -195,7 +215,12 @@ export default function LeadFormBuilder({
   });
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
-  const [draggingFieldId, setDraggingFieldId] = useState<string | null>(null);
+  const fieldSensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -230,6 +255,10 @@ export default function LeadFormBuilder({
       : form.fields.slice();
     return fields;
   }, [form]);
+  const fieldIds = useMemo(
+    () => form?.fields.map((field) => field.id) ?? [],
+    [form]
+  );
   const isExternalPreviewLayout =
     layout === "side" && columns === 2 && !showPreview;
   const hasAdvancedFieldOptions = Boolean(
@@ -502,6 +531,17 @@ export default function LeadFormBuilder({
     next.splice(targetIndex, 0, moved);
     updateForm({ fields: next });
   }, [form, updateForm]);
+
+  const handleFieldDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const movedFieldId = String(active.id);
+      reorderFields(movedFieldId, String(over.id));
+      setSelectedFieldId(movedFieldId);
+    },
+    [reorderFields]
+  );
 
   const moveField = useCallback(
     (fieldId: string, direction: "up" | "down") => {
@@ -874,91 +914,35 @@ export default function LeadFormBuilder({
                 </p>
               ) : null}
               {form.fields.length ? (
-                form.fields.map((field, index) => (
-                  <div
-                    key={field.id}
-                    className={cn(
-                      "dashboard-drag-item lead-form-drag-item grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
-                      selectedFieldId === field.id && "ring-2 ring-primary/20",
-                      draggingFieldId === field.id && "is-dragging"
-                    )}
-                    draggable
-                    onDragStart={() => setDraggingFieldId(field.id)}
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={() => {
-                      if (draggingFieldId)
-                        reorderFields(draggingFieldId, field.id);
-                    }}
-                    onDragEnd={() => setDraggingFieldId(null)}
-                    onClick={() => {
-                      setSelectedFieldId(field.id);
-                      focusFieldSettingsOnPhone();
-                    }}
+                <DndContext
+                  sensors={fieldSensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleFieldDragEnd}
+                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                >
+                  <SortableContext
+                    items={fieldIds}
+                    strategy={verticalListSortingStrategy}
                   >
-                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                    <div className="min-w-0 space-y-1">
-                      <div className="break-words text-sm font-semibold leading-snug">
-                        {field.label}
-                      </div>
-                      <div className="text-xs leading-snug text-muted-foreground">
-                        {fieldTypeLabel(field.type)}
-                        {field.required ? " - required" : ""}
-                      </div>
-                    </div>
-                    <div
-                      className="lead-form-question-actions"
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      <div
-                        className="lead-form-question-reorder-actions"
-                        role="group"
-                        aria-label={`Reorder ${field.label || "field"}`}
-                      >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="lead-form-question-action lead-form-question-action-split"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            moveField(field.id, "up");
+                    <div className="space-y-3">
+                      {form.fields.map((field, index) => (
+                        <LeadFormQuestionItem
+                          key={field.id}
+                          field={field}
+                          index={index}
+                          fieldCount={form.fields.length}
+                          selected={selectedFieldId === field.id}
+                          onSelect={(fieldId) => {
+                            setSelectedFieldId(fieldId);
+                            focusFieldSettingsOnPhone();
                           }}
-                          disabled={index === 0}
-                          aria-label={`Move ${field.label || "field"} up`}
-                        >
-                          <ArrowUp className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="lead-form-question-action lead-form-question-action-split"
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            moveField(field.id, "down");
-                          }}
-                          disabled={index === form.fields.length - 1}
-                          aria-label={`Move ${field.label || "field"} down`}
-                        >
-                          <ArrowDown className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="lead-form-question-action lead-form-question-action-danger"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          deleteField(field.id);
-                        }}
-                        aria-label="Delete field"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                          onMove={moveField}
+                          onDelete={deleteField}
+                        />
+                      ))}
                     </div>
-                  </div>
-                ))
+                  </SortableContext>
+                </DndContext>
               ) : (
                 <div className="rounded-xl border border-dashed border-border/60 px-3 py-6 text-center text-sm text-muted-foreground">
                   Add a field to start your form.
@@ -1188,6 +1172,119 @@ export default function LeadFormBuilder({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function LeadFormQuestionItem({
+  field,
+  index,
+  fieldCount,
+  selected,
+  onSelect,
+  onMove,
+  onDelete,
+}: {
+  field: LeadFormField;
+  index: number;
+  fieldCount: number;
+  selected: boolean;
+  onSelect: (fieldId: string) => void;
+  onMove: (fieldId: string, direction: "up" | "down") => void;
+  onDelete: (fieldId: string) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id });
+  const canMoveUp = index > 0;
+  const canMoveDown = index < fieldCount - 1;
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    cursor: isDragging ? "grabbing" : "grab",
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "dashboard-drag-item lead-form-drag-item grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/60 bg-background/80 p-3 active:cursor-grabbing",
+        selected && "ring-2 ring-primary/20",
+        isDragging && "is-dragging"
+      )}
+      onClick={() => onSelect(field.id)}
+    >
+      <GripVertical className="h-4 w-4 text-muted-foreground" />
+      <div className="min-w-0 space-y-1">
+        <div className="break-words text-sm font-semibold leading-snug">
+          {field.label}
+        </div>
+        <div className="text-xs leading-snug text-muted-foreground">
+          {fieldTypeLabel(field.type)}
+          {field.required ? " - required" : ""}
+        </div>
+      </div>
+      <div
+        className="lead-form-question-actions"
+        onClick={(event) => event.stopPropagation()}
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        <div
+          className="lead-form-question-reorder-actions"
+          role="group"
+          aria-label={`Reorder ${field.label || "field"}`}
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="lead-form-question-action lead-form-question-action-split"
+            onClick={() => onMove(field.id, "up")}
+            disabled={!canMoveUp}
+            aria-label={`Move ${field.label || "field"} up`}
+          >
+            {canMoveUp ? (
+              <ArrowUp className="h-3.5 w-3.5" />
+            ) : (
+              <span className="h-3.5 w-3.5" aria-hidden />
+            )}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="lead-form-question-action lead-form-question-action-split"
+            onClick={() => onMove(field.id, "down")}
+            disabled={!canMoveDown}
+            aria-label={`Move ${field.label || "field"} down`}
+          >
+            {canMoveDown ? (
+              <ArrowDown className="h-3.5 w-3.5" />
+            ) : (
+              <span className="h-3.5 w-3.5" aria-hidden />
+            )}
+          </Button>
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="lead-form-question-action lead-form-question-action-danger"
+          onClick={() => onDelete(field.id)}
+          aria-label="Delete field"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 }
