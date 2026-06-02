@@ -20,6 +20,9 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import { Download, Star } from "lucide-react";
 import {
@@ -66,6 +69,7 @@ const DARK_DELTA_TEXT_THEMES = new Set([
   "maroon",
   "burnt-orange",
 ]);
+const TOP_CTA_SHARE_COLORS = ["var(--primary)", "var(--accent)"] as const;
 
 type TimelineDatum = {
   date: string;
@@ -101,6 +105,20 @@ type ActionInsight = {
   title: string;
   detail: string;
   tone: "primary" | "accent" | "neutral";
+  linkShare?: LinkShareInsight;
+};
+
+type LinkShareDatum = {
+  id: string;
+  label: string;
+  value: number;
+  share: number;
+  color: string;
+};
+
+type LinkShareInsight = {
+  data: LinkShareDatum[];
+  totalClicks: number;
 };
 
 export default function AnalyticsContent() {
@@ -494,6 +512,32 @@ export default function AnalyticsContent() {
     : recentLeads.slice(0, 3);
   const topProfile = analytics?.topProfiles?.[0] ?? null;
   const topLink = analytics?.topLinks?.[0] ?? null;
+  const topCtaLinkShare = useMemo<LinkShareInsight | null>(() => {
+    if (!topLink || topLinksTotalClicks <= 0) return null;
+
+    const remainingClicks = Math.max(0, topLinksTotalClicks - topLink.clicks);
+    const data: LinkShareDatum[] = [
+      {
+        id: topLink.id,
+        label: topLink.title,
+        value: topLink.clicks,
+        share: (topLink.clicks / topLinksTotalClicks) * 100,
+        color: TOP_CTA_SHARE_COLORS[0],
+      },
+    ];
+
+    if (remainingClicks > 0) {
+      data.push({
+        id: "other-links",
+        label: "Other links",
+        value: remainingClicks,
+        share: (remainingClicks / topLinksTotalClicks) * 100,
+        color: TOP_CTA_SHARE_COLORS[1],
+      });
+    }
+
+    return { data, totalClicks: topLinksTotalClicks };
+  }, [topLink, topLinksTotalClicks]);
   const onboarding = analytics?.onboarding ?? null;
   const incompleteOnboardingItems = useMemo(
     () => onboarding?.items.filter((item) => !item.completed) ?? [],
@@ -566,6 +610,7 @@ export default function AnalyticsContent() {
             : ""
         }. Keep high-intent links near the top of your page.`,
         tone: "primary",
+        linkShare: topCtaLinkShare ?? undefined,
       });
     }
 
@@ -587,6 +632,7 @@ export default function AnalyticsContent() {
     rangeTotals.leads,
     rangeTotals.scans,
     siteHost,
+    topCtaLinkShare,
     topLink,
     topLinksTotalClicks,
     topProfile,
@@ -811,6 +857,11 @@ export default function AnalyticsContent() {
                       <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
                         {primaryInsight.detail}
                       </p>
+                      {primaryInsight.linkShare ? (
+                        <LinkSharePieChart
+                          linkShare={primaryInsight.linkShare}
+                        />
+                      ) : null}
                     </div>
                   ) : (
                     <div className="space-y-3">
@@ -1645,6 +1696,116 @@ function CompactInsightCard({ insight }: { insight: ActionInsight }) {
         <p className="text-sm leading-6 text-muted-foreground">
           {insight.detail}
         </p>
+        {insight.linkShare ? (
+          <LinkSharePieChart linkShare={insight.linkShare} compact />
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function LinkSharePieChart({
+  linkShare,
+  compact = false,
+}: {
+  linkShare: LinkShareInsight;
+  compact?: boolean;
+}) {
+  const topSlice = linkShare.data[0];
+  if (!topSlice) return null;
+
+  const ariaLabel = `${topSlice.label} accounts for ${topSlice.share.toFixed(
+    1,
+  )}% of ${numberFormatter.format(linkShare.totalClicks)} link clicks.`;
+
+  return (
+    <div className="dashboard-link-share-chart mt-4 rounded-2xl border border-border/70 bg-background/45 p-3">
+      <div
+        className={cn(
+          "grid gap-3",
+          compact
+            ? "grid-cols-1"
+            : "sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center",
+        )}
+      >
+        <div
+          className={cn(
+            "relative mx-auto aspect-square w-36 shrink-0",
+            !compact && "sm:w-40",
+          )}
+          role="img"
+          aria-label={ariaLabel}
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart margin={{ top: 6, right: 6, bottom: 6, left: 6 }}>
+              <Tooltip
+                content={<LinkShareTooltip />}
+                wrapperStyle={{ outline: "none" }}
+              />
+              <Pie
+                data={linkShare.data}
+                dataKey="value"
+                nameKey="label"
+                innerRadius="58%"
+                outerRadius="86%"
+                paddingAngle={1}
+                stroke="var(--card)"
+                strokeWidth={3}
+                isAnimationActive={false}
+              >
+                {linkShare.data.map((slice) => (
+                  <Cell key={slice.id} fill={slice.color} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
+            <div>
+              <div className="text-xl font-semibold leading-none text-foreground">
+                {topSlice.share.toFixed(1)}%
+              </div>
+              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                Top share
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="min-w-0 space-y-2">
+          {linkShare.data.map((slice) => (
+            <div
+              key={slice.id}
+              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 text-xs"
+            >
+              <span
+                className="h-2.5 w-2.5 rounded-full border border-border/40"
+                style={{ backgroundColor: slice.color }}
+                aria-hidden
+              />
+              <span className="min-w-0 truncate font-medium text-foreground">
+                {slice.label}
+              </span>
+              <span className="font-semibold tabular-nums text-foreground">
+                {slice.share.toFixed(1)}%
+              </span>
+              <span className="col-start-2 text-muted-foreground">
+                {numberFormatter.format(slice.value)} clicks
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <dl className="sr-only">
+          {linkShare.data.map((slice) => (
+            <div key={slice.id}>
+              <dt>{slice.label}</dt>
+              <dd>
+                {slice.share.toFixed(1)}%, {numberFormatter.format(slice.value)}
+                clicks
+              </dd>
+            </div>
+          ))}
+        </dl>
       </div>
     </div>
   );
@@ -1846,6 +2007,26 @@ type SeriesTooltipProps = {
   payload?: Array<{ name: string; value: number | null }>;
   label?: string;
 };
+
+type LinkShareTooltipProps = {
+  active?: boolean;
+  payload?: Array<{ payload?: LinkShareDatum }>;
+};
+
+function LinkShareTooltip({ active, payload }: LinkShareTooltipProps) {
+  const slice = payload?.[0]?.payload;
+  if (!active || !slice) return null;
+
+  return (
+    <div className="dashboard-analytics-tooltip rounded-md border border-border/70 bg-background/95 px-3 py-2 text-xs shadow">
+      <div className="font-medium text-foreground">{slice.label}</div>
+      <div className="mt-1 text-muted-foreground">
+        {numberFormatter.format(slice.value)} clicks, {slice.share.toFixed(1)}%
+        share
+      </div>
+    </div>
+  );
+}
 
 function SeriesTooltip({ active, payload, label }: SeriesTooltipProps) {
   if (!active || !payload || payload.length === 0) return null;

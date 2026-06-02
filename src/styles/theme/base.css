@@ -4,6 +4,12 @@
   /* Layout + sizing tokens */
   --radius: 0.625rem;
 
+  /* Type hierarchy */
+  --font-family-body: var(--font-landing), var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-family-heading: var(--font-display), var(--font-family-body);
+  --font-family-ui: var(--font-family-body);
+  --font-family-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
   /* Core Linket brand palette */
   --brand-blue: #58c0e0;
   --brand-amber: #f8d058;
@@ -201,6 +207,27 @@
   --premium-inset: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
 }
 
+body {
+  font-family: var(--font-family-body);
+}
+
+:where(h1, h2, h3, h4, h5, h6),
+.font-display {
+  font-family: var(--font-family-heading);
+}
+
+:where(button, input, select, textarea),
+.font-dashboard,
+.font-body,
+.font-ui {
+  font-family: var(--font-family-ui);
+}
+
+:where(code, kbd, samp, pre),
+.font-mono {
+  font-family: var(--font-family-mono);
+}
+
 @keyframes landing-fade-up {
   0% {
     opacity: 0;
@@ -276,11 +303,11 @@
 }
 
 .landing-alt-font {
-  font-family: var(--font-landing), var(--font-geist-sans), system-ui, sans-serif;
+  font-family: var(--font-family-body);
 }
 
 .landing-serif {
-  font-family: var(--font-landing-serif), var(--font-display), Georgia, serif;
+  font-family: var(--font-family-heading);
 }
 
 .landing-delay-1 {

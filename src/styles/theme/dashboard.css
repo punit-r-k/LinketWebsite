@@ -8,6 +8,7 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 
 /* Premium typography rhythm */
 #dashboard-theme-scope {
+  --dashboard-title-font: var(--font-landing-serif), var(--font-family-heading);
   font-feature-settings: "ss01", "ss02", "liga";
   text-rendering: optimizeLegibility;
   --dashboard-interaction-duration: 180ms;
@@ -45,6 +46,22 @@ html:where(.typography-smooth) h6 { font-size: var(--step--1); line-height: 1.4;
 #dashboard-theme-scope h3,
 #dashboard-theme-scope h4 {
   letter-spacing: -0.015em;
+}
+
+#dashboard-theme-scope :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  [data-slot=card-title],
+  [data-slot=dialog-title],
+  .dashboard-topbar-title,
+  .dashboard-onboarding-tour-title,
+  .dashboard-mint-title
+) {
+  font-family: var(--dashboard-title-font);
 }
 
 #dashboard-theme-scope p,
