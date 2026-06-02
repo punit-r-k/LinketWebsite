@@ -969,9 +969,9 @@
   --button-solid-outline: rgba(255, 228, 205, 0.68);
   --color-button-disabled-border: #a57a58;
   --premium-gradient:
-    radial-gradient(120% 120% at 16% 0%, rgba(181, 82, 0, 0.16) 0%, transparent 60%),
+    radial-gradient(120% 120% at 16% 0%, rgba(255, 202, 160, 0.2) 0%, transparent 60%),
     radial-gradient(120% 120% at 84% 0%, rgba(232, 139, 58, 0.18) 0%, transparent 55%),
-    linear-gradient(180deg, #fff8f2 0%, #fff1e3 52%, #f5d0b0 100%);
+    linear-gradient(180deg, #4a2312 0%, #b55200 34%, #f4b27b 62%, #fff4ea 100%);
   --premium-card-gradient: linear-gradient(180deg, rgba(255, 252, 248, 0.98) 0%, rgba(255, 238, 223, 0.95) 100%);
   --premium-topbar-gradient: linear-gradient(96deg, rgba(74, 35, 18, 0.98) 0%, rgba(126, 58, 14, 0.98) 40%, rgba(181, 82, 0, 0.96) 100%);
   --premium-input-gradient: linear-gradient(180deg, rgba(255, 251, 246, 0.98) 0%, rgba(255, 240, 225, 0.95) 100%);
@@ -1018,9 +1018,9 @@
   --button-solid-outline: rgba(255, 224, 230, 0.68);
   --color-button-disabled-border: #aa7480;
   --premium-gradient:
-    radial-gradient(120% 120% at 16% 0%, rgba(80, 0, 0, 0.16) 0%, transparent 60%),
-    radial-gradient(120% 120% at 84% 0%, rgba(125, 23, 48, 0.18) 0%, transparent 55%),
-    linear-gradient(180deg, #fff8f9 0%, #fff1f3 52%, #f2c7d0 100%);
+    radial-gradient(120% 120% at 16% 0%, rgba(255, 216, 222, 0.18) 0%, transparent 60%),
+    radial-gradient(120% 120% at 84% 0%, rgba(196, 84, 104, 0.16) 0%, transparent 55%),
+    linear-gradient(180deg, #2f040a 0%, #500000 34%, #b86473 62%, #fff3f3 100%);
   --premium-card-gradient: linear-gradient(180deg, rgba(255, 251, 252, 0.98) 0%, rgba(248, 232, 236, 0.95) 100%);
   --premium-topbar-gradient: linear-gradient(96deg, rgba(47, 4, 10, 0.98) 0%, rgba(80, 0, 0, 0.98) 42%, rgba(125, 23, 48, 0.96) 100%);
   --premium-input-gradient: linear-gradient(180deg, rgba(255, 250, 251, 0.98) 0%, rgba(249, 236, 239, 0.95) 100%);

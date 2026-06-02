@@ -104,14 +104,14 @@ const THEME_OPTIONS: Array<{
     id: "burnt-orange",
     label: "Hook 'Em",
     description: "UT Austin-inspired burnt orange with warm neutrals",
-    preview: "linear-gradient(135deg, #120b09 0%, #bf5700 100%)",
+    preview: "linear-gradient(180deg, #4a2312 0%, #b55200 36%, #fff4ea 100%)",
     textTone: "light",
   },
   {
     id: "maroon",
     label: "Aggie",
     description: "Texas A&M maroon with rich, dramatic depth",
-    preview: "linear-gradient(135deg, #500000 0%, #fff1f1 100%)",
+    preview: "linear-gradient(180deg, #2f040a 0%, #500000 36%, #fff3f3 100%)",
     textTone: "light",
   },
 ];
