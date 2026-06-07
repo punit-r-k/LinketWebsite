@@ -1472,6 +1472,26 @@
   );
 }
 
+.theme-burnt-orange.public-profile-shell,
+.theme-burnt-orange .public-profile-shell,
+.public-profile-preview.theme-burnt-orange {
+  background-color: #fff4ea;
+  background-image:
+    radial-gradient(220px 150px at 10% 0%, rgba(255, 214, 181, 0.34) 0%, transparent 72%),
+    radial-gradient(260px 180px at 90% 0%, rgba(255, 182, 138, 0.2) 0%, transparent 74%),
+    linear-gradient(180deg, #4a2312 0%, #b55200 34%, #f4b27b 62%, #fff4ea 100%);
+}
+
+.theme-maroon.public-profile-shell,
+.theme-maroon .public-profile-shell,
+.public-profile-preview.theme-maroon {
+  background-color: #fff3f3;
+  background-image:
+    radial-gradient(220px 160px at 12% 0%, rgba(255, 215, 221, 0.28) 0%, transparent 72%),
+    radial-gradient(260px 180px at 88% 0%, rgba(196, 84, 104, 0.2) 0%, transparent 74%),
+    linear-gradient(180deg, #2f040a 0%, #500000 34%, #b86473 62%, #fff3f3 100%);
+}
+
 .public-profile-shell .public-profile-backdrop-orb-left,
 .public-profile-shell .public-profile-backdrop-orb-right {
   display: none;

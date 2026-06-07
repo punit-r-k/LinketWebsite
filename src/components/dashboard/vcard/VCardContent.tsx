@@ -21,7 +21,7 @@ import { confirmRemove } from "@/lib/confirm-remove";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
 
 const OUTPUT_SIZE = 256;
-const MIN_ZOOM = 1;
+const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
 

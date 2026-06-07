@@ -42,7 +42,7 @@ type Props = {
 };
 
 const OUTPUT_SIZE = 480;
-const MIN_ZOOM = 0.7;
+const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
 const RECT_GUIDE_RATIO = 2.5;

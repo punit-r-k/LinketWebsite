@@ -41,7 +41,7 @@ type Props = {
 
 const OUTPUT_WIDTH = 1200;
 const OUTPUT_HEIGHT = 600;
-const MIN_ZOOM = 0.7;
+const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
 
