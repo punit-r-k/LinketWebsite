@@ -107,13 +107,18 @@ export async function POST(req: NextRequest) {
     "claim_code_display",
     "batch_id",
     "batch_label",
+    "claimed",
   ];
   const rows = Array.isArray(data) ? data : [];
   const csv = [
     columns.join(","),
-    ...rows.map((row) =>
-      columns.map((key) => csvEscape((row as Record<string, unknown>)[key])).join(",")
-    ),
+    ...rows.map((row) => {
+      const record = {
+        ...(row as Record<string, unknown>),
+        claimed: "no",
+      };
+      return columns.map((key) => csvEscape(record[key])).join(",");
+    }),
   ].join("\n");
 
   const batchId = (rows[0] as { batch_id?: string } | undefined)?.batch_id ?? null;

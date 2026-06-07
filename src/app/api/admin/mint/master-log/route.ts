@@ -37,6 +37,7 @@ type TagRow = {
   claim_code: string | null;
   batch_id: string | null;
   created_at: string | null;
+  status: string | null;
 };
 
 function resolveBatchLabel(batch: BatchRow) {
@@ -80,7 +81,7 @@ async function fetchAllTags() {
   while (true) {
     const { data, error } = await supabaseAdmin
       .from("hardware_tags")
-      .select("id, public_token, claim_code, batch_id, created_at")
+      .select("id, public_token, claim_code, batch_id, created_at, status")
       .order("created_at", { ascending: true })
       .order("id", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
@@ -143,6 +144,7 @@ export async function GET() {
     "claim_code_display",
     "batch_id",
     "batch_label",
+    "claimed",
   ];
 
   const rows = Array.isArray(tags) ? tags : [];
@@ -161,6 +163,7 @@ export async function GET() {
         claim_code_display: formatClaimCodeDisplay(row.claim_code),
         batch_id: batchId,
         batch_label: batchLabel,
+        claimed: row.status === "claimed" ? "yes" : "no",
       };
       return columns.map((key) => csvEscape(record[key as keyof typeof record])).join(",");
     }),

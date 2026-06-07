@@ -206,7 +206,7 @@ export default function PhonePreviewCard({
             {logoUrl && logoShape === "rect" ? (
               <span
                 className={cn(
-                  "mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm",
+                  "relative z-20 -mt-3 mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm",
                   logoBadgeClass
                 )}
               >

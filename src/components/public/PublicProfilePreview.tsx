@@ -223,7 +223,7 @@ export default function PublicProfilePreview({
                           ) : null}
                         </div>
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`relative z-20 -mt-3 mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -272,7 +272,7 @@ export default function PublicProfilePreview({
                         ) : null}
                       </div>
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`relative z-20 -mt-2 mb-1.5 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
@@ -411,7 +411,7 @@ export default function PublicProfilePreview({
                           ) : null}
                         </div>
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`relative z-20 -mt-3 mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -460,7 +460,7 @@ export default function PublicProfilePreview({
                         ) : null}
                       </div>
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`mt-2 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`relative z-20 -mt-2 mb-1.5 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>

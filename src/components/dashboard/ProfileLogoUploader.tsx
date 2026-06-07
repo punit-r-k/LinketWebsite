@@ -71,9 +71,11 @@ export default function ProfileLogoUploader({
   const cropSize = Math.round(previewSize * 0.82);
   const cropHalf = cropSize / 2;
   const rectGuideHeight = cropSize / RECT_GUIDE_RATIO;
+  const rectGuideWidth = Math.round(
+    2 * Math.sqrt(cropHalf ** 2 - (rectGuideHeight / 2) ** 2)
+  );
   const rectGuideCorner = Math.round(rectGuideHeight * 0.4);
-  const rectGuideCircleRadius = rectGuideHeight / 2;
-  const cropOffset = (previewSize - cropSize) / 2;
+  const rectGuideX = (previewSize - rectGuideWidth) / 2;
   const rectGuideOffset = (previewSize - rectGuideHeight) / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -552,24 +554,24 @@ export default function ProfileLogoUploader({
                     <rect width={previewSize} height={previewSize} fill="transparent" />
                     {logoShape === "rect" ? (
                       <>
+                        <circle
+                          cx={previewSize / 2}
+                          cy={previewSize / 2}
+                          r={cropHalf}
+                          fill="none"
+                          stroke="rgba(255,255,255,0.55)"
+                          strokeDasharray="4 6"
+                          strokeWidth="2"
+                        />
                         <rect
-                          x={cropOffset}
+                          x={rectGuideX}
                           y={rectGuideOffset}
-                          width={cropSize}
+                          width={rectGuideWidth}
                           height={rectGuideHeight}
                           rx={rectGuideCorner}
                           ry={rectGuideCorner}
                           fill="none"
                           stroke="rgba(255,255,255,0.85)"
-                          strokeWidth="2"
-                        />
-                        <circle
-                          cx={previewSize / 2}
-                          cy={previewSize / 2}
-                          r={rectGuideCircleRadius}
-                          fill="none"
-                          stroke="rgba(255,255,255,0.55)"
-                          strokeDasharray="4 6"
                           strokeWidth="2"
                         />
                       </>
@@ -726,24 +728,24 @@ export default function ProfileLogoUploader({
                   <rect width={previewSize} height={previewSize} fill="transparent" />
                   {logoShape === "rect" ? (
                     <>
+                      <circle
+                        cx={previewSize / 2}
+                        cy={previewSize / 2}
+                        r={cropHalf}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.55)"
+                        strokeDasharray="4 6"
+                        strokeWidth="2"
+                      />
                       <rect
-                        x={cropOffset}
+                        x={rectGuideX}
                         y={rectGuideOffset}
-                        width={cropSize}
+                        width={rectGuideWidth}
                         height={rectGuideHeight}
                         rx={rectGuideCorner}
                         ry={rectGuideCorner}
                         fill="none"
                         stroke="rgba(255,255,255,0.85)"
-                        strokeWidth="2"
-                      />
-                      <circle
-                        cx={previewSize / 2}
-                        cy={previewSize / 2}
-                        r={rectGuideCircleRadius}
-                        fill="none"
-                        stroke="rgba(255,255,255,0.55)"
-                        strokeDasharray="4 6"
                         strokeWidth="2"
                       />
                     </>

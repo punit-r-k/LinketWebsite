@@ -2240,7 +2240,7 @@ function PhonePreviewCard({
                 ) : null}
               </div>
               {logoUrl && logoShape === "rect" ? (
-                <span className={cn("mt-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm", logoBadgeClass)}>
+                <span className={cn("relative z-20 -mt-3 mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm", logoBadgeClass)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>

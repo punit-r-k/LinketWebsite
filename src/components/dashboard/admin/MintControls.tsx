@@ -202,7 +202,7 @@ export default function MintControls({ defaultQty, defaultLabel }: MintControlsP
         <div className="dashboard-mint-surface rounded-2xl border border-border/60 bg-background/60 p-4 text-xs text-muted-foreground">
           <div className="dashboard-mint-title text-sm font-semibold text-foreground">CSV output</div>
           <p className="dashboard-mint-muted mt-1">
-            Includes public token, Linket URL, raw claim code, display claim code, and batch metadata.
+            Includes public token, Linket URL, raw claim code, display claim code, claimed status, and batch metadata.
           </p>
         </div>
 
