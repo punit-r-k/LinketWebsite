@@ -176,12 +176,7 @@ export default function PhonePreviewCard({
       <div className="flex flex-col items-center px-6 pb-6">
         <div className="-mt-16 flex flex-col items-center">
           <div className="relative flex flex-col items-center">
-            <div
-              className={cn(
-                "relative z-10 h-28 w-28 overflow-visible rounded-3xl bg-background shadow-sm",
-                logoUrl && logoShape === "rect" && "mb-5"
-              )}
-            >
+            <div className="relative z-10 h-28 w-28 overflow-visible rounded-3xl bg-background shadow-sm">
               {avatarUrl ? (
                 <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -210,7 +205,7 @@ export default function PhonePreviewCard({
             {logoUrl && logoShape === "rect" ? (
               <span
                 className={cn(
-                  "absolute -bottom-1 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm",
+                  "absolute bottom-0 left-1/2 z-20 h-8 w-24 -translate-x-1/2 overflow-hidden rounded-lg border-2 border-[var(--avatar-border)] shadow-lg",
                   logoBadgeClass
                 )}
               >

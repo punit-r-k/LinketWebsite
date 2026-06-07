@@ -225,7 +225,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   >
                     {avatar ? (
                       <div className="flex flex-col items-center">
-                        <div className={`relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "mb-5" : ""}`}>
+                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
                           <div className="relative h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             <PublicProfileImage
                               src={avatar}
@@ -254,7 +254,7 @@ export default async function PublicProfilePage({ params }: Props) {
                             </span>
                           ) : null}
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`absolute -bottom-1 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`absolute bottom-0 left-1/2 z-20 h-8 w-24 -translate-x-1/2 overflow-hidden rounded-lg border-2 border-[var(--avatar-border)] shadow-lg ${logoBadgeClass}`}>
                             <PublicProfileImage
                               src={logoUrl}
                               alt=""
@@ -292,7 +292,7 @@ export default async function PublicProfilePage({ params }: Props) {
               <div className="public-profile-desktop-header public-profile-load public-profile-load-2 hidden flex-wrap items-center gap-4 sm:flex">
                 {avatar ? (
                   <div className="flex flex-col items-center">
-                    <div className={`relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "mb-4" : ""}`}>
+                    <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
                       <div className="relative h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                         <PublicProfileImage
                           src={avatar}
@@ -321,7 +321,7 @@ export default async function PublicProfilePage({ params }: Props) {
                         </span>
                       ) : null}
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`absolute -bottom-1 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`absolute bottom-0 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border-2 border-[var(--avatar-border)] shadow-lg ${logoBadgeClass}`}>
                         <PublicProfileImage
                           src={logoUrl}
                           alt=""

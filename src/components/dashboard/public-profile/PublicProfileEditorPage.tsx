@@ -2223,12 +2223,7 @@ function PhonePreviewCard({
         {avatarUrl ? (
           <div className="-mt-16 flex flex-col items-center">
             <div className="relative flex flex-col items-center">
-              <div
-                className={cn(
-                  "relative h-28 w-28 rounded-3xl bg-background shadow-sm z-10 overflow-visible",
-                  logoUrl && logoShape === "rect" && "mb-5"
-                )}
-              >
+              <div className="relative h-28 w-28 rounded-3xl bg-background shadow-sm z-10 overflow-visible">
                 <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -2244,7 +2239,7 @@ function PhonePreviewCard({
                   </span>
                 ) : null}
               {logoUrl && logoShape === "rect" ? (
-                <span className={cn("absolute -bottom-1 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm", logoBadgeClass)}>
+                <span className={cn("absolute bottom-0 left-1/2 z-20 h-8 w-24 -translate-x-1/2 overflow-hidden rounded-lg border-2 border-[var(--avatar-border)] shadow-lg", logoBadgeClass)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>

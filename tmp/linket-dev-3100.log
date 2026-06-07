@@ -1,0 +1,18 @@
+
+> linket-connect@0.1.0 dev
+> next dev --turbopack --hostname 127.0.0.1 --port 3100
+
+▲ Next.js 16.2.3 (Turbopack)
+- Local:         http://127.0.0.1:3100
+- Network:       http://127.0.0.1:3100
+- Environments: .env
+✓ Ready in 961ms
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          4352
+- Dir:          C:\Users\punit\OneDrive\Documents\GitHub\LinketWebsite
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 4352 /F to stop it.
+[?25h
