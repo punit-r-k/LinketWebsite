@@ -176,7 +176,12 @@ export default function PhonePreviewCard({
       <div className="flex flex-col items-center px-6 pb-6">
         <div className="-mt-16 flex flex-col items-center">
           <div className="relative flex flex-col items-center">
-            <div className="relative z-10 h-28 w-28 overflow-visible rounded-3xl bg-background shadow-sm">
+            <div
+              className={cn(
+                "relative z-10 h-28 w-28 overflow-visible rounded-3xl bg-background shadow-sm",
+                logoUrl && logoShape === "rect" && "mb-5"
+              )}
+            >
               {avatarUrl ? (
                 <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -202,11 +207,10 @@ export default function PhonePreviewCard({
                   <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                 </span>
               ) : null}
-            </div>
             {logoUrl && logoShape === "rect" ? (
               <span
                 className={cn(
-                  "relative z-20 -mt-3 mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm",
+                  "absolute -bottom-5 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm",
                   logoBadgeClass
                 )}
               >
@@ -214,6 +218,7 @@ export default function PhonePreviewCard({
                 <img src={logoUrl} alt="" className="h-full w-full object-cover" />
               </span>
             ) : null}
+            </div>
           </div>
         </div>
         <div

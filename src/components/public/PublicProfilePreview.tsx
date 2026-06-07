@@ -206,7 +206,7 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
+                        <div className={`relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "mb-5" : ""}`}>
                           <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -221,13 +221,13 @@ export default function PublicProfilePreview({
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
-                        </div>
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`relative z-20 -mt-3 mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`absolute -bottom-5 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
+                        </div>
                         </div>
                       </div>
                     ) : null}
@@ -255,7 +255,7 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
+                      <div className={`relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "mb-4" : ""}`}>
                         <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -270,13 +270,13 @@ export default function PublicProfilePreview({
                             <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                           </span>
                         ) : null}
-                      </div>
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`relative z-20 -mt-2 mb-1.5 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`absolute -bottom-4 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
                       ) : null}
+                      </div>
                     </div>
                   </div>
                 ) : null}
@@ -394,7 +394,7 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
+                        <div className={`relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "mb-5" : ""}`}>
                           <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -409,13 +409,13 @@ export default function PublicProfilePreview({
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
-                        </div>
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`relative z-20 -mt-3 mb-2 h-8 w-20 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`absolute -bottom-5 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
                           ) : null}
+                        </div>
                         </div>
                       </div>
                     ) : null}
@@ -443,7 +443,7 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
+                      <div className={`relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "mb-4" : ""}`}>
                         <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -458,13 +458,13 @@ export default function PublicProfilePreview({
                             <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                           </span>
                         ) : null}
-                      </div>
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`relative z-20 -mt-2 mb-1.5 h-6 w-16 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`absolute -bottom-4 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
                       ) : null}
+                      </div>
                     </div>
                   </div>
                 ) : null}

@@ -3362,6 +3362,14 @@ body.theme-forest .dashboard-forest-pin {
   box-shadow: none;
 }
 
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon) .dashboard-date-pill {
+  color: var(--foreground);
+}
+
+#dashboard-theme-scope:is(.theme-burnt-orange, .theme-maroon) .dashboard-date-pill svg {
+  color: currentColor;
+}
+
 @media (max-width: 640px) {
   #dashboard-theme-scope .dashboard-scroll-area {
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
