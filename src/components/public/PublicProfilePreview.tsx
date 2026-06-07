@@ -222,7 +222,7 @@ export default function PublicProfilePreview({
                             </span>
                           ) : null}
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`absolute -bottom-5 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`absolute -bottom-1 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -271,7 +271,7 @@ export default function PublicProfilePreview({
                           </span>
                         ) : null}
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`absolute -bottom-4 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`absolute -bottom-1 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
@@ -410,7 +410,7 @@ export default function PublicProfilePreview({
                             </span>
                           ) : null}
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`absolute -bottom-5 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                          <span className={`absolute -bottom-1 left-1/2 z-20 h-8 w-20 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -459,7 +459,7 @@ export default function PublicProfilePreview({
                           </span>
                         ) : null}
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`absolute -bottom-4 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
+                      <span className={`absolute -bottom-1 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border border-[var(--avatar-border)] shadow-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
