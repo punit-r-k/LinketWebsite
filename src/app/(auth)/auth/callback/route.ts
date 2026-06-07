@@ -52,6 +52,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const preferredNext = sanitizeNextPath(url.searchParams.get("next"));
+  const shouldPromptToSaveAccount = url.searchParams.get("switch") === "1";
   const supabase = await createServerSupabase();
 
   if (code) {
@@ -68,6 +69,9 @@ export async function GET(request: Request) {
 
   const redirectPath = await resolveRedirectPath(supabase, preferredNext);
   const redirectUrl = new URL(redirectPath, url.origin);
+  if (shouldPromptToSaveAccount) {
+    redirectUrl.searchParams.set("saveAccount", "1");
+  }
   return NextResponse.redirect(redirectUrl);
 }
 

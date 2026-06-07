@@ -70,9 +70,9 @@ export default function ProfileLogoUploader({
       : 280;
   const cropSize = Math.round(previewSize * 0.82);
   const cropHalf = cropSize / 2;
-  const cropCorner = Math.round(cropSize * 0.2);
   const rectGuideHeight = cropSize / RECT_GUIDE_RATIO;
   const rectGuideCorner = Math.round(rectGuideHeight * 0.4);
+  const rectGuideCircleRadius = rectGuideHeight / 2;
   const cropOffset = (previewSize - cropSize) / 2;
   const rectGuideOffset = (previewSize - rectGuideHeight) / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -547,44 +547,45 @@ export default function ProfileLogoUploader({
                   draggable={false}
                 />
               </div>
-              <div className="pointer-events-none absolute inset-0" aria-hidden>
-                <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
-                  <rect width={previewSize} height={previewSize} fill="transparent" />
-                  <rect
-                    x={cropOffset}
-                    y={cropOffset}
-                    width={cropSize}
-                    height={cropSize}
-                    rx={cropCorner}
-                    ry={cropCorner}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.85)"
-                    strokeWidth="2"
-                  />
-                  <rect
-                    x={cropOffset}
-                    y={rectGuideOffset}
-                    width={cropSize}
-                    height={rectGuideHeight}
-                    rx={rectGuideCorner}
-                    ry={rectGuideCorner}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.55)"
-                    strokeDasharray="6 6"
-                    strokeWidth="2"
-                  />
-                  <circle
-                    cx={previewSize / 2}
-                    cy={previewSize / 2}
-                    r={cropHalf}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.55)"
-                    strokeDasharray="4 6"
-                    strokeWidth="2"
-                  />
-                </svg>
+                <div className="pointer-events-none absolute inset-0" aria-hidden>
+                  <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
+                    <rect width={previewSize} height={previewSize} fill="transparent" />
+                    {logoShape === "rect" ? (
+                      <>
+                        <rect
+                          x={cropOffset}
+                          y={rectGuideOffset}
+                          width={cropSize}
+                          height={rectGuideHeight}
+                          rx={rectGuideCorner}
+                          ry={rectGuideCorner}
+                          fill="none"
+                          stroke="rgba(255,255,255,0.85)"
+                          strokeWidth="2"
+                        />
+                        <circle
+                          cx={previewSize / 2}
+                          cy={previewSize / 2}
+                          r={rectGuideCircleRadius}
+                          fill="none"
+                          stroke="rgba(255,255,255,0.55)"
+                          strokeDasharray="4 6"
+                          strokeWidth="2"
+                        />
+                      </>
+                    ) : (
+                      <circle
+                        cx={previewSize / 2}
+                        cy={previewSize / 2}
+                        r={cropHalf}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.85)"
+                        strokeWidth="2"
+                      />
+                    )}
+                  </svg>
+                </div>
               </div>
-            </div>
 
             <div className="space-y-2">
               <label
@@ -720,41 +721,42 @@ export default function ProfileLogoUploader({
                     draggable={false}
                   />
                 </div>
-                <div className="pointer-events-none absolute inset-0" aria-hidden>
+              <div className="pointer-events-none absolute inset-0" aria-hidden>
                 <svg className="h-full w-full" viewBox={`0 0 ${previewSize} ${previewSize}`}>
                   <rect width={previewSize} height={previewSize} fill="transparent" />
-                  <rect
-                    x={cropOffset}
-                    y={cropOffset}
-                    width={cropSize}
-                    height={cropSize}
-                    rx={cropCorner}
-                    ry={cropCorner}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.85)"
-                    strokeWidth="2"
-                  />
-                  <rect
-                    x={cropOffset}
-                    y={rectGuideOffset}
-                    width={cropSize}
-                    height={rectGuideHeight}
-                    rx={rectGuideCorner}
-                    ry={rectGuideCorner}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.55)"
-                    strokeDasharray="6 6"
-                    strokeWidth="2"
-                  />
-                  <circle
-                    cx={previewSize / 2}
-                    cy={previewSize / 2}
-                    r={cropHalf}
-                    fill="none"
-                    stroke="rgba(255,255,255,0.55)"
-                    strokeDasharray="4 6"
-                    strokeWidth="2"
-                  />
+                  {logoShape === "rect" ? (
+                    <>
+                      <rect
+                        x={cropOffset}
+                        y={rectGuideOffset}
+                        width={cropSize}
+                        height={rectGuideHeight}
+                        rx={rectGuideCorner}
+                        ry={rectGuideCorner}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.85)"
+                        strokeWidth="2"
+                      />
+                      <circle
+                        cx={previewSize / 2}
+                        cy={previewSize / 2}
+                        r={rectGuideCircleRadius}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.55)"
+                        strokeDasharray="4 6"
+                        strokeWidth="2"
+                      />
+                    </>
+                  ) : (
+                    <circle
+                      cx={previewSize / 2}
+                      cy={previewSize / 2}
+                      r={cropHalf}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.85)"
+                      strokeWidth="2"
+                    />
+                  )}
                 </svg>
               </div>
             </div>

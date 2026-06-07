@@ -1,15 +1,20 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { Suspense, useCallback, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Trash2, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "@/components/system/toaster";
 import { trackEvent } from "@/lib/analytics";
 import { getSiteOrigin } from "@/lib/site-url";
 import { friendlyAuthError } from "@/lib/auth-errors";
+import {
+  getSavedAccounts,
+  removeSavedAccount,
+  type SavedAccount,
+} from "@/lib/saved-accounts";
 
 const DEFAULT_NEXT = "/dashboard";
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
@@ -51,6 +56,16 @@ function hasStrongPassword(value: string) {
   return Object.values(status).every(Boolean);
 }
 
+function addSaveAccountPromptParam(path: string) {
+  try {
+    const url = new URL(path, "http://localhost");
+    url.searchParams.set("saveAccount", "1");
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return `${DEFAULT_NEXT}?saveAccount=1`;
+  }
+}
+
 function getAuthErrorCode(error: unknown): string | undefined {
   if (
     typeof error === "object" &&
@@ -73,6 +88,8 @@ function AuthPageContent() {
   const oauthError = searchParams.get("error");
   const oauthMessage = searchParams.get("message");
   const view = searchParams.get("view") ?? "signin";
+  const accountParam = searchParams.get("account");
+  const isSwitchAccountFlow = searchParams.get("switch") === "1";
   const supabase = useMemo(() => createClient(), []);
   const siteUrl = getSiteOrigin();
 
@@ -80,7 +97,17 @@ function AuthPageContent() {
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savedAccounts, setSavedAccounts] = useState<SavedAccount[]>([]);
   const isSignUp = view === "signup";
+
+  useEffect(() => {
+    setSavedAccounts(getSavedAccounts());
+  }, []);
+
+  useEffect(() => {
+    if (!accountParam || email) return;
+    setEmail(accountParam);
+  }, [accountParam, email]);
 
   const passwordRequirementStatus = useMemo(
     () => getPasswordRequirementStatus(password),
@@ -202,7 +229,11 @@ function AuthPageContent() {
           description: "Your dashboard is ready to manage Linkets.",
           variant: "success",
         });
-        router.replace(destination);
+        router.replace(
+          isSwitchAccountFlow
+            ? addSaveAccountPromptParam(destination)
+            : destination
+        );
       } catch (err) {
         const message =
           err instanceof Error
@@ -213,7 +244,7 @@ function AuthPageContent() {
         setPending(false);
       }
     },
-    [email, password, next, resolveRedirect, router, supabase]
+    [email, isSwitchAccountFlow, password, next, resolveRedirect, router, supabase]
   );
 
   const handlePasswordSignIn = useCallback(
@@ -249,7 +280,11 @@ function AuthPageContent() {
           variant: "success",
         });
 
-        router.replace(destination);
+        router.replace(
+          isSwitchAccountFlow
+            ? addSaveAccountPromptParam(destination)
+            : destination
+        );
       } catch (err) {
         const message =
           err instanceof Error
@@ -260,7 +295,7 @@ function AuthPageContent() {
         setPending(false);
       }
     },
-    [email, password, supabase, router, next, resolveRedirect]
+    [email, isSwitchAccountFlow, password, supabase, router, next, resolveRedirect]
   );
 
   const handleOAuth = useCallback(
@@ -271,12 +306,16 @@ function AuthPageContent() {
       setPending(true);
       setError(null);
 
+      const callbackUrl = new URL(`${siteUrl}/auth/callback`);
+      callbackUrl.searchParams.set("next", next);
+      if (isSwitchAccountFlow) {
+        callbackUrl.searchParams.set("switch", "1");
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
-            next
-          )}`,
+          redirectTo: callbackUrl.toString(),
           queryParams:
             provider === "google" ? { prompt: "select_account" } : undefined,
           skipBrowserRedirect: true,
@@ -297,7 +336,7 @@ function AuthPageContent() {
 
       window.location.assign(data.url);
     },
-    [supabase, next, siteUrl, view]
+    [supabase, isSwitchAccountFlow, next, siteUrl, view]
   );
 
   const displayedError = error
@@ -310,6 +349,29 @@ function AuthPageContent() {
     if (!trimmedEmail) return "/forgot-password";
     return `/forgot-password?email=${encodeURIComponent(trimmedEmail)}`;
   }, [email]);
+  const signInHref = `/auth?next=${encodeURIComponent(next)}&view=signin${
+    isSwitchAccountFlow ? "&switch=1" : ""
+  }`;
+  const signUpHref = `/auth?next=${encodeURIComponent(next)}&view=signup${
+    isSwitchAccountFlow ? "&switch=1" : ""
+  }`;
+  const handleRemoveSavedAccount = useCallback(
+    (accountEmail: string) => {
+      const nextAccounts = removeSavedAccount(accountEmail);
+      setSavedAccounts(nextAccounts);
+      if (email.trim().toLowerCase() === accountEmail.trim().toLowerCase()) {
+        setEmail("");
+        setPassword("");
+      }
+      toast({
+        title: "Account removed",
+        description:
+          "This device will no longer show that shortcut. Sign in normally to use it again.",
+        variant: "success",
+      });
+    },
+    [email]
+  );
 
   return (
     <div className="landing-page-shell min-h-screen text-slate-900">
@@ -341,6 +403,44 @@ function AuthPageContent() {
               {displayedError ? (
                 <div className="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                   <p>{displayedError}</p>
+                </div>
+              ) : null}
+
+              {!isSignUp && savedAccounts.length > 0 ? (
+                <div className="mt-5 rounded-2xl border border-slate-200 bg-white/80 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    Saved accounts
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    {savedAccounts.map((account) => (
+                      <div
+                        key={account.email}
+                        className="flex min-w-0 items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1 transition hover:border-slate-300 hover:bg-white"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEmail(account.email);
+                            setPassword("");
+                            setError(null);
+                          }}
+                          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-2 text-left text-sm font-medium text-slate-800 transition hover:bg-white"
+                        >
+                          <UserRound className="h-4 w-4 shrink-0 text-slate-500" />
+                          <span className="truncate">{account.email}</span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${account.email} from saved accounts`}
+                          title="Remove saved account"
+                          onClick={() => handleRemoveSavedAccount(account.email)}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : null}
 
@@ -483,7 +583,7 @@ function AuthPageContent() {
                 <p className="mt-6 text-center text-sm text-slate-600">
                   Already have an account?{" "}
                   <Link
-                    href={`/auth?next=${encodeURIComponent(next)}&view=signin`}
+                    href={signInHref}
                     className="font-semibold text-slate-900 transition hover:text-slate-700"
                   >
                     Sign in
@@ -493,7 +593,7 @@ function AuthPageContent() {
                 <p className="mt-6 text-center text-sm text-slate-600">
                   New to Linket?{" "}
                   <Link
-                    href={`/auth?next=${encodeURIComponent(next)}&view=signup`}
+                    href={signUpHref}
                     className="font-semibold text-slate-900 transition hover:text-slate-700"
                   >
                     Create an account

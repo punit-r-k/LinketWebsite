@@ -21,6 +21,7 @@ import {
   Menu,
   MessageSquare,
   Plus,
+  RefreshCw,
   User,
   X,
 } from "lucide-react";
@@ -43,6 +44,8 @@ import { LEGAL_PAGE_LINKS } from "@/components/site/legal-page-actions";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { getSiteOrigin } from "@/lib/site-url";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
+import { confirmRemove } from "@/lib/confirm-remove";
+import { isSavedAccount, saveAccount } from "@/lib/saved-accounts";
 
 type UserLite = {
   id: string;
@@ -632,7 +635,17 @@ export function Navbar() {
     }
   };
 
-  const handleLogout = async () => {
+  const signOutAndRedirect = async ({
+    redirectTo,
+    successTitle,
+    successDescription,
+    failureTitle,
+  }: {
+    redirectTo: string;
+    successTitle: string;
+    successDescription: string;
+    failureTitle: string;
+  }) => {
     if (loggingOut) return;
     setLoggingOut(true);
     try {
@@ -644,20 +657,38 @@ export function Navbar() {
         body: JSON.stringify({ event: "SIGNED_OUT" }),
       }).catch(() => null);
       toast({
-        title: "Signed out",
-        description: "You have been logged out safely.",
+        title: successTitle,
+        description: successDescription,
         variant: "success",
       });
-      window.location.assign("/auth?view=signin");
+      window.location.assign(redirectTo);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Please try again.";
       toast({
-        title: "Sign out failed",
+        title: failureTitle,
         description: message,
         variant: "destructive",
       });
       setLoggingOut(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await signOutAndRedirect({
+      redirectTo: "/auth?view=signin",
+      successTitle: "Signed out",
+      successDescription: "You have been logged out safely.",
+      failureTitle: "Sign out failed",
+    });
+  };
+
+  const handleSwitchAccount = async () => {
+    await signOutAndRedirect({
+      redirectTo: "/auth?view=signin&switch=1&next=%2Fdashboard",
+      successTitle: "Ready to switch accounts",
+      successDescription: "Sign in with another account to continue.",
+      failureTitle: "Switch account failed",
+    });
   };
 
   const handleDashboardMenuToggle = () => {
@@ -688,6 +719,52 @@ export function Navbar() {
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !user?.email) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("saveAccount") !== "1") return;
+
+    const cleanSavePromptParam = () => {
+      url.searchParams.delete("saveAccount");
+      window.history.replaceState(
+        null,
+        "",
+        `${url.pathname}${url.search}${url.hash}`
+      );
+    };
+
+    if (isSavedAccount(user.email)) {
+      cleanSavePromptParam();
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      const shouldSave = await confirmRemove({
+        title: "Save this account?",
+        description:
+          "Save this email on this device so it is easier to switch back to this account later. Passwords and sessions are not saved.",
+        confirmLabel: "Save account",
+        cancelLabel: "Not now",
+        variant: "default",
+      });
+      if (cancelled) return;
+      if (shouldSave) {
+        saveAccount(user.email ?? "");
+        toast({
+          title: "Account saved",
+          description: "You can select it from the sign-in screen next time.",
+          variant: "success",
+        });
+      }
+      cleanSavePromptParam();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.email, pathname]);
 
   useEffect(() => {
     if (!isLandingPage || typeof window === "undefined") {
@@ -1205,6 +1282,9 @@ export function Navbar() {
                     }
                   >
                     Support
+                  </MenuButton>
+                  <MenuButton onClick={handleSwitchAccount} disabled={loggingOut}>
+                    <RefreshCw className="mr-2 h-4 w-4" /> Switch account
                   </MenuButton>
                   <MenuButton onClick={handleLogout} disabled={loggingOut}>
                     <LogOut className="mr-2 h-4 w-4" /> Logout
