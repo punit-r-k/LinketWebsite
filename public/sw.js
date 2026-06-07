@@ -1,4 +1,4 @@
-const VERSION = "v4";
+const VERSION = "v5";
 const PAGE_CACHE = `linket-pages-${VERSION}`;
 const ASSET_CACHE = `linket-assets-${VERSION}`;
 const CACHE_ALLOWLIST = [PAGE_CACHE, ASSET_CACHE];

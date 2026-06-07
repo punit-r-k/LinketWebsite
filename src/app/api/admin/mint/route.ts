@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
   const csv = [
     columns.join(","),
     ...rows.map((row) => {
-      const record = {
+      const record: Record<string, unknown> = {
         ...(row as Record<string, unknown>),
         claimed: "no",
       };
