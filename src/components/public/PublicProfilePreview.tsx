@@ -206,7 +206,7 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
+                        <div className={`public-profile-avatar-frame relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "public-profile-avatar-frame--rect-logo" : ""}`}>
                           <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -222,7 +222,7 @@ export default function PublicProfilePreview({
                             </span>
                           ) : null}
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`absolute bottom-0 left-1/2 z-20 h-8 w-24 -translate-x-1/2 overflow-hidden rounded-lg border-2 border-[var(--avatar-border)] shadow-lg ${logoBadgeClass}`}>
+                          <span className={`public-profile-logo-badge public-profile-logo-badge--rect ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -255,7 +255,7 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
+                      <div className={`public-profile-avatar-frame relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "public-profile-avatar-frame--rect-logo-sm" : ""}`}>
                         <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -271,7 +271,7 @@ export default function PublicProfilePreview({
                           </span>
                         ) : null}
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`absolute bottom-0 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border-2 border-[var(--avatar-border)] shadow-lg ${logoBadgeClass}`}>
+                      <span className={`public-profile-logo-badge public-profile-logo-badge--rect-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
@@ -394,7 +394,7 @@ export default function PublicProfilePreview({
                     {avatar ? (
                       <div className="flex flex-col items-center">
                         <div className="relative flex flex-col items-center">
-                        <div className="relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible">
+                        <div className={`public-profile-avatar-frame relative h-28 w-28 rounded-3xl shadow-sm z-10 bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "public-profile-avatar-frame--rect-logo" : ""}`}>
                           <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -410,7 +410,7 @@ export default function PublicProfilePreview({
                             </span>
                           ) : null}
                           {logoUrl && logoShape === "rect" ? (
-                          <span className={`absolute bottom-0 left-1/2 z-20 h-8 w-24 -translate-x-1/2 overflow-hidden rounded-lg border-2 border-[var(--avatar-border)] shadow-lg ${logoBadgeClass}`}>
+                          <span className={`public-profile-logo-badge public-profile-logo-badge--rect ${logoBadgeClass}`}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                             </span>
@@ -443,7 +443,7 @@ export default function PublicProfilePreview({
                 {avatar ? (
                   <div className="flex flex-col items-center">
                     <div className="relative flex flex-col items-center">
-                      <div className="relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible">
+                      <div className={`public-profile-avatar-frame relative h-20 w-20 rounded-3xl bg-muted/40 overflow-visible ${logoUrl && logoShape === "rect" ? "public-profile-avatar-frame--rect-logo-sm" : ""}`}>
                         <div className="h-full w-full overflow-hidden rounded-3xl ring-4 ring-[var(--avatar-border)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
@@ -459,7 +459,7 @@ export default function PublicProfilePreview({
                           </span>
                         ) : null}
                       {logoUrl && logoShape === "rect" ? (
-                      <span className={`absolute bottom-0 left-1/2 z-20 h-6 w-16 -translate-x-1/2 overflow-hidden rounded-md border-2 border-[var(--avatar-border)] shadow-lg ${logoBadgeClass}`}>
+                      <span className={`public-profile-logo-badge public-profile-logo-badge--rect-sm ${logoBadgeClass}`}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={logoUrl} alt="" className="h-full w-full object-cover" />
                         </span>
