@@ -1289,31 +1289,31 @@ export default function PublicProfileEditorPage() {
         </Select>
       </div>
       <div
-        className="dashboard-mobile-status-strip flex flex-col gap-2 rounded-2xl border border-border/70 bg-card px-4 py-3 text-sm shadow-[var(--shadow-grounded)] sm:flex-row sm:items-center sm:justify-between"
+        className="dashboard-mobile-status-strip flex flex-col gap-3 rounded-2xl border border-border/70 bg-card px-4 py-4 text-sm shadow-[var(--shadow-grounded)]"
         aria-live="polite"
       >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-semibold text-foreground">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="text-base font-semibold leading-none text-foreground">
             {liveStatusLabel}
           </span>
           <span
             className={cn(
-              "rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+              "inline-flex h-7 items-center rounded-full border px-3 text-xs font-semibold leading-none",
               saveStatusMeta.className
             )}
           >
             {saveStatusMeta.label}
           </span>
-          <span className="text-xs text-muted-foreground">
+          <span className="whitespace-nowrap text-sm leading-none text-muted-foreground">
             Last saved: {displayedLastSavedAt ? formatShortDate(displayedLastSavedAt) : "Not yet"}
           </span>
         </div>
         {saveDetail ? (
-          <p className="text-xs text-destructive sm:max-w-md sm:text-right">
+          <p className="text-sm leading-5 text-destructive">
             {saveDetail}
           </p>
         ) : (
-          <p className="text-xs text-muted-foreground sm:text-right">
+          <p className="text-sm leading-5 text-muted-foreground">
             Preview and public page use this same saved profile data.
           </p>
         )}
@@ -1781,7 +1781,7 @@ function EditorPanel({
                       Rectangle
                     </Button>
                   </div>
-                  <label className="mt-1 flex w-full items-center justify-start gap-3 rounded-full">
+                  <label className="mt-1 flex w-full items-center justify-start gap-2.5 rounded-full text-sm font-medium leading-none text-foreground">
                     <Switch
                       checked={draft?.logoBackgroundWhite ?? false}
                       onCheckedChange={(value) =>
