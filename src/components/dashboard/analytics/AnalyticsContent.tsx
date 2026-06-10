@@ -860,14 +860,26 @@ export default function AnalyticsContent() {
                       The people most likely to still remember the interaction.
                     </p>
                   </div>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full"
-                  >
-                    <Link href="/dashboard/leads">View all</Link>
-                  </Button>
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                    >
+                      <Link href="/dashboard/leads">View all</Link>
+                    </Button>
+                    {!loading && followUpLeads.length === 0 && !latestLead ? (
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full"
+                      >
+                        <Link href="/dashboard/profiles">Open profile setup</Link>
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="mt-5 space-y-3">
@@ -888,10 +900,6 @@ export default function AnalyticsContent() {
                   ) : (
                     <EmptyState
                       message="No contacts captured yet. Publish your lead form and keep the share flow simple so taps become people."
-                      actionLabel="Open profile setup"
-                      onAction={() => {
-                        window.location.href = "/dashboard/profiles";
-                      }}
                     />
                   )}
                 </div>
