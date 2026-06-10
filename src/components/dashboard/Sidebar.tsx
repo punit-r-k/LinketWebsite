@@ -224,6 +224,13 @@ export default function Sidebar({
                     onNavigate?.();
                     return;
                   }
+                  if (item.href === "/dashboard/profiles") {
+                    window.dispatchEvent(
+                      new CustomEvent("linket:profile-section-nav", {
+                        detail: { section: "profile" },
+                      })
+                    );
+                  }
                   event.preventDefault();
                   requestNavigation(item.href);
                 }}

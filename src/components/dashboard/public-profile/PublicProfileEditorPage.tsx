@@ -67,7 +67,6 @@ import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
 import { cn } from "@/lib/utils";
 import { shuffleFields } from "@/lib/lead-form";
-import { readLocalStorage, writeLocalStorage } from "@/lib/browser-storage";
 import { toast } from "@/components/system/toaster";
 import {
   getDefaultProfileLinkUrl,
@@ -169,23 +168,13 @@ const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: "lead", label: "Lead Form" },
   { id: "preview", label: "Preview" },
 ];
-const ACTIVE_PROFILE_SECTION_STORAGE_KEY = "linket:profile-editor:active-section";
 const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
   const { theme } = useThemeOptional();
   const [userId, setUserId] = useState<string | null>(dashboardUser?.id ?? null);
-  const [activeSection, setActiveSection] = useState<SectionId>(() => {
-    const saved = readLocalStorage(ACTIVE_PROFILE_SECTION_STORAGE_KEY);
-    if (
-      saved &&
-      MOBILE_PROFILE_SECTIONS.some((section) => section.id === saved)
-    ) {
-      return saved as SectionId;
-    }
-    return "profile";
-  });
+  const [activeSection, setActiveSection] = useState<SectionId>("profile");
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
   const [savedProfile, setSavedProfile] = useState<ProfileDraft | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1216,10 +1205,6 @@ export default function PublicProfileEditorPage() {
       }).__linketProfileEditorState;
     };
   }, [hasUnsavedChanges, saveError, vcardSnapshot.status]);
-
-  useEffect(() => {
-    writeLocalStorage(ACTIVE_PROFILE_SECTION_STORAGE_KEY, activeSection);
-  }, [activeSection]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
