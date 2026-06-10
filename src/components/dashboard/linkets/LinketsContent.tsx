@@ -880,8 +880,8 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                           </span>
                         </div>
                       </div>
-                      <div className="flex min-w-0 flex-col gap-2 text-sm lg:flex-row lg:items-center">
-                        <div className="flex w-full min-w-0 flex-col items-stretch gap-2 lg:flex-row lg:flex-wrap lg:items-center xl:flex-nowrap">
+                      <div className="flex min-w-0 flex-col gap-2 text-sm lg:items-end">
+                        <div className="grid w-full min-w-0 grid-cols-1 items-center gap-2 sm:grid-cols-2 lg:w-auto lg:grid-cols-[minmax(220px,320px)_repeat(auto-fit,minmax(7.5rem,max-content))]">
                           <Select
                             value={assignedProfileId ?? "default"}
                             onValueChange={(value) =>
@@ -891,7 +891,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                               )
                             }
                           >
-                            <SelectTrigger className="w-full min-w-0 lg:w-auto lg:min-w-[220px]">
+                            <SelectTrigger className="w-full min-w-0 sm:col-span-2 lg:col-span-1">
                               <SelectValue placeholder="Assign a profile" />
                             </SelectTrigger>
                             <SelectContent>
@@ -909,46 +909,48 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
                               href={`/${assignedProfile.handle}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-flex w-full items-center justify-center gap-1 rounded-full border px-2 py-1 text-xs text-muted-foreground hover:text-foreground lg:w-auto"
+                              className="inline-flex h-9 w-full min-w-0 items-center justify-center gap-1 rounded-full border px-3 text-xs text-muted-foreground hover:text-foreground lg:w-auto"
                             >
-                              <ExternalLink className="h-3 w-3" /> View
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                              <span className="truncate">View</span>
                             </Link>
                           ) : null}
                           {item.complimentaryTrial?.claimable ? (
                             <Button
                               type="button"
                               variant="outline"
-                              className="w-full rounded-full border-primary/50 bg-primary/5 text-primary lg:w-auto"
+                              className="w-full min-w-0 rounded-full border-primary/50 bg-primary/5 text-primary lg:w-auto"
                               onClick={() => setTrialDialogAssignment(item)}
                             >
-                              <Gift className="mr-2 h-3.5 w-3.5" />
-                              Claim 1 year free
+                              <Gift className="mr-2 h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">Claim 1 year free</span>
                             </Button>
                           ) : item.complimentaryTrial?.claimedByCurrentUser ? (
-                            <span className="inline-flex w-full items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800 lg:w-auto">
-                              Trial claimed
+                            <span className="inline-flex h-9 w-full min-w-0 items-center justify-center rounded-full border border-emerald-300 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 lg:w-auto">
+                              <span className="truncate">Trial claimed</span>
                             </span>
                           ) : item.complimentaryTrial?.claimed ? (
-                            <span className="inline-flex w-full items-center justify-center rounded-full border border-border/60 px-3 py-1.5 text-xs font-semibold text-muted-foreground lg:w-auto">
-                              Trial already used
+                            <span className="inline-flex h-9 w-full min-w-0 items-center justify-center rounded-full border border-border/60 px-3 text-xs font-semibold text-muted-foreground lg:w-auto">
+                              <span className="truncate">Trial already used</span>
                             </span>
                           ) : null}
                           <Button
                             type="button"
                             variant="outline"
-                            className="w-full rounded-full lg:w-auto"
+                            className="w-full min-w-0 rounded-full lg:w-auto"
                             onClick={() => openTransferDialog(item)}
                           >
-                            <ArrowRightLeft className="mr-2 h-3.5 w-3.5" />
-                            Transfer
+                            <ArrowRightLeft className="mr-2 h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">Transfer</span>
                           </Button>
                         </div>
                         <button
                           type="button"
-                          className="inline-flex items-center gap-2 self-start text-xs text-rose-600 hover:underline"
+                          className="inline-flex min-w-0 items-center gap-2 self-start text-xs text-rose-600 hover:underline lg:self-end"
                           onClick={() => handleRelease(item.assignment.id)}
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> Release
+                          <Trash2 className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">Release</span>
                         </button>
                       </div>
                     </div>
