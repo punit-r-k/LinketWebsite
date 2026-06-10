@@ -2735,6 +2735,7 @@ function LinkModal({
   const [resumeUploadError, setResumeUploadError] = useState<string | null>(null);
   const isResumeLink = link?.linkType === "resume";
   const canSave = Boolean(link) && (!isResumeLink || Boolean(link.url.trim())) && !uploadingResume;
+  const resumeFileName = link?.url ? formatResumeFileName(link.url) : "";
 
   const handleResumeUpload = useCallback(
     async (file: File | null) => {
@@ -2839,7 +2840,7 @@ function LinkModal({
                   <p className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden text-xs text-muted-foreground">
                     <span className="shrink-0">Uploaded:</span>
                     <span className="block min-w-0 flex-1 truncate" title={link.url}>
-                      {link.url}
+                      {resumeFileName}
                     </span>
                   </p>
                 ) : null}
@@ -2931,6 +2932,31 @@ function LinkModal({
       </DialogContent>
     </Dialog>
   );
+}
+
+function formatResumeFileName(value: string) {
+  const fallback = "resume.pdf";
+  const trimmed = value.trim();
+  if (!trimmed) return fallback;
+
+  const rawFileName = (() => {
+    try {
+      const parsed = new URL(trimmed);
+      return parsed.pathname.split("/").filter(Boolean).pop() ?? fallback;
+    } catch {
+      return trimmed.split(/[\\/]/).filter(Boolean).pop() ?? fallback;
+    }
+  })();
+
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(rawFileName);
+    } catch {
+      return rawFileName;
+    }
+  })();
+
+  return decoded.replace(/^resume-\d+-/i, "") || fallback;
 }
 
 function formatShortDate(value: string) {
