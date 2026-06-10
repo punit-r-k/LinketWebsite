@@ -3408,7 +3408,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-mobile-status-strip {
     position: sticky;
-    top: calc(var(--dashboard-nav-height, 64px) + 4.25rem);
+    top: calc(var(--dashboard-nav-height, 64px) + 3.25rem);
     z-index: 20;
     margin-inline: -0.25rem;
     border-color: var(--mobile-readable-border, var(--border));
@@ -3418,8 +3418,9 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-mobile-section-switcher {
     position: sticky;
-    top: calc(var(--dashboard-nav-height, 64px) + 0.5rem);
+    top: calc(var(--dashboard-nav-height, 64px) + 0.125rem);
     z-index: 21;
+    margin-bottom: -0.5rem;
   }
 
   #dashboard-theme-scope .dashboard-mobile-preview-shell {
