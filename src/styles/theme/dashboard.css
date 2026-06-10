@@ -3436,10 +3436,8 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-mobile-preview-shell {
-    max-height: calc(100svh - var(--dashboard-nav-height, 64px) - 5.5rem);
-    overflow: auto;
-    padding-bottom: env(safe-area-inset-bottom);
-    overscroll-behavior: contain;
+    overflow: visible;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
 
   #dashboard-theme-scope .dashboard-mobile-preview-shell .public-profile-preview {

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Preview clipping before</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: #202020;
+        color: #f4f0e8;
+        font-family: Arial, sans-serif;
+      }
+      .viewport {
+        width: 390px;
+        min-height: 844px;
+        margin: 0 auto;
+        background: #294434;
+      }
+      .navbar {
+        height: 102px;
+        background: linear-gradient(90deg, #1d3325, #111);
+        border-bottom: 1px solid rgba(218, 201, 169, 0.35);
+      }
+      .content {
+        padding: 16px;
+      }
+      .dashboard-mobile-preview-shell {
+        display: flex;
+        justify-content: center;
+        max-height: calc(100svh - 102px - 5.5rem);
+        overflow: auto;
+        padding-bottom: 0;
+        overscroll-behavior: contain;
+      }
+      .public-profile-preview {
+        width: 340px;
+        overflow: hidden;
+        border: 1px solid rgba(218, 201, 169, 0.45);
+        border-radius: 32px;
+        background: #304c3a;
+      }
+      .header {
+        height: 166px;
+        background: linear-gradient(#19251d, #4d604e);
+      }
+      .body {
+        padding: 24px;
+      }
+      .avatar {
+        width: 118px;
+        height: 118px;
+        margin: -72px auto 20px;
+        border: 5px solid #efc19b;
+        border-radius: 32px;
+        background: #111;
+      }
+      .button {
+        height: 64px;
+        margin: 24px 0;
+        border-radius: 999px;
+        background: #9f5d3d;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+      .link {
+        min-height: 94px;
+        margin-top: 16px;
+        border: 1px solid rgba(218, 201, 169, 0.45);
+        border-radius: 22px;
+        padding: 22px;
+      }
+      .lead {
+        min-height: 280px;
+        margin-top: 16px;
+        border: 1px solid rgba(218, 201, 169, 0.45);
+        border-radius: 22px;
+        padding: 22px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="viewport">
+      <div class="navbar"></div>
+      <section class="content">
+        <div class="dashboard-mobile-preview-shell">
+          <article class="public-profile-preview">
+            <div class="header"></div>
+            <div class="body">
+              <div class="avatar"></div>
+              <h2>Punit Kothakonda</h2>
+              <p>TAMU CS | Founder | Digital Media</p>
+              <div class="button">Save contact</div>
+              <strong>Links</strong>
+              <div class="link">Photography Portfolio</div>
+              <div class="link">Resume</div>
+              <div class="lead">Lead form fields continue below the fold.</div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+    <script>
+      window.addEventListener("load", () => {
+        if (location.search.includes("bottom")) {
+          window.scrollTo(0, document.documentElement.scrollHeight);
+        }
+      });
+    </script>
+  </body>
+</html>

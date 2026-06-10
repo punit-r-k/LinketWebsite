@@ -2776,9 +2776,9 @@ function LinkModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="max-h-[min(88svh,44rem)] w-[calc(100vw-2rem)] min-w-0 max-w-[calc(100vw-2rem)] overflow-y-auto overflow-x-hidden sm:max-w-2xl">
+        <DialogHeader className="min-w-0 pr-8">
+          <DialogTitle className="truncate">
             {mode === "add"
               ? isResumeLink
                 ? "Add resume"
@@ -2787,7 +2787,7 @@ function LinkModal({
                 ? "Edit resume"
                 : "Edit link"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="break-words">
             {isResumeLink
               ? "Upload a PDF resume up to 5 MB."
               : mode === "add"
@@ -2796,8 +2796,8 @@ function LinkModal({
           </DialogDescription>
         </DialogHeader>
         {link ? (
-          <div className="space-y-4">
-            <div className="space-y-2">
+          <div className="min-w-0 space-y-4">
+            <div className="min-w-0 space-y-2">
               <Label htmlFor="link-label">Label</Label>
               <Input
                 id="link-label"
@@ -2812,14 +2812,14 @@ function LinkModal({
               />
             </div>
             {isResumeLink ? (
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="resume-pdf">Resume PDF</Label>
-                <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-center text-sm transition hover:bg-muted/35">
+                <label className="flex min-h-24 min-w-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-center text-sm transition hover:bg-muted/35">
                   <Upload className="h-5 w-5 text-muted-foreground" />
-                  <span className="font-medium text-foreground">
+                  <span className="max-w-full truncate font-medium text-foreground">
                     {uploadingResume ? "Uploading..." : link.url ? "Replace PDF" : "Upload PDF"}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="max-w-full truncate text-xs text-muted-foreground">
                     PDF only, 5 MB max
                   </span>
                   <input
@@ -2836,16 +2836,19 @@ function LinkModal({
                   />
                 </label>
                 {link.url ? (
-                  <p className="truncate text-xs text-muted-foreground">
-                    Uploaded: {link.url}
+                  <p className="flex min-w-0 max-w-full items-center gap-1 overflow-hidden text-xs text-muted-foreground">
+                    <span className="shrink-0">Uploaded:</span>
+                    <span className="block min-w-0 flex-1 truncate" title={link.url}>
+                      {link.url}
+                    </span>
                   </p>
                 ) : null}
                 {resumeUploadError ? (
-                  <p className="text-xs text-destructive">{resumeUploadError}</p>
+                  <p className="break-words text-xs text-destructive">{resumeUploadError}</p>
                 ) : null}
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="min-w-0 space-y-2">
                 <Label htmlFor="link-url">URL</Label>
                 <LinkUrlInput
                   id="link-url"
@@ -2864,13 +2867,13 @@ function LinkModal({
                 />
               </div>
             )}
-            <div className="space-y-3 rounded-xl border border-border/60 px-3 py-3">
-              <label className="flex items-center justify-between gap-3">
-                <span className="space-y-0.5">
+            <div className="min-w-0 space-y-3 rounded-xl border border-border/60 px-3 py-3">
+              <label className="flex min-w-0 items-center justify-between gap-3">
+                <span className="min-w-0 space-y-0.5">
                   <span className="block text-sm font-medium text-foreground">
                     Visible on public profile
                   </span>
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block break-words text-xs text-muted-foreground">
                     Hides this link from your public page when turned off.
                   </span>
                 </span>
@@ -2886,19 +2889,19 @@ function LinkModal({
                   }
                 />
               </label>
-              <div className="flex items-center justify-between gap-3">
-                <span className="space-y-0.5">
+              <div className="flex min-w-0 items-center justify-between gap-3">
+                <span className="min-w-0 space-y-0.5">
                   <span className="block text-sm font-medium text-foreground">
                     Direct-to-link mode
                   </span>
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block break-words text-xs text-muted-foreground">
                     Linket scans open this URL directly instead of your public profile.
                   </span>
-                  <span className="block text-xs text-muted-foreground">
+                  <span className="block break-words text-xs text-muted-foreground">
                     Consequence: this bypasses your profile page for Linket scans.
                   </span>
                   {hasOverrideLink && !link.isOverride ? (
-                    <span className="block text-xs text-muted-foreground">
+                    <span className="block break-words text-xs text-muted-foreground">
                       Turning this on replaces your current Direct-to-link selection.
                     </span>
                   ) : null}
