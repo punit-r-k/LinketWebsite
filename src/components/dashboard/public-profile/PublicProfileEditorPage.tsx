@@ -35,6 +35,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Eye,
   EyeOff,
+  FileText,
   Globe,
   GripVertical,
   Instagram,
@@ -42,6 +43,7 @@ import {
   Pencil,
   Star,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 
@@ -96,12 +98,13 @@ import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
 type SectionId = "profile" | "contact" | "links" | "lead" | "preview";
 
-type LinkIconKey = "instagram" | "globe" | "twitter" | "link";
+type LinkIconKey = "instagram" | "globe" | "twitter" | "link" | "file";
 
 type LinkItem = {
   id: string;
   label: string;
   url: string;
+  linkType: "link" | "resume";
   icon: LinkIconKey;
   color: string;
   visible: boolean;
@@ -148,6 +151,7 @@ const ICON_OPTIONS: Array<{
   { value: "globe", label: "My Website", icon: Globe, color: "#55D88A" },
   { value: "twitter", label: "Twitter", icon: X, color: "#F1B16C" },
   { value: "link", label: "Link", icon: Link2, color: "#CBD5F5" },
+  { value: "file", label: "File", icon: FileText, color: "#6AB7FF" },
 ];
 
 const LINK_COLORS = [
@@ -539,6 +543,7 @@ export default function PublicProfileEditorPage() {
           id: link.id,
           title: link.label,
           url: link.url,
+          linkType: link.linkType,
           isActive: link.visible,
           isOverride: link.isOverride,
         })),
@@ -910,6 +915,45 @@ export default function PublicProfileEditorPage() {
     setLinkModalOpen(true);
   }, []);
 
+  const addResumeLink = useCallback(() => {
+    const newLink = createResumeLink();
+    lastLinkModalSnapshotRef.current = null;
+    setLinkForm(newLink);
+    setEditingLinkId(null);
+    setLinkModalMode("add");
+    setLinkModalOpen(true);
+  }, []);
+
+  const uploadResumePdf = useCallback(
+    async (file: File) => {
+      if (!userId) {
+        throw new Error("Sign in to upload a resume.");
+      }
+      const formData = new FormData();
+      formData.append("userId", userId);
+      if (draft?.id) {
+        formData.append("profileId", draft.id);
+      }
+      formData.append("file", file);
+      const response = await fetch("/api/profile-links/resume-upload", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        file?: { name?: string; url?: string };
+      };
+      if (!response.ok || !payload.file?.url) {
+        throw new Error(payload.error || "Unable to upload resume.");
+      }
+      return {
+        name: payload.file.name || file.name,
+        url: payload.file.url,
+      };
+    },
+    [draft?.id, userId]
+  );
+
   const removeLink = useCallback((linkId: string) => {
     let removedLink: LinkItem | undefined;
     let removedIndex = -1;
@@ -1152,6 +1196,14 @@ export default function PublicProfileEditorPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!hasUnsavedChanges || saveState === "saving" || saveState === "failed") {
+      return;
+    }
+    window.dispatchEvent(new Event("linket:save-request"));
+  }, [hasUnsavedChanges, saveState]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
     (window as Window & {
       __linketProfileEditorState?: { hasUnsavedChanges: boolean; saveFailed: boolean };
     }).__linketProfileEditorState = {
@@ -1371,6 +1423,7 @@ export default function PublicProfileEditorPage() {
               }}
               onProfileChange={handleProfileChange}
               onAddLink={addLink}
+              onAddResumeLink={addResumeLink}
               onUpdateLink={updateLink}
               onSetOverrideLink={setOverrideLink}
               onEditLink={openEditLink}
@@ -1447,6 +1500,7 @@ export default function PublicProfileEditorPage() {
         hasOverrideLink={Boolean(draft?.links.some((item) => item.isOverride))}
         onOverrideToggle={handleModalOverrideToggle}
         onChange={setLinkForm}
+        onUploadResume={uploadResumePdf}
         onSave={saveLinkModal}
       />
     </div>
@@ -1471,6 +1525,7 @@ function EditorPanel({
   onRegisterLeadFormReorder,
   onProfileChange,
   onAddLink,
+  onAddResumeLink,
   onUpdateLink,
   onSetOverrideLink,
   onEditLink,
@@ -1514,6 +1569,7 @@ function EditorPanel({
   ) => void;
   onProfileChange: (patch: Partial<ProfileDraft>) => void;
   onAddLink: () => void;
+  onAddResumeLink: () => void;
   onUpdateLink: (linkId: string, patch: Partial<LinkItem>) => void;
   onSetOverrideLink: (linkId: string, enabled: boolean) => void;
   onEditLink: (linkId: string) => void;
@@ -1823,13 +1879,23 @@ function EditorPanel({
         <Card className="rounded-2xl border border-border/60 bg-card/80 shadow-sm">
           <CardHeader className="flex flex-col items-start gap-2 text-left sm:flex-row sm:items-center sm:justify-between">
             <CardTitle className="text-sm font-semibold">Links</CardTitle>
-            <div className="flex w-full justify-center sm:w-auto sm:justify-end">
+            <div className="flex w-full flex-wrap justify-center gap-2 sm:w-auto sm:justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="justify-center rounded-full px-4"
+                  onClick={onAddResumeLink}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Add resume
+                </Button>
                 <Button
                   variant="default"
                   size="sm"
                   className="justify-center rounded-full px-6"
                   onClick={onAddLink}
                 >
+                  <Link2 className="mr-2 h-4 w-4" />
                   Add link
                 </Button>
             </div>
@@ -2459,19 +2525,25 @@ function LinkListItem({
         >
           <GripVertical className="h-4 w-4" />
         </span>
-        <LinkFavicon
-          title={link.label}
-          url={link.url}
-          useDarkThemeIcons={useDarkThemeIcons}
-          className="h-10 w-10 rounded-md"
-          fallbackClassName="flex items-center justify-center rounded-md border border-border/60 bg-background/70 text-[11px] font-semibold text-muted-foreground"
-        />
+        {link.linkType === "resume" ? (
+          <span className="flex h-10 w-10 items-center justify-center rounded-md border border-border/60 bg-background/70 text-muted-foreground">
+            <FileText className="h-5 w-5" aria-hidden />
+          </span>
+        ) : (
+          <LinkFavicon
+            title={link.label}
+            url={link.url}
+            useDarkThemeIcons={useDarkThemeIcons}
+            className="h-10 w-10 rounded-md"
+            fallbackClassName="flex items-center justify-center rounded-md border border-border/60 bg-background/70 text-[11px] font-semibold text-muted-foreground"
+          />
+        )}
         <div className="min-w-0">
           <div className="public-link-title truncate text-sm font-semibold text-foreground">
             {link.label}
           </div>
           <div className="public-link-url truncate text-[11px] text-muted-foreground">
-            {link.url}
+            {link.linkType === "resume" ? "Download PDF" : link.url}
           </div>
           <div className="public-link-clicks text-[10px] text-muted-foreground">
             {clicks.toLocaleString()} clicks
@@ -2646,6 +2718,7 @@ function LinkModal({
   hasOverrideLink,
   onOverrideToggle,
   onChange,
+  onUploadResume,
   onSave,
 }: {
   open: boolean;
@@ -2655,15 +2728,69 @@ function LinkModal({
   hasOverrideLink: boolean;
   onOverrideToggle: (enabled: boolean) => void;
   onChange: (link: LinkItem | null) => void;
+  onUploadResume: (file: File) => Promise<{ name: string; url: string }>;
   onSave: () => void;
 }) {
+  const [uploadingResume, setUploadingResume] = useState(false);
+  const [resumeUploadError, setResumeUploadError] = useState<string | null>(null);
+  const isResumeLink = link?.linkType === "resume";
+  const canSave = Boolean(link) && (!isResumeLink || Boolean(link.url.trim())) && !uploadingResume;
+
+  const handleResumeUpload = useCallback(
+    async (file: File | null) => {
+      if (!file || !link) return;
+      setResumeUploadError(null);
+      if (file.size > 5 * 1024 * 1024) {
+        setResumeUploadError("Resume PDF must be 5 MB or smaller.");
+        return;
+      }
+      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
+        setResumeUploadError("Upload a PDF resume.");
+        return;
+      }
+      setUploadingResume(true);
+      try {
+        const uploaded = await onUploadResume(file);
+        const nextLabel =
+          link.label.trim() && link.label.trim() !== "Resume"
+            ? link.label
+            : "Resume";
+        onChange({
+          ...link,
+          label: nextLabel,
+          url: uploaded.url,
+          linkType: "resume",
+          icon: "file",
+          visible: true,
+        });
+      } catch (error) {
+        setResumeUploadError(
+          error instanceof Error ? error.message : "Unable to upload resume."
+        );
+      } finally {
+        setUploadingResume(false);
+      }
+    },
+    [link, onChange, onUploadResume]
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{mode === "add" ? "Add link" : "Edit link"}</DialogTitle>
-          <DialogDescription>
+          <DialogTitle>
             {mode === "add"
+              ? isResumeLink
+                ? "Add resume"
+                : "Add link"
+              : isResumeLink
+                ? "Edit resume"
+                : "Edit link"}
+          </DialogTitle>
+          <DialogDescription>
+            {isResumeLink
+              ? "Upload a PDF resume up to 5 MB."
+              : mode === "add"
               ? "Add the link details."
               : "Changes autosave while you edit."}
           </DialogDescription>
@@ -2684,24 +2811,59 @@ function LinkModal({
                 }
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="link-url">URL</Label>
-              <LinkUrlInput
-                id="link-url"
-                value={link.url}
-                placeholder="www.website.com"
-                enterKeyHint={mode === "add" ? "done" : "next"}
-                onValueChange={(url) => onChange({ ...link, url })}
-                onKeyDown={(event) => {
-                  if (mode !== "add" || event.key !== "Enter" || event.nativeEvent.isComposing) {
-                    return;
-                  }
-                  if (!getEditableLinkValue(link.url).trim()) return;
-                  event.preventDefault();
-                  onSave();
-                }}
-              />
-            </div>
+            {isResumeLink ? (
+              <div className="space-y-2">
+                <Label htmlFor="resume-pdf">Resume PDF</Label>
+                <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-muted/20 px-4 py-4 text-center text-sm transition hover:bg-muted/35">
+                  <Upload className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium text-foreground">
+                    {uploadingResume ? "Uploading..." : link.url ? "Replace PDF" : "Upload PDF"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    PDF only, 5 MB max
+                  </span>
+                  <input
+                    id="resume-pdf"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    className="sr-only"
+                    disabled={uploadingResume}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      void handleResumeUpload(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                {link.url ? (
+                  <p className="truncate text-xs text-muted-foreground">
+                    Uploaded: {link.url}
+                  </p>
+                ) : null}
+                {resumeUploadError ? (
+                  <p className="text-xs text-destructive">{resumeUploadError}</p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="link-url">URL</Label>
+                <LinkUrlInput
+                  id="link-url"
+                  value={link.url}
+                  placeholder="www.website.com"
+                  enterKeyHint={mode === "add" ? "done" : "next"}
+                  onValueChange={(url) => onChange({ ...link, url })}
+                  onKeyDown={(event) => {
+                    if (mode !== "add" || event.key !== "Enter" || event.nativeEvent.isComposing) {
+                      return;
+                    }
+                    if (!getEditableLinkValue(link.url).trim()) return;
+                    event.preventDefault();
+                    onSave();
+                  }}
+                />
+              </div>
+            )}
             <div className="space-y-3 rounded-xl border border-border/60 px-3 py-3">
               <label className="flex items-center justify-between gap-3">
                 <span className="space-y-0.5">
@@ -2759,8 +2921,8 @@ function LinkModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={onSave}>
-            {mode === "add" ? "Add link" : "Done"}
+          <Button onClick={onSave} disabled={!canSave}>
+            {mode === "add" ? (isResumeLink ? "Add resume" : "Add link") : "Done"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -2808,6 +2970,22 @@ function createLink(): LinkItem {
     id: `link-${cryptoRandom()}`,
     label: "",
     url: "",
+    linkType: "link",
+    icon: base.value,
+    color: base.color,
+    visible: true,
+    isOverride: false,
+    clicks: 0,
+  };
+}
+
+function createResumeLink(): LinkItem {
+  const base = ICON_OPTIONS.find((option) => option.value === "file") ?? ICON_OPTIONS[0];
+  return {
+    id: `link-${cryptoRandom()}`,
+    label: "Resume",
+    url: "",
+    linkType: "resume",
     icon: base.value,
     color: base.color,
     visible: true,
@@ -2818,6 +2996,7 @@ function createLink(): LinkItem {
 
 function guessIcon(title: string, url: string): LinkIconKey {
   const raw = `${title} ${url}`.toLowerCase();
+  if (raw.includes("resume") || raw.endsWith(".pdf")) return "file";
   if (raw.includes("instagram")) return "instagram";
   if (raw.includes("twitter") || raw.includes("x.com")) return "twitter";
   if (raw.includes("website") || raw.includes("http")) return "globe";
@@ -2825,8 +3004,10 @@ function guessIcon(title: string, url: string): LinkIconKey {
 }
 
 function mapProfile(record: ProfileWithLinks): ProfileDraft {
-  const links = (record.links ?? []).map((link, index) => {
-    const icon = guessIcon(link.title, link.url);
+  const links: LinkItem[] = (record.links ?? []).map((link, index) => {
+    const linkType: LinkItem["linkType"] =
+      link.link_type === "resume" ? "resume" : "link";
+    const icon = linkType === "resume" ? "file" : guessIcon(link.title, link.url);
     const fallbackColor =
       ICON_OPTIONS.find((option) => option.value === icon)?.color ??
       LINK_COLORS[index % LINK_COLORS.length];
@@ -2834,6 +3015,7 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
       id: link.id ?? `link-${index}`,
       label: link.title,
       url: link.url,
+      linkType,
       icon,
       color: fallbackColor,
       visible: link.is_active ?? true,
@@ -2898,6 +3080,7 @@ function normalizeDraftForCompare(draft: ProfileDraft) {
       id: link.id,
       label: link.label,
       url: link.url,
+      linkType: link.linkType,
       icon: link.icon,
       color: link.color,
       visible: link.visible,

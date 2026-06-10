@@ -36,6 +36,7 @@ export type PrivilegedRouteId =
   | "POST /api/dashboard/notifications"
   | "POST /api/linket-profiles/[id]/activate"
   | "POST /api/linket-profiles"
+  | "POST /api/profile-links/resume-upload"
   | "POST /api/linkets/claim"
   | "POST /api/linkets/complimentary-trial"
   | "POST /api/linkets/transfers"
@@ -87,6 +88,7 @@ export const PRIVILEGED_ROUTE_POLICIES: Record<
   "POST /api/dashboard/notifications": "authenticated",
   "POST /api/linket-profiles/[id]/activate": "self",
   "POST /api/linket-profiles": "self",
+  "POST /api/profile-links/resume-upload": "self",
   "POST /api/linkets/claim": "authenticated",
   "POST /api/linkets/complimentary-trial": "authenticated",
   "POST /api/linkets/transfers": "authenticated",

@@ -510,7 +510,6 @@ export default function AnalyticsContent() {
   const followUpLeads = latestLead
     ? recentLeads.slice(1, 4)
     : recentLeads.slice(0, 3);
-  const topProfile = analytics?.topProfiles?.[0] ?? null;
   const topLink = analytics?.topLinks?.[0] ?? null;
   const topCtaLinkShare = useMemo<LinkShareInsight | null>(() => {
     if (!topLink || topLinksTotalClicks <= 0) return null;
@@ -538,11 +537,6 @@ export default function AnalyticsContent() {
 
     return { data, totalClicks: topLinksTotalClicks };
   }, [topLink, topLinksTotalClicks]);
-  const onboarding = analytics?.onboarding ?? null;
-  const incompleteOnboardingItems = useMemo(
-    () => onboarding?.items.filter((item) => !item.completed) ?? [],
-    [onboarding],
-  );
   const nextSteps = useMemo<ActionInsight[]>(() => {
     const items: ActionInsight[] = [];
 
@@ -573,27 +567,6 @@ export default function AnalyticsContent() {
       });
     }
 
-    if (topProfile) {
-      const profileLabel = topProfile.handle
-        ? `${siteHost}/${topProfile.handle}`
-        : topProfile.nickname || "Assigned Linket";
-      const captureRate =
-        topProfile.scans > 0 ? (topProfile.leads / topProfile.scans) * 100 : 0;
-
-      items.push({
-        kicker: "Best Linket",
-        title: topProfile.displayName || "Linket driving activity",
-        detail: `${profileLabel} generated ${numberFormatter.format(
-          topProfile.scans,
-        )} scans and ${numberFormatter.format(
-          topProfile.leads,
-        )} leads in the last ${range} days${
-          topProfile.scans > 0 ? ` (${captureRate.toFixed(1)}% capture)` : ""
-        }.`,
-        tone: "neutral",
-      });
-    }
-
     if (topLink) {
       const sharePercent =
         topLinksTotalClicks > 0
@@ -614,28 +587,14 @@ export default function AnalyticsContent() {
       });
     }
 
-    const firstGap = incompleteOnboardingItems[0];
-    if (firstGap) {
-      items.push({
-        kicker: "Reduce friction",
-        title: firstGap.label,
-        detail: firstGap.detail,
-        tone: "accent",
-      });
-    }
-
     return items.slice(0, 4);
   }, [
-    incompleteOnboardingItems,
     latestLead,
-    range,
     rangeTotals.leads,
     rangeTotals.scans,
-    siteHost,
     topCtaLinkShare,
     topLink,
     topLinksTotalClicks,
-    topProfile,
   ]);
   const primaryInsight = nextSteps[0] ?? null;
   const supportingInsights = nextSteps.slice(1, 4);
@@ -1143,183 +1102,6 @@ export default function AnalyticsContent() {
 
             </div>
             </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section
-        id="analytics-breakdowns"
-        className="grid gap-6 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]"
-      >
-        <Card className="dashboard-analytics-card rounded-[32px] border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-foreground">
-              Top Linkets
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Scans, contacts, and capture rate by profile.
-            </p>
-          </CardHeader>
-          <CardContent>
-              {loading ? (
-                <div className="space-y-2">
-                  <div
-                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
-                    data-skeleton
-                  />
-                  <div
-                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
-                    data-skeleton
-                  />
-                  <div
-                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
-                    data-skeleton
-                  />
-                </div>
-              ) : analytics?.topProfiles?.length ? (
-                <div className="space-y-2">
-                  {analytics.topProfiles.map((profile) => {
-                    const subtitle = profile.handle
-                      ? `${siteHost}/${profile.handle}`
-                      : profile.nickname || "Unassigned";
-                    const conversion =
-                      profile.scans > 0 ? profile.leads / profile.scans : 0;
-                    return (
-                      <div
-                        key={`${profile.profileId ?? "np"}-${profile.handle ?? "nh"}`}
-                        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-3 py-2"
-                      >
-                        <div>
-                          <div className="text-sm font-medium text-foreground">
-                            {profile.displayName || "Linket"}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {subtitle}
-                          </p>
-                        </div>
-                        <div className="text-right text-xs text-muted-foreground">
-                          <div className="font-semibold text-foreground">
-                            {numberFormatter.format(profile.scans)} scans
-                          </div>
-                          <div>
-                            {profile.leads
-                              ? `${numberFormatter.format(profile.leads)} leads`
-                              : "0 leads"}
-                          </div>
-                          <div>{(conversion * 100).toFixed(1)}% capture</div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <EmptyState
-                  message="No Linkets generated activity in this range."
-                  actionLabel="Refresh"
-                  onAction={() => setReloadToken((value) => value + 1)}
-                />
-              )}
-          </CardContent>
-        </Card>
-
-        <Card className="dashboard-analytics-card rounded-[32px] border bg-card/80 shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold text-foreground">
-              Top links
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Click distribution across your public profile links.
-            </p>
-          </CardHeader>
-          <CardContent>
-              {loading ? (
-                <div className="space-y-2">
-                  <div
-                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
-                    data-skeleton
-                  />
-                  <div
-                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
-                    data-skeleton
-                  />
-                  <div
-                    className="dashboard-skeleton h-12 animate-pulse rounded-2xl bg-muted"
-                    data-skeleton
-                  />
-                </div>
-              ) : analytics?.topLinks?.length ? (
-                <div className="space-y-3">
-                  {analytics.topLinks.map((link) => {
-                    const clickShare =
-                      topLinksTotalClicks > 0
-                        ? link.clicks / topLinksTotalClicks
-                        : 0;
-                    const sharePercent = clickShare * 100;
-                    const barPercent =
-                      link.clicks > 0
-                        ? Math.max(4, Math.round(sharePercent))
-                        : 0;
-                    const displayUrl = formatLinkUrl(link.url);
-                    return (
-                      <div
-                        key={link.id}
-                        className="space-y-3 rounded-2xl border border-border/70 bg-background/20 px-4 py-3"
-                      >
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="min-w-0 space-y-1">
-                            <div className="truncate text-base font-semibold text-foreground">
-                              {link.title}
-                            </div>
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-                              {link.handle ? (
-                                <span
-                                  className={cn(
-                                    "rounded-full bg-muted px-2 py-0.5 font-medium",
-                                    theme === "dark" ||
-                                      theme === "gilded" ||
-                                      theme === "midnight"
-                                      ? "text-slate-100"
-                                      : "text-slate-900",
-                                  )}
-                                >
-                                  {link.handle}
-                                </span>
-                              ) : null}
-                              <span className="min-w-0 truncate">
-                                {displayUrl}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground sm:flex-col sm:items-end sm:justify-start sm:gap-0.5">
-                            <div className="text-base font-semibold text-foreground">
-                              {numberFormatter.format(link.clicks)} clicks
-                            </div>
-                            <div>{sharePercent.toFixed(1)}% share</div>
-                          </div>
-                        </div>
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-muted-foreground">
-                            <span>Share</span>
-                            <span>{sharePercent.toFixed(1)}%</span>
-                          </div>
-                          <div className="h-2 overflow-hidden rounded-full bg-muted/80">
-                            <div
-                              className="h-full rounded-full bg-primary transition-all duration-500"
-                              style={{ width: `${barPercent}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <EmptyState
-                  message="No link clicks yet. Put your highest-value CTA near the top of the page and test again."
-                  actionLabel="Refresh"
-                  onAction={() => setReloadToken((value) => value + 1)}
-                />
-              )}
           </CardContent>
         </Card>
       </section>

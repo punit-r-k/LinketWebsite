@@ -1147,7 +1147,7 @@ export function Navbar() {
             </Link>
             {isProfileEditor ? (
               <>
-                <div className="hidden min-w-0 max-w-[550px] flex-1 md:ml-3 md:flex lg:ml-5">
+                <div className="hidden min-w-0 max-w-[550px] flex-1 lg:ml-5 lg:flex">
                   <div className="flex min-h-[52px] w-full items-center rounded-2xl border border-border/70 bg-card px-3 py-2 shadow-[var(--shadow-grounded)]">
                     <div className="flex w-full flex-nowrap items-center gap-2">
                       {PROFILE_SECTIONS.map((section) => {

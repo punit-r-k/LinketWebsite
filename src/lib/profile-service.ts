@@ -157,6 +157,7 @@ export type ProfilePayload = {
     id?: string;
     title: string;
     url: string;
+    linkType?: "link" | "resume";
     isActive?: boolean;
     isOverride?: boolean;
   }>;
@@ -279,6 +280,7 @@ type NormalizedLinkForSave = {
   id?: string;
   title: string;
   url: string;
+  linkType: "link" | "resume";
   order_index: number;
   isActive: boolean;
   isOverride: boolean;
@@ -322,6 +324,7 @@ function normalizeIncomingLinksForSave(
       id: suppliedId,
       title: link.title,
       url: sanitizePublicLinkUrl(link.url),
+      linkType: link.linkType === "resume" ? "resume" : "link",
       order_index: index,
       isActive,
       isOverride,
@@ -549,6 +552,7 @@ function memorySaveProfileForUser(
       user_id: userId,
       title: link.title?.trim() || `Link ${index + 1}`,
       url: link.url?.trim() || "",
+      link_type: link.linkType,
       order_index: index,
       is_active: link.isActive,
       is_override: link.isOverride,
@@ -857,6 +861,7 @@ export async function saveProfileForUser(
       user_id: userId,
       title: link.title?.trim() || "Link",
       url: link.url?.trim() || "https://",
+      link_type: link.linkType,
       order_index: link.order_index,
       is_active: link.isActive,
       is_override: false,
@@ -876,6 +881,7 @@ export async function saveProfileForUser(
       user_id: userId,
       title: link.title?.trim() || "Link",
       url: link.url?.trim() || "https://",
+      link_type: link.linkType,
       order_index: link.order_index,
       is_active: link.isActive,
       is_override: false,

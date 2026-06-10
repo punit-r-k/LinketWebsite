@@ -58,6 +58,13 @@ function normalizeHandle(value: string | null | undefined) {
   return value?.trim().toLowerCase() ?? "";
 }
 
+function isOwnerHandleConflict(error: { code?: string; message?: string }) {
+  return (
+    error.code === "23505" &&
+    (error.message?.includes("lead_forms_owner_handle") ?? false)
+  );
+}
+
 export async function getPlanScopedLeadFormConfig(
   userId: string,
   rawConfig: LeadFormConfig | null | undefined,
@@ -80,6 +87,24 @@ export async function findExistingLeadFormRow({
   const normalizedHandle = normalizeHandle(handle);
   const normalizedProfileId = profileId?.trim() || null;
 
+  if (normalizedHandle) {
+    const { data, error } = await client
+      .from("lead_forms")
+      .select(LEAD_FORM_SELECT)
+      .eq("user_id", userId)
+      .eq("handle", normalizedHandle)
+      .limit(1)
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") {
+      throw new Error(error.message);
+    }
+
+    if (data) {
+      return data as LeadFormRecord;
+    }
+  }
+
   if (normalizedProfileId) {
     const { data, error } = await client
       .from("lead_forms")
@@ -99,23 +124,7 @@ export async function findExistingLeadFormRow({
     }
   }
 
-  if (!normalizedHandle) {
-    return null;
-  }
-
-  const { data, error } = await client
-    .from("lead_forms")
-    .select(LEAD_FORM_SELECT)
-    .eq("user_id", userId)
-    .eq("handle", normalizedHandle)
-    .limit(1)
-    .maybeSingle();
-
-  if (error && error.code !== "PGRST116") {
-    throw new Error(error.message);
-  }
-
-  return (data as LeadFormRecord | null) ?? null;
+  return null;
 }
 
 export async function upsertPublishedLeadFormRow({
@@ -161,6 +170,23 @@ export async function upsertPublishedLeadFormRow({
       .single();
 
     if (error) {
+      if (isOwnerHandleConflict(error)) {
+        const handleRow = await findExistingLeadFormRow({
+          client,
+          userId,
+          handle: normalizedHandle,
+        });
+        if (handleRow?.id && handleRow.id !== existingRow.id) {
+          return upsertPublishedLeadFormRow({
+            client,
+            userId,
+            handle: normalizedHandle,
+            profileId,
+            config,
+            existingRow: handleRow,
+          });
+        }
+      }
       throw new Error(error.message);
     }
 
@@ -174,6 +200,23 @@ export async function upsertPublishedLeadFormRow({
     .single();
 
   if (error) {
+    if (isOwnerHandleConflict(error)) {
+      const handleRow = await findExistingLeadFormRow({
+        client,
+        userId,
+        handle: normalizedHandle,
+      });
+      if (handleRow?.id) {
+        return upsertPublishedLeadFormRow({
+          client,
+          userId,
+          handle: normalizedHandle,
+          profileId,
+          config,
+          existingRow: handleRow,
+        });
+      }
+    }
     throw new Error(error.message);
   }
 

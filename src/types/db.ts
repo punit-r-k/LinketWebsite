@@ -27,6 +27,7 @@ export type ProfileLinkRecord = {
   user_id: string;
   title: string;
   url: string;
+  link_type?: "link" | "resume" | null;
   order_index: number;
   is_active: boolean;
   is_override: boolean;
