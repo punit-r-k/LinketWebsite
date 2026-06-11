@@ -2511,8 +2511,8 @@ function LinkListItem({
           <GripVertical className="h-4 w-4" />
         </span>
         {link.linkType === "resume" ? (
-          <span className="flex h-10 w-10 items-center justify-center rounded-md border border-border/60 bg-background/70 text-muted-foreground">
-            <FileText className="h-5 w-5" aria-hidden />
+          <span className="public-profile-resume-icon-shell flex h-10 w-10 items-center justify-center">
+            <span className="public-profile-resume-icon h-10 w-10" aria-hidden />
           </span>
         ) : (
           <LinkFavicon
