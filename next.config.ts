@@ -97,9 +97,24 @@ function originFromEnv(url?: string) {
   }
 }
 
+function websocketOriginFromEnv(url?: string) {
+  try {
+    if (!url) return null;
+    const u = new URL(url);
+    if (u.protocol === "https:") u.protocol = "wss:";
+    if (u.protocol === "http:") u.protocol = "ws:";
+    return u.origin;
+  } catch {
+    return null;
+  }
+}
+
 const supabaseOrigin =
   originFromEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) ||
   "https://*.supabase.co";
+const supabaseRealtimeOrigin =
+  websocketOriginFromEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) ||
+  "wss://*.supabase.co";
 
 const remoteImageHosts = [
   "images.unsplash.com",
@@ -125,7 +140,7 @@ const csp = [
   `img-src 'self' data: blob: ${supabaseOrigin} ${remoteImageHosts
     .map((host) => `https://${host}`)
     .join(" ")} https://q.stripe.com ${qrCodeImageOrigin}`,
-  `connect-src 'self' ${supabaseOrigin} ${stripeConnectOrigins.join(" ")}`,
+  `connect-src 'self' ${supabaseOrigin} ${supabaseRealtimeOrigin} ${stripeConnectOrigins.join(" ")}`,
   `font-src 'self' data:`,
   `frame-src 'self' ${stripeFrameOrigins.join(" ")}`,
   `frame-ancestors 'self'`,
