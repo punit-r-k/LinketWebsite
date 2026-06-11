@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { signalPublicProfileRefresh } from "@/components/public/PublicProfileLiteMode";
 import { supabase } from "@/lib/supabase";
 
 const REFRESH_DEBOUNCE_MS = 300;
@@ -49,12 +50,14 @@ export default function PublicProfileRealtimeRefresh({
       if (refreshTimer !== null) window.clearTimeout(refreshTimer);
       refreshTimer = window.setTimeout(() => {
         refreshTimer = null;
+        signalPublicProfileRefresh();
         router.refresh();
       }, REFRESH_DEBOUNCE_MS);
 
       if (settleTimer !== null) window.clearTimeout(settleTimer);
       settleTimer = window.setTimeout(() => {
         settleTimer = null;
+        signalPublicProfileRefresh();
         router.refresh();
       }, SETTLE_REFRESH_MS);
     };

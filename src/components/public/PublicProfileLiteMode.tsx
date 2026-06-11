@@ -12,6 +12,7 @@ type NetworkConnection = {
 };
 
 const WEAK_TYPES = new Set(["slow-2g", "2g"]);
+const PUBLIC_PROFILE_REFRESH_EVENT = "linket:public-profile-refresh";
 
 function getConnection(): NetworkConnection | undefined {
   if (typeof navigator === "undefined") return undefined;
@@ -60,30 +61,50 @@ export default function PublicProfileLiteMode() {
       };
     }
 
-    const connection = getConnection();
-    const prefersReducedData =
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-data: reduce)").matches;
+    const reducedDataQuery =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-data: reduce)")
+        : null;
 
     const update = () => {
+      const connection = getConnection();
+      const prefersReducedData = Boolean(reducedDataQuery?.matches);
       const lite = prefersReducedData || isWeakConnection(connection);
       root.dataset.lite = lite ? "true" : "false";
     };
 
     update();
 
-    if (connection && typeof connection.addEventListener === "function") {
-      connection.addEventListener("change", update);
-      return () => {
-        connection.removeEventListener?.("change", update);
-        delete root.dataset.lite;
-      };
-    }
+    const updateWhenVisible = () => {
+      if (document.visibilityState === "hidden") return;
+      update();
+    };
+
+    const connection = getConnection();
+    connection?.addEventListener?.("change", update);
+    reducedDataQuery?.addEventListener?.("change", update);
+    window.addEventListener("focus", update);
+    window.addEventListener("online", update);
+    window.addEventListener("pageshow", update);
+    window.addEventListener(PUBLIC_PROFILE_REFRESH_EVENT, update);
+    document.addEventListener("visibilitychange", updateWhenVisible);
+
     return () => {
+      connection?.removeEventListener?.("change", update);
+      reducedDataQuery?.removeEventListener?.("change", update);
+      window.removeEventListener("focus", update);
+      window.removeEventListener("online", update);
+      window.removeEventListener("pageshow", update);
+      window.removeEventListener(PUBLIC_PROFILE_REFRESH_EVENT, update);
+      document.removeEventListener("visibilitychange", updateWhenVisible);
       delete root.dataset.lite;
     };
   }, []);
 
   return null;
+}
+
+export function signalPublicProfileRefresh() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(PUBLIC_PROFILE_REFRESH_EVENT));
 }
