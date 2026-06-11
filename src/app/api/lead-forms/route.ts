@@ -5,6 +5,7 @@ import { requireRouteAccess } from "@/lib/api-authorization";
 import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import { revalidatePublicProfileHandle } from "@/lib/public-profile-revalidation";
 import {
   createDefaultLeadFormConfig,
 } from "@/lib/lead-form";
@@ -331,6 +332,7 @@ export async function PUT(request: NextRequest) {
         .update({ config: normalized })
         .eq("id", data.id);
     }
+    revalidatePublicProfileHandle(handle);
 
     return NextResponse.json(
       { form: normalized, formId: data.id },

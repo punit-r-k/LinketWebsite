@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getActiveProfileForUser } from "@/lib/profile-service";
+import { revalidatePublicProfileHandle } from "@/lib/public-profile-revalidation";
 import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
@@ -288,6 +289,19 @@ export async function POST(request: NextRequest) {
       .from("vcard_profiles")
       .upsert(payload, { onConflict: "user_id" });
     if (error) throw error;
+
+    const { data: activeProfile, error: activeProfileError } = await supabase
+      .from("user_profiles")
+      .select("handle")
+      .eq("user_id", body.userId)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    if (!activeProfileError) {
+      revalidatePublicProfileHandle(
+        (activeProfile as { handle?: string | null } | null)?.handle
+      );
+    }
 
     return NextResponse.json({ fields: savedFields }, { status: 200 });
   } catch (error) {

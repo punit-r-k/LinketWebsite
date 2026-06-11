@@ -16,6 +16,7 @@ import { sanitizePublicLinkUrl } from "@/lib/security";
 import { normalizeThemeName } from "@/lib/themes";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
+import { revalidatePublicProfileHandles } from "@/lib/public-profile-revalidation";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
 import {
   getConfiguredSiteHost,
@@ -24,6 +25,7 @@ import {
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
+type ServerSupabase = Awaited<ReturnType<typeof createServerSupabase>>;
 const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 const DEFAULT_PROFILE_NAME = "Linket Public Profile";
 const DEFAULT_THEME = normalizeThemeName("autumn", "autumn");
@@ -50,6 +52,37 @@ function sortLinks(links: ProfileLinkRecord[] | null | undefined) {
         (a.order_index ?? 0) - (b.order_index ?? 0) ||
         a.created_at.localeCompare(b.created_at)
     );
+}
+
+async function fetchOwnedProfileHandle(
+  supabase: ServerSupabase,
+  userId: string,
+  profileId: string | null | undefined
+) {
+  if (!profileId) return null;
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("handle")
+    .eq("id", profileId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error && error.code !== "PGRST116") throw new Error(error.message);
+  return (data?.handle as string | null | undefined) ?? null;
+}
+
+async function fetchActivePublicHandles(
+  supabase: ServerSupabase,
+  userId: string
+) {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .select("handle")
+    .eq("user_id", userId)
+    .eq("is_active", true);
+  if (error) throw new Error(error.message);
+  return (data ?? [])
+    .map((row) => (row as { handle?: string | null }).handle)
+    .filter((handle): handle is string => Boolean(handle));
 }
 
 function normaliseLinkUrl(url: string | null | undefined) {
@@ -567,10 +600,21 @@ export async function POST(request: NextRequest) {
         planAccess
       ),
     };
+    const previousHandle = await fetchOwnedProfileHandle(
+      supabase,
+      userId,
+      sanitizedProfile.id
+    );
+    const previousActiveHandles = await fetchActivePublicHandles(supabase, userId);
 
     if (isSupabaseAdminAvailable) {
       try {
         const saved = await saveProfileForUser(userId, sanitizedProfile);
+        revalidatePublicProfileHandles(
+          previousHandle,
+          ...previousActiveHandles,
+          saved.handle
+        );
         return NextResponse.json(
           applyThemeAccessToProfile(saved, planAccess.hasPaidAccess),
           {
@@ -862,6 +906,11 @@ export async function POST(request: NextRequest) {
         links: sortLinks((saved as ProfileWithLinks).links),
       },
       planAccess.hasPaidAccess
+    );
+    revalidatePublicProfileHandles(
+      previousHandle,
+      ...previousActiveHandles,
+      payload.handle
     );
 
     return NextResponse.json(payload, {

@@ -12,6 +12,7 @@ import { isDarkTheme, normalizeThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicProfileLiteMode from "@/components/public/PublicProfileLiteMode";
+import PublicProfileRealtimeRefresh from "@/components/public/PublicProfileRealtimeRefresh";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import PublicProfileImage from "@/components/public/PublicProfileImage";
 import PublicProfileViewTracker from "@/components/public/PublicProfileViewTracker";
@@ -169,6 +170,11 @@ export default async function PublicProfilePage({ params }: Props) {
   return (
     <div className={`public-profile-shell min-h-screen text-foreground ${themeClass}`}>
       <PublicProfileViewTracker handle={publicHandle} />
+      <PublicProfileRealtimeRefresh
+        profileId={profile.id}
+        userId={profile.user_id}
+        leadFormId={leadFormRow?.id ?? null}
+      />
       <PublicProfileLiteMode />
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 public-profile-backdrop-entrance public-profile-heavy">
