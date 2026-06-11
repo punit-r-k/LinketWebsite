@@ -85,17 +85,7 @@ export default function PublicProfileRealtimeRefresh({
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
-          schema: "public",
-          table: "profile_links",
-          filter: `profile_id=eq.${profileId}`,
-        },
-        queueRefresh
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
+          event: "*",
           schema: "public",
           table: "profile_links",
           filter: `profile_id=eq.${profileId}`,
