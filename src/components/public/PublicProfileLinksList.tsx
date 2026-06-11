@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, type CSSProperties } from "react";
-import { ArrowUpRight, Download, FileText } from "lucide-react";
+import Image from "next/image";
+import { ArrowUpRight, Download } from "lucide-react";
 import LinkFavicon from "@/components/LinkFavicon";
 import { emitAnalyticsEvent } from "@/lib/analytics";
 import { sanitizePublicLinkUrl } from "@/lib/security";
@@ -76,7 +77,14 @@ export default function PublicProfileLinksList({
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {link.link_type === "resume" ? (
               <span className="public-profile-link-icon-fallback inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-                <FileText className="h-5 w-5" aria-hidden />
+                <Image
+                  src="/icons/resume.png"
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="public-profile-resume-icon h-6 w-6 object-contain"
+                  aria-hidden
+                />
               </span>
             ) : (
               <LinkFavicon

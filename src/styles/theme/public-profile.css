@@ -1426,6 +1426,10 @@
   text-transform: uppercase;
 }
 
+.public-profile-shell.dark .public-profile-resume-icon {
+  filter: invert(1);
+}
+
 .public-profile-shell .public-profile-link-action {
   background: var(--color-button-outline-bg);
   color: var(--color-button-outline-fg);
