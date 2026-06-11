@@ -1426,8 +1426,11 @@
   text-transform: uppercase;
 }
 
-.public-profile-shell.dark .public-profile-resume-icon {
-  filter: invert(1);
+.public-profile-resume-icon {
+  display: block;
+  background: var(--foreground);
+  mask: url("/icons/resume.png") center / contain no-repeat;
+  -webkit-mask: url("/icons/resume.png") center / contain no-repeat;
 }
 
 .public-profile-shell .public-profile-link-action {
