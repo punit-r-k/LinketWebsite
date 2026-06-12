@@ -160,7 +160,7 @@ export default function PhonePreviewCard({
   const previewSensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 6,
+        distance: 1,
       },
     }),
     useSensor(KeyboardSensor, {

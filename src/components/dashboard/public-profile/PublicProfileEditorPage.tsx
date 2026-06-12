@@ -1633,7 +1633,7 @@ function EditorPanel({
   const editorLinkSensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: -6,
+        distance: 6,
       },
     }),
     useSensor(KeyboardSensor, {
