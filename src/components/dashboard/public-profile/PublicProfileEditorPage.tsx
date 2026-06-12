@@ -19,6 +19,7 @@ import {
   useSensors,
   type DragCancelEvent,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import {
@@ -1638,25 +1639,37 @@ function EditorPanel({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  const lastEditorLinkOverRef = useRef<string | null>(null);
   const handleEditorLinkDragStart = useCallback(
     (event: DragStartEvent) => {
       if (!canReorderLinks) return;
+      lastEditorLinkOverRef.current = null;
       setDraggingLinkId(String(event.active.id));
     },
     [canReorderLinks, setDraggingLinkId]
   );
   const handleEditorLinkDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    (_event: DragEndEvent) => {
+      lastEditorLinkOverRef.current = null;
       setDraggingLinkId(null);
+    },
+    [setDraggingLinkId]
+  );
+  const handleEditorLinkDragOver = useCallback(
+    (event: DragOverEvent) => {
       if (!canReorderLinks) return;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
+      const overKey = `${String(active.id)}:${String(over.id)}`;
+      if (lastEditorLinkOverRef.current === overKey) return;
+      lastEditorLinkOverRef.current = overKey;
       onReorderLink(String(active.id), String(over.id));
     },
-    [canReorderLinks, onReorderLink, setDraggingLinkId]
+    [canReorderLinks, onReorderLink]
   );
   const handleEditorLinkDragCancel = useCallback(
     (_event: DragCancelEvent) => {
+      lastEditorLinkOverRef.current = null;
       setDraggingLinkId(null);
     },
     [setDraggingLinkId]
@@ -1918,6 +1931,7 @@ function EditorPanel({
             sensors={editorLinkSensors}
             collisionDetection={closestCenter}
             onDragStart={handleEditorLinkDragStart}
+            onDragOver={handleEditorLinkDragOver}
             onDragEnd={handleEditorLinkDragEnd}
             onDragCancel={handleEditorLinkDragCancel}
             modifiers={[restrictToVerticalAxis]}
@@ -2234,19 +2248,45 @@ function PhonePreviewCard({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  const lastPreviewLinkOverRef = useRef<string | null>(null);
+  const lastPreviewLeadFieldOverRef = useRef<string | null>(null);
+  const resetPreviewLinkDragGuard = useCallback(() => {
+    lastPreviewLinkOverRef.current = null;
+  }, []);
+  const resetPreviewLeadFieldDragGuard = useCallback(() => {
+    lastPreviewLeadFieldOverRef.current = null;
+  }, []);
   const handlePreviewLinkDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    (_event: DragEndEvent) => {
+      resetPreviewLinkDragGuard();
+    },
+    [resetPreviewLinkDragGuard]
+  );
+  const handlePreviewLinkDragOver = useCallback(
+    (event: DragOverEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      onReorderLink(String(active.id), String(over.id), true);
+      const overKey = `${String(active.id)}:${String(over.id)}`;
+      if (lastPreviewLinkOverRef.current === overKey) return;
+      lastPreviewLinkOverRef.current = overKey;
+      onReorderLink(String(active.id), String(over.id), false);
     },
     [onReorderLink]
   );
   const handlePreviewLeadFieldDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    (_event: DragEndEvent) => {
+      resetPreviewLeadFieldDragGuard();
+    },
+    [resetPreviewLeadFieldDragGuard]
+  );
+  const handlePreviewLeadFieldDragOver = useCallback(
+    (event: DragOverEvent) => {
       if (!onReorderLeadField) return;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
+      const overKey = `${String(active.id)}:${String(over.id)}`;
+      if (lastPreviewLeadFieldOverRef.current === overKey) return;
+      lastPreviewLeadFieldOverRef.current = overKey;
       onReorderLeadField(String(active.id), String(over.id));
     },
     [onReorderLeadField]
@@ -2348,7 +2388,10 @@ function PhonePreviewCard({
             <DndContext
               sensors={previewSensors}
               collisionDetection={closestCenter}
+              onDragStart={resetPreviewLinkDragGuard}
+              onDragOver={handlePreviewLinkDragOver}
               onDragEnd={handlePreviewLinkDragEnd}
+              onDragCancel={resetPreviewLinkDragGuard}
               modifiers={[restrictToVerticalAxis]}
             >
               <SortableContext
@@ -2378,7 +2421,10 @@ function PhonePreviewCard({
           <DndContext
             sensors={previewSensors}
             collisionDetection={closestCenter}
+            onDragStart={resetPreviewLeadFieldDragGuard}
+            onDragOver={handlePreviewLeadFieldDragOver}
             onDragEnd={handlePreviewLeadFieldDragEnd}
+            onDragCancel={resetPreviewLeadFieldDragGuard}
             modifiers={[restrictToVerticalAxis]}
           >
             <SortableContext

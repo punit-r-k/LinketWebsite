@@ -18,6 +18,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import {
   restrictToVerticalAxis,
@@ -224,6 +225,7 @@ export default function LeadFormBuilder({
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  const lastFieldOverRef = useRef<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -537,11 +539,22 @@ export default function LeadFormBuilder({
 
   const handleFieldDragEnd = useCallback(
     (event: DragEndEvent) => {
+      lastFieldOverRef.current = null;
+      setSelectedFieldId(String(event.active.id));
+    },
+    []
+  );
+  const resetFieldDragGuard = useCallback(() => {
+    lastFieldOverRef.current = null;
+  }, []);
+  const handleFieldDragOver = useCallback(
+    (event: DragOverEvent) => {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      const movedFieldId = String(active.id);
-      reorderFields(movedFieldId, String(over.id));
-      setSelectedFieldId(movedFieldId);
+      const overKey = `${String(active.id)}:${String(over.id)}`;
+      if (lastFieldOverRef.current === overKey) return;
+      lastFieldOverRef.current = overKey;
+      reorderFields(String(active.id), String(over.id));
     },
     [reorderFields]
   );
@@ -920,7 +933,10 @@ export default function LeadFormBuilder({
                 <DndContext
                   sensors={fieldSensors}
                   collisionDetection={closestCenter}
+                  onDragStart={resetFieldDragGuard}
+                  onDragOver={handleFieldDragOver}
                   onDragEnd={handleFieldDragEnd}
+                  onDragCancel={resetFieldDragGuard}
                   modifiers={[restrictToVerticalAxis]}
                 >
                   <SortableContext

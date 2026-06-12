@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -9,6 +9,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import {
   restrictToVerticalAxis,
@@ -149,20 +150,46 @@ export default function PhonePreviewCard({
   );
   const allowLinkReorder = Boolean(onReorderLink);
   const allowLeadFieldReorder = Boolean(onReorderLeadField);
+  const lastPreviewLinkOverRef = useRef<string | null>(null);
+  const lastPreviewLeadFieldOverRef = useRef<string | null>(null);
+  const resetPreviewLinkDragGuard = useCallback(() => {
+    lastPreviewLinkOverRef.current = null;
+  }, []);
+  const resetPreviewLeadFieldDragGuard = useCallback(() => {
+    lastPreviewLeadFieldOverRef.current = null;
+  }, []);
   const handlePreviewLinkDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    (_event: DragEndEvent) => {
+      resetPreviewLinkDragGuard();
+    },
+    [resetPreviewLinkDragGuard]
+  );
+  const handlePreviewLinkDragOver = useCallback(
+    (event: DragOverEvent) => {
       if (!onReorderLink) return;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
-      onReorderLink(String(active.id), String(over.id), true);
+      const overKey = `${String(active.id)}:${String(over.id)}`;
+      if (lastPreviewLinkOverRef.current === overKey) return;
+      lastPreviewLinkOverRef.current = overKey;
+      onReorderLink(String(active.id), String(over.id), false);
     },
     [onReorderLink]
   );
   const handlePreviewLeadFieldDragEnd = useCallback(
-    (event: DragEndEvent) => {
+    (_event: DragEndEvent) => {
+      resetPreviewLeadFieldDragGuard();
+    },
+    [resetPreviewLeadFieldDragGuard]
+  );
+  const handlePreviewLeadFieldDragOver = useCallback(
+    (event: DragOverEvent) => {
       if (!onReorderLeadField) return;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
+      const overKey = `${String(active.id)}:${String(over.id)}`;
+      if (lastPreviewLeadFieldOverRef.current === overKey) return;
+      lastPreviewLeadFieldOverRef.current = overKey;
       onReorderLeadField(String(active.id), String(over.id));
     },
     [onReorderLeadField]
@@ -302,7 +329,10 @@ export default function PhonePreviewCard({
             <DndContext
               sensors={previewSensors}
               collisionDetection={closestCenter}
+              onDragStart={resetPreviewLinkDragGuard}
+              onDragOver={handlePreviewLinkDragOver}
               onDragEnd={handlePreviewLinkDragEnd}
+              onDragCancel={resetPreviewLinkDragGuard}
               modifiers={[restrictToVerticalAxis]}
             >
               <SortableContext
@@ -341,7 +371,10 @@ export default function PhonePreviewCard({
               <DndContext
                 sensors={previewSensors}
                 collisionDetection={closestCenter}
+                onDragStart={resetPreviewLeadFieldDragGuard}
+                onDragOver={handlePreviewLeadFieldDragOver}
                 onDragEnd={handlePreviewLeadFieldDragEnd}
+                onDragCancel={resetPreviewLeadFieldDragGuard}
                 modifiers={[restrictToVerticalAxis]}
               >
                 <SortableContext
