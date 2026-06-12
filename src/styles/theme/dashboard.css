@@ -1063,21 +1063,6 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
   box-shadow: 0 18px 30px -20px rgba(15, 23, 42, 0.35);
 }
 
-#dashboard-theme-scope .dashboard-drag-placeholder {
-  opacity: 0;
-}
-
-.dashboard-drag-overlay {
-  cursor: grabbing !important;
-  pointer-events: none;
-  box-shadow: 0 22px 38px -22px rgba(15, 23, 42, 0.45);
-  will-change: transform;
-}
-
-.dashboard-drag-overlay * {
-  pointer-events: none;
-}
-
 /* Modal in/out for dashboard dialogs */
 #dashboard-theme-scope [data-slot=dialog-overlay][data-state="open"] {
   animation: dashboard-fade-in var(--duration-base) var(--ease-smooth);

@@ -1,17 +1,14 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import {
   DndContext,
-  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
   useSensors,
-  type DragCancelEvent,
   type DragEndEvent,
-  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   restrictToVerticalAxis,
@@ -133,28 +130,12 @@ export default function PhonePreviewCard({
     () => visibleLinks.map((link) => link.id),
     [visibleLinks]
   );
-  const [activePreviewLinkId, setActivePreviewLinkId] = useState<string | null>(
-    null
-  );
-  const [activePreviewLeadFieldId, setActivePreviewLeadFieldId] = useState<
-    string | null
-  >(null);
   const previewLeadFieldIds = useMemo(
     () =>
       previewFields
         .filter((field) => field.type !== "section")
         .map((field) => field.id),
     [previewFields]
-  );
-  const activePreviewLink = useMemo(
-    () => visibleLinks.find((link) => link.id === activePreviewLinkId) ?? null,
-    [activePreviewLinkId, visibleLinks]
-  );
-  const activePreviewLeadField = useMemo(
-    () =>
-      previewFields.find((field) => field.id === activePreviewLeadFieldId) ??
-      null,
-    [activePreviewLeadFieldId, previewFields]
   );
   const previewSensors = useSensors(
     useSensor(PointerSensor, {
@@ -170,7 +151,6 @@ export default function PhonePreviewCard({
   const allowLeadFieldReorder = Boolean(onReorderLeadField);
   const handlePreviewLinkDragEnd = useCallback(
     (event: DragEndEvent) => {
-      setActivePreviewLinkId(null);
       if (!onReorderLink) return;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
@@ -178,33 +158,14 @@ export default function PhonePreviewCard({
     },
     [onReorderLink]
   );
-  const handlePreviewLinkDragStart = useCallback((event: DragStartEvent) => {
-    setActivePreviewLinkId(String(event.active.id));
-  }, []);
-  const handlePreviewLinkDragCancel = useCallback((_event: DragCancelEvent) => {
-    setActivePreviewLinkId(null);
-  }, []);
   const handlePreviewLeadFieldDragEnd = useCallback(
     (event: DragEndEvent) => {
-      setActivePreviewLeadFieldId(null);
       if (!onReorderLeadField) return;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
       onReorderLeadField(String(active.id), String(over.id));
     },
     [onReorderLeadField]
-  );
-  const handlePreviewLeadFieldDragStart = useCallback(
-    (event: DragStartEvent) => {
-      setActivePreviewLeadFieldId(String(event.active.id));
-    },
-    []
-  );
-  const handlePreviewLeadFieldDragCancel = useCallback(
-    (_event: DragCancelEvent) => {
-      setActivePreviewLeadFieldId(null);
-    },
-    []
   );
   const submitLabel = "Submit";
   const resolvedTheme = themeName;
@@ -341,9 +302,7 @@ export default function PhonePreviewCard({
             <DndContext
               sensors={previewSensors}
               collisionDetection={closestCenter}
-              onDragStart={handlePreviewLinkDragStart}
               onDragEnd={handlePreviewLinkDragEnd}
-              onDragCancel={handlePreviewLinkDragCancel}
               modifiers={[restrictToVerticalAxis]}
             >
               <SortableContext
@@ -369,18 +328,6 @@ export default function PhonePreviewCard({
                   )}
                 </div>
               </SortableContext>
-              <DragOverlay>
-                {activePreviewLink ? (
-                  <LinkListItem
-                    link={activePreviewLink}
-                    disabled
-                    showClicks={showClicks}
-                    showHandle={allowLinkReorder}
-                    useDarkThemeIcons={useDarkThemeIcons}
-                    isOverlay
-                  />
-                ) : null}
-              </DragOverlay>
             </DndContext>
           </div>
         </div>
@@ -394,9 +341,7 @@ export default function PhonePreviewCard({
               <DndContext
                 sensors={previewSensors}
                 collisionDetection={closestCenter}
-                onDragStart={handlePreviewLeadFieldDragStart}
                 onDragEnd={handlePreviewLeadFieldDragEnd}
-                onDragCancel={handlePreviewLeadFieldDragCancel}
                 modifiers={[restrictToVerticalAxis]}
               >
                 <SortableContext
@@ -436,16 +381,6 @@ export default function PhonePreviewCard({
                     )}
                   </div>
                 </SortableContext>
-                <DragOverlay>
-                  {activePreviewLeadField ? (
-                    <SortableLeadFieldItem
-                      field={activePreviewLeadField}
-                      disabled
-                      showHandle={allowLeadFieldReorder}
-                      isOverlay
-                    />
-                  ) : null}
-                </DragOverlay>
               </DndContext>
             </div>
             <button
@@ -517,14 +452,12 @@ function LinkListItem({
   showClicks,
   showHandle,
   useDarkThemeIcons,
-  isOverlay = false,
 }: {
   link: PhonePreviewLinkItem;
   disabled: boolean;
   showClicks: boolean;
   showHandle: boolean;
   useDarkThemeIcons: boolean;
-  isOverlay?: boolean;
 }) {
   const {
     attributes,
@@ -537,11 +470,11 @@ function LinkListItem({
   const clicks = link.clicks ?? 0;
   const resumeLink = isResumePreviewLink(link);
   const style = {
-    transform: isOverlay ? undefined : CSS.Translate.toString(transform),
-    transition: isDragging || isOverlay ? "none" : transition,
-    zIndex: isDragging || isOverlay ? 50 : undefined,
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? "none" : transition,
+    zIndex: isDragging ? 50 : undefined,
     cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
-    willChange: transform || isOverlay ? "transform" : undefined,
+    willChange: transform ? "transform" : undefined,
     touchAction: "none",
   };
 
@@ -554,8 +487,7 @@ function LinkListItem({
       className={cn(
         "dashboard-drag-item relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)]",
         !disabled && "active:cursor-grabbing",
-        isDragging && !isOverlay && "is-dragging dashboard-drag-placeholder",
-        isOverlay && "dashboard-drag-overlay"
+        isDragging && "is-dragging"
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
@@ -602,12 +534,10 @@ function SortableLeadFieldItem({
   field,
   disabled,
   showHandle,
-  isOverlay = false,
 }: {
   field: LeadFormField;
   disabled: boolean;
   showHandle: boolean;
-  isOverlay?: boolean;
 }) {
   const {
     attributes,
@@ -618,11 +548,11 @@ function SortableLeadFieldItem({
     isDragging,
   } = useSortable({ id: field.id, disabled });
   const style = {
-    transform: isOverlay ? undefined : CSS.Translate.toString(transform),
-    transition: isDragging || isOverlay ? "none" : transition,
-    zIndex: isDragging || isOverlay ? 50 : undefined,
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? "none" : transition,
+    zIndex: isDragging ? 50 : undefined,
     cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
-    willChange: transform || isOverlay ? "transform" : undefined,
+    willChange: transform ? "transform" : undefined,
     touchAction: "none",
   };
 
@@ -635,8 +565,7 @@ function SortableLeadFieldItem({
       className={cn(
         "preview-lead-item dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground",
         !disabled && "active:cursor-grabbing",
-        isDragging && !isOverlay && "is-dragging dashboard-drag-placeholder",
-        isOverlay && "dashboard-drag-overlay"
+        isDragging && "is-dragging"
       )}
     >
       <div className="flex items-center gap-2">
