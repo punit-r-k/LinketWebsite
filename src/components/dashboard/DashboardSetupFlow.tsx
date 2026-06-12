@@ -2358,6 +2358,7 @@ export default function DashboardSetupFlow({
     id: link.id,
     label: link.title,
     url: link.url,
+    linkType: link.link_type === "resume" ? "resume" : "link",
     visible: link.is_active,
     isOverride: link.is_override,
     clicks: link.click_count ?? 0,

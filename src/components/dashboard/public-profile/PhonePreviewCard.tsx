@@ -35,6 +35,7 @@ export type PhonePreviewLinkItem = {
   id: string;
   label: string;
   url: string;
+  linkType?: "link" | "resume";
   icon?: PhonePreviewLinkIconKey;
   visible?: boolean;
   isOverride?: boolean;
@@ -49,6 +50,28 @@ function buildPreviewInitials(value: string) {
     .slice(0, 2);
   if (!parts.length) return "LP";
   return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+}
+
+function isResumePreviewLink(link: PhonePreviewLinkItem) {
+  if (link.linkType === "resume") return true;
+
+  const label = link.label.trim().toLowerCase();
+  const url = link.url.trim().toLowerCase();
+  const isResumeLabel =
+    label === "resume" ||
+    label === "cv" ||
+    label.includes("resume") ||
+    label.includes("curriculum vitae");
+
+  return (
+    url.includes("/profile-resumes/") ||
+    url.includes("/storage/v1/object/public/profile-resumes/") ||
+    (isResumeLabel && url.includes(".pdf"))
+  );
+}
+
+function getPreviewLinkSubtitle(link: PhonePreviewLinkItem) {
+  return isResumePreviewLink(link) ? "Download PDF" : link.url;
 }
 
 type PhonePreviewCardProps = {
@@ -441,6 +464,7 @@ function LinkListItem({
     isDragging,
   } = useSortable({ id: link.id, disabled });
   const clicks = link.clicks ?? 0;
+  const resumeLink = isResumePreviewLink(link);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -469,19 +493,25 @@ function LinkListItem({
             <GripVertical className="h-4 w-4" />
           </span>
         ) : null}
-        <LinkFavicon
-          title={link.label}
-          url={link.url}
-          useDarkThemeIcons={useDarkThemeIcons}
-          className="h-10 w-10 rounded-md"
-          fallbackClassName="flex items-center justify-center rounded-md border border-border/60 bg-background/70 text-[11px] font-semibold text-muted-foreground"
-        />
+        {resumeLink ? (
+          <span className="public-profile-resume-icon-shell flex h-10 w-10 shrink-0 items-center justify-center">
+            <span className="public-profile-resume-icon h-10 w-10" aria-hidden />
+          </span>
+        ) : (
+          <LinkFavicon
+            title={link.label}
+            url={link.url}
+            useDarkThemeIcons={useDarkThemeIcons}
+            className="h-10 w-10 rounded-md"
+            fallbackClassName="flex items-center justify-center rounded-md border border-border/60 bg-background/70 text-[11px] font-semibold text-muted-foreground"
+          />
+        )}
         <div className="min-w-0">
           <div className="public-link-title truncate text-sm font-semibold text-foreground">
             {link.label}
           </div>
           <div className="public-link-url truncate text-[11px] text-muted-foreground">
-            {link.url}
+            {getPreviewLinkSubtitle(link)}
           </div>
           {showClicks ? (
             <div className="public-link-clicks text-[10px] text-muted-foreground">
