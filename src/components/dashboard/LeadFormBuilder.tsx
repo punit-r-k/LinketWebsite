@@ -20,7 +20,6 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import {
-  restrictToParentElement,
   restrictToVerticalAxis,
 } from "@dnd-kit/modifiers";
 import {
@@ -216,7 +215,11 @@ export default function LeadFormBuilder({
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [fieldPickerOpen, setFieldPickerOpen] = useState(false);
   const fieldSensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 6,
+      },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -918,7 +921,7 @@ export default function LeadFormBuilder({
                   sensors={fieldSensors}
                   collisionDetection={closestCenter}
                   onDragEnd={handleFieldDragEnd}
-                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                  modifiers={[restrictToVerticalAxis]}
                 >
                   <SortableContext
                     items={fieldIds}
@@ -1206,10 +1209,12 @@ function LeadFormQuestionItem({
   const hasBothMoveActions = canMoveUp && canMoveDown;
   const hasMoveAction = canMoveUp || canMoveDown;
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? "none" : transition,
     zIndex: isDragging ? 50 : undefined,
     cursor: isDragging ? "grabbing" : "grab",
+    willChange: transform ? "transform" : undefined,
+    touchAction: "none",
   };
 
   return (
