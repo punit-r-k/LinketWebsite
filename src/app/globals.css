@@ -73,6 +73,27 @@ input[type="reset"]:disabled,
   cursor: not-allowed;
 }
 
+[data-slot="switch"] {
+  position: relative;
+}
+
+[data-slot="switch"] > [data-slot="switch-thumb"] {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  transform: none;
+}
+
+[data-slot="switch"][data-state="unchecked"] > [data-slot="switch-thumb"] {
+  left: 0.125rem;
+  transform: none;
+}
+
+[data-slot="switch"][data-state="checked"] > [data-slot="switch-thumb"] {
+  left: 1.375rem;
+  transform: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
