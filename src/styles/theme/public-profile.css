@@ -14,11 +14,6 @@
   transition: none !important;
 }
 
-:root[data-lite="true"] .public-profile-link-icon,
-:root[data-lite="true"] .public-profile-link-icon-fallback {
-  display: none !important;
-}
-
 :root[data-lite="true"] .public-profile-header-image {
   display: none !important;
 }
