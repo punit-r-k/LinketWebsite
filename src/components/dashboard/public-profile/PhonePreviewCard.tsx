@@ -472,7 +472,7 @@ function LinkListItem({
   const style = {
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
-    zIndex: isDragging ? 50 : undefined,
+    zIndex: isDragging ? 1000 : undefined,
     cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
     willChange: transform ? "transform" : undefined,
     touchAction: "none",
@@ -550,7 +550,7 @@ function SortableLeadFieldItem({
   const style = {
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
-    zIndex: isDragging ? 50 : undefined,
+    zIndex: isDragging ? 1000 : undefined,
     cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
     willChange: transform ? "transform" : undefined,
     touchAction: "none",

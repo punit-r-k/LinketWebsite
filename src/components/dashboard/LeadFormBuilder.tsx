@@ -1211,7 +1211,7 @@ function LeadFormQuestionItem({
   const style = {
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
-    zIndex: isDragging ? 50 : undefined,
+    zIndex: isDragging ? 1000 : undefined,
     cursor: isDragging ? "grabbing" : "grab",
     willChange: transform ? "transform" : undefined,
     touchAction: "none",
