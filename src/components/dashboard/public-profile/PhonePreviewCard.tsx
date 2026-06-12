@@ -139,11 +139,7 @@ export default function PhonePreviewCard({
     [previewFields]
   );
   const previewSensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 6,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -471,12 +467,10 @@ function LinkListItem({
   const clicks = link.clicks ?? 0;
   const resumeLink = isResumePreviewLink(link);
   const style = {
-    transform: CSS.Translate.toString(transform),
-    transition: isDragging ? "none" : transition,
+    transform: CSS.Transform.toString(transform),
+    transition,
     zIndex: isDragging ? 50 : undefined,
     cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
-    willChange: transform ? "transform" : undefined,
-    touchAction: "none",
   };
 
   return (
@@ -549,12 +543,10 @@ function SortableLeadFieldItem({
     isDragging,
   } = useSortable({ id: field.id, disabled });
   const style = {
-    transform: CSS.Translate.toString(transform),
-    transition: isDragging ? "none" : transition,
+    transform: CSS.Transform.toString(transform),
+    transition,
     zIndex: isDragging ? 50 : undefined,
     cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
-    willChange: transform ? "transform" : undefined,
-    touchAction: "none",
   };
 
   return (

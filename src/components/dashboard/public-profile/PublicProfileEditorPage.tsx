@@ -1630,11 +1630,7 @@ function EditorPanel({
     [sortedFilteredLinks]
   );
   const editorLinkSensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 6,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -2052,11 +2048,9 @@ function EditorLinkItem({
     isDragging,
   } = useSortable({ id: link.id, disabled: !canReorderLinks });
   const style = {
-    transform: CSS.Translate.toString(transform),
-    transition: isDragging ? "none" : transition,
+    transform: CSS.Transform.toString(transform),
+    transition,
     zIndex: isDragging ? 40 : undefined,
-    willChange: transform ? "transform" : undefined,
-    touchAction: "none",
   };
   const handleCursor = isDragging ? "grabbing" : "grab";
 
@@ -2226,11 +2220,7 @@ function PhonePreviewCard({
     [previewFields]
   );
   const previewSensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 6,
-      },
-    }),
+    useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -2498,12 +2488,10 @@ function LinkListItem({
   const clicks = link.clicks ?? 0;
   const resumeLink = isResumeLinkItem(link);
   const style = {
-    transform: CSS.Translate.toString(transform),
-    transition: isDragging ? "none" : transition,
+    transform: CSS.Transform.toString(transform),
+    transition,
     zIndex: isDragging ? 50 : undefined,
     cursor: isDragging ? "grabbing" : "grab",
-    willChange: transform ? "transform" : undefined,
-    touchAction: "none",
   };
   return (
     <div
@@ -2670,12 +2658,10 @@ function SortableLeadFieldItem({
     isDragging,
   } = useSortable({ id: field.id, disabled });
   const style = {
-    transform: CSS.Translate.toString(transform),
-    transition: isDragging ? "none" : transition,
+    transform: CSS.Transform.toString(transform),
+    transition,
     zIndex: isDragging ? 50 : undefined,
     cursor: disabled ? "not-allowed" : isDragging ? "grabbing" : "grab",
-    willChange: transform ? "transform" : undefined,
-    touchAction: "none",
   };
   return (
     <div
