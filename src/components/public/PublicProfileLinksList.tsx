@@ -21,6 +21,7 @@ function isResumeLink(link: ProfileLinkRecord) {
     title.includes("curriculum vitae");
 
   return (
+    isResumeTitle ||
     url.includes("/profile-resumes/") ||
     url.includes("/storage/v1/object/public/profile-resumes/") ||
     (isResumeTitle && url.includes(".pdf"))

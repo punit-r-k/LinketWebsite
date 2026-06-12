@@ -2486,6 +2486,7 @@ function LinkListItem({
     isDragging,
   } = useSortable({ id: link.id });
   const clicks = link.clicks ?? 0;
+  const resumeLink = isResumeLinkItem(link);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -2510,7 +2511,7 @@ function LinkListItem({
         >
           <GripVertical className="h-4 w-4" />
         </span>
-        {link.linkType === "resume" ? (
+        {resumeLink ? (
           <span className="public-profile-resume-icon-shell flex h-10 w-10 items-center justify-center">
             <span className="public-profile-resume-icon h-10 w-10" aria-hidden />
           </span>
@@ -2528,7 +2529,7 @@ function LinkListItem({
             {link.label}
           </div>
           <div className="public-link-url truncate text-[11px] text-muted-foreground">
-            {link.linkType === "resume" ? "Download PDF" : link.url}
+            {resumeLink ? "Download PDF" : link.url}
           </div>
           <div className="public-link-clicks text-[10px] text-muted-foreground">
             {clicks.toLocaleString()} clicks
@@ -3015,6 +3016,21 @@ function guessIcon(title: string, url: string): LinkIconKey {
   if (raw.includes("twitter") || raw.includes("x.com")) return "twitter";
   if (raw.includes("website") || raw.includes("http")) return "globe";
   return "link";
+}
+
+function isResumeLinkItem(link: Pick<LinkItem, "label" | "url" | "linkType">) {
+  if (link.linkType === "resume") return true;
+
+  const label = link.label.trim().toLowerCase();
+  const url = link.url.trim().toLowerCase();
+  return (
+    label === "resume" ||
+    label === "cv" ||
+    label.includes("resume") ||
+    label.includes("curriculum vitae") ||
+    url.includes("/profile-resumes/") ||
+    url.includes("/storage/v1/object/public/profile-resumes/")
+  );
 }
 
 function mapProfile(record: ProfileWithLinks): ProfileDraft {

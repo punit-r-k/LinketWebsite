@@ -64,6 +64,7 @@ function isResumePreviewLink(link: PhonePreviewLinkItem) {
     label.includes("curriculum vitae");
 
   return (
+    isResumeLabel ||
     url.includes("/profile-resumes/") ||
     url.includes("/storage/v1/object/public/profile-resumes/") ||
     (isResumeLabel && url.includes(".pdf"))
