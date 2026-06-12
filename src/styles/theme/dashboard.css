@@ -1070,7 +1070,6 @@ html.dashboard-link-dragging #dashboard-theme-scope * {
 .dashboard-drag-overlay {
   cursor: grabbing !important;
   pointer-events: none;
-  transform: scale(1.015);
   box-shadow: 0 22px 38px -22px rgba(15, 23, 42, 0.45);
   will-change: transform;
 }

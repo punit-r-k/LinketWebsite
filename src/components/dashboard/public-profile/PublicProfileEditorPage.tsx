@@ -23,7 +23,6 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import {
-  restrictToParentElement,
   restrictToVerticalAxis,
 } from "@dnd-kit/modifiers";
 import {
@@ -1927,7 +1926,7 @@ function EditorPanel({
             onDragStart={handleEditorLinkDragStart}
             onDragEnd={handleEditorLinkDragEnd}
             onDragCancel={handleEditorLinkDragCancel}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            modifiers={[restrictToVerticalAxis]}
           >
             <SortableContext
               items={editorLinkIds}
@@ -2414,7 +2413,7 @@ function PhonePreviewCard({
               onDragStart={handlePreviewLinkDragStart}
               onDragEnd={handlePreviewLinkDragEnd}
               onDragCancel={handlePreviewLinkDragCancel}
-              modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+              modifiers={[restrictToVerticalAxis]}
             >
               <SortableContext
                 items={previewLinkIds}
@@ -2455,7 +2454,7 @@ function PhonePreviewCard({
             onDragStart={handlePreviewLeadFieldDragStart}
             onDragEnd={handlePreviewLeadFieldDragEnd}
             onDragCancel={handlePreviewLeadFieldDragCancel}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            modifiers={[restrictToVerticalAxis]}
           >
             <SortableContext
               items={previewLeadFieldIds}

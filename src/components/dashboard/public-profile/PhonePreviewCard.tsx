@@ -14,7 +14,6 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import {
-  restrictToParentElement,
   restrictToVerticalAxis,
 } from "@dnd-kit/modifiers";
 import {
@@ -345,7 +344,7 @@ export default function PhonePreviewCard({
               onDragStart={handlePreviewLinkDragStart}
               onDragEnd={handlePreviewLinkDragEnd}
               onDragCancel={handlePreviewLinkDragCancel}
-              modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+              modifiers={[restrictToVerticalAxis]}
             >
               <SortableContext
                 items={previewLinkIds}
@@ -398,7 +397,7 @@ export default function PhonePreviewCard({
                 onDragStart={handlePreviewLeadFieldDragStart}
                 onDragEnd={handlePreviewLeadFieldDragEnd}
                 onDragCancel={handlePreviewLeadFieldDragCancel}
-                modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+                modifiers={[restrictToVerticalAxis]}
               >
                 <SortableContext
                   items={previewLeadFieldIds}
