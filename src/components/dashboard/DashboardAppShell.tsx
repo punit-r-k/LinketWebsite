@@ -156,7 +156,7 @@ export default function DashboardAppShell({
       <div className="flex flex-1 flex-col overflow-hidden">
         <div
           className={cn(
-            "dashboard-scroll-area flex-1 overflow-auto",
+            "dashboard-scroll-area flex-1 overflow-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] [touch-action:pan-y]",
             shouldHideChrome
               ? "px-0 pb-0 pt-0"
               : "px-5 pb-6 pt-4 sm:px-6 sm:pb-8 sm:pt-5 lg:px-8 lg:pb-10"

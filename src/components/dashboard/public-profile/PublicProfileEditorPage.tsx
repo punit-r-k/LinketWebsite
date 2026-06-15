@@ -81,7 +81,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { SwitchRow } from "@/components/ui/switch-row";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
@@ -160,6 +160,42 @@ const LINK_COLORS = [
   "#6AB7FF",
   "#F28AA0",
 ];
+
+const SUPPORT_EMAIL = "support@linketconnect.com";
+
+function getErrorText(error: unknown, fallback: string) {
+  return error instanceof Error && error.message.trim()
+    ? error.message.trim()
+    : fallback;
+}
+
+function withSupport(message: string) {
+  return `${message} If this keeps happening, contact ${SUPPORT_EMAIL}.`;
+}
+
+function profileLoadErrorMessage(message: string) {
+  return withSupport(
+    `Profile editor could not load your public profile. Refresh the page and try again. Details: ${message}`
+  );
+}
+
+function profileSaveErrorMessage(message: string) {
+  return withSupport(
+    `Profile changes did not save. Your edits are still on this screen and we will retry automatically. Details: ${message}`
+  );
+}
+
+function leadFormSaveErrorMessage(message: string) {
+  return withSupport(
+    `Lead form order did not save. Keep the page open; we will retry the next save. Details: ${message}`
+  );
+}
+
+function resumeUploadErrorMessage(message: string) {
+  return withSupport(
+    `Resume upload failed. Check that the file is a PDF under 5 MB, then try uploading it again. Details: ${message}`
+  );
+}
 
 const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
   { id: "profile", label: "Profile" },
@@ -442,8 +478,9 @@ export default function PublicProfileEditorPage() {
       setSavedProfile(mapped);
       setLastSavedAt(mapped.updatedAt);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to load profile";
+      const message = profileLoadErrorMessage(
+        getErrorText(err, "Unable to load profile")
+      );
       toast({
         title: "Profile unavailable",
         description: message,
@@ -549,7 +586,11 @@ export default function PublicProfileEditorPage() {
         const hint = suggestions.length ? `Try: ${suggestions.join(", ")}` : "";
         const message = info?.error || "Unable to save profile";
         if (res.status === 409 && info?.error) {
-          setHandleError(hint ? `${info.error} ${hint}` : info.error);
+          setHandleError(
+            hint
+              ? `This public handle is already taken. Choose one of the suggested handles below or type a different handle. ${hint}`
+              : `This public handle is already taken. Type a different handle to save your public profile.`
+          );
         }
         throw new Error(hint ? `${message} ${hint}` : message);
       }
@@ -573,11 +614,11 @@ export default function PublicProfileEditorPage() {
         setDraft(saved);
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Unable to save profile";
+      const rawMessage = getErrorText(err, "Unable to save profile");
+      const message = profileSaveErrorMessage(rawMessage);
       setSaveError(message);
       if (
-        !message.toLowerCase().includes("handle already taken") &&
+        !rawMessage.toLowerCase().includes("handle already taken") &&
         saveError !== message
       ) {
         toast({
@@ -759,8 +800,9 @@ export default function PublicProfileEditorPage() {
               throw new Error(info?.error || "Unable to save form");
             }
           } catch (error) {
-            const message =
-              error instanceof Error ? error.message : "Unable to save form";
+            const message = leadFormSaveErrorMessage(
+              getErrorText(error, "Unable to save form")
+            );
             toast({
               title: "Lead form save failed",
               description: message,
@@ -916,7 +958,7 @@ export default function PublicProfileEditorPage() {
   const uploadResumePdf = useCallback(
     async (file: File) => {
       if (!userId) {
-        throw new Error("Sign in to upload a resume.");
+        throw new Error("You are not signed in.");
       }
       const formData = new FormData();
       formData.append("userId", userId);
@@ -1294,9 +1336,10 @@ export default function PublicProfileEditorPage() {
           </span>
         </div>
         {saveDetail ? (
-          <p className="text-sm leading-5 text-destructive">
-            {saveDetail}
-          </p>
+          <div className="rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive">
+            <p className="font-semibold">Where to look: public profile save status</p>
+            <p className="mt-1">{saveDetail}</p>
+          </div>
         ) : (
           <p className="text-sm leading-5 text-muted-foreground">
             Preview and public page use this same saved profile data.
@@ -1782,16 +1825,15 @@ function EditorPanel({
                       Rectangle
                     </Button>
                   </div>
-                  <label className="mt-1 flex w-full items-center justify-start gap-2.5 rounded-full text-sm font-medium leading-none text-foreground">
-                    <Switch
-                      checked={draft?.logoBackgroundWhite ?? false}
-                      onCheckedChange={(value) =>
-                        onProfileChange({ logoBackgroundWhite: Boolean(value) })
-                      }
-                      disabled={loading || !userId}
-                    />
-                    White logo background
-                  </label>
+                  <SwitchRow
+                    label="White logo background"
+                    checked={draft?.logoBackgroundWhite ?? false}
+                    onCheckedChange={(value) =>
+                      onProfileChange({ logoBackgroundWhite: Boolean(value) })
+                    }
+                    disabled={loading || !userId}
+                    containerClassName="mt-1 w-full rounded-full"
+                  />
                 </div>
               }
             />
@@ -1856,7 +1898,10 @@ function EditorPanel({
               />
             </div>
             {handleError ? (
-              <p className="text-xs text-destructive">{handleError}</p>
+              <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs leading-5 text-destructive">
+                <span className="font-semibold">Public handle error: </span>
+                {handleError}
+              </p>
             ) : null}
           </div>
         </CardContent>
@@ -2069,7 +2114,7 @@ function EditorLinkItem({
     transition: isDragging ? "none" : transition,
     zIndex: isDragging ? 1000 : undefined,
     willChange: transform ? "transform" : undefined,
-    touchAction: "none",
+    touchAction: "pan-y",
   };
   const handleCursor = isDragging ? "grabbing" : "grab";
 
@@ -2137,7 +2182,7 @@ function EditorLinkItem({
                   ? "cursor-grabbing"
                   : "cursor-grab hover:cursor-grab active:cursor-grabbing"
               )}
-              style={{ cursor: handleCursor }}
+              style={{ cursor: handleCursor, touchAction: "none" }}
               aria-label={`Reorder ${link.label || "link"}`}
               title="Drag to reorder"
             >
@@ -2546,28 +2591,31 @@ function LinkListItem({
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
     zIndex: isDragging ? 1000 : undefined,
-    cursor: isDragging ? "grabbing" : "grab",
+    cursor: "default",
     willChange: transform ? "transform" : undefined,
-    touchAction: "none",
+    touchAction: "pan-y",
   };
+  const handleCursor = isDragging ? "grabbing" : "grab";
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={cn(
-        "dashboard-drag-item relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)] active:cursor-grabbing",
+        "dashboard-drag-item relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)]",
         isDragging && "is-dragging"
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <span
-          aria-hidden
-          className="rounded-full p-1 text-muted-foreground transition hover:bg-muted/60"
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full p-1 text-muted-foreground transition hover:bg-muted/60 active:cursor-grabbing"
+          style={{ cursor: handleCursor, touchAction: "none" }}
+          aria-label={`Reorder ${link.label || "link"}`}
         >
-          <GripVertical className="h-4 w-4" />
-        </span>
+          <GripVertical className="pointer-events-none h-4 w-4" />
+        </button>
         {resumeLink ? (
           <span className="public-profile-resume-icon-shell flex h-10 w-10 items-center justify-center">
             <span className="public-profile-resume-icon h-10 w-10" aria-hidden />
@@ -2718,33 +2766,36 @@ function SortableLeadFieldItem({
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
     zIndex: isDragging ? 1000 : undefined,
-    cursor: disabled ? "not-allowed" : isDragging ? "grabbing" : "grab",
+    cursor: disabled ? "not-allowed" : "default",
     willChange: transform ? "transform" : undefined,
-    touchAction: "none",
+    touchAction: "pan-y",
   };
+  const handleCursor = disabled ? "not-allowed" : isDragging ? "grabbing" : "grab";
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={cn(
         "preview-lead-item dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground",
         disabled && "cursor-not-allowed",
-        !disabled && "active:cursor-grabbing",
         isDragging && "is-dragging"
       )}
     >
       <div className="flex items-center gap-2">
-        <span
-          aria-hidden
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          disabled={disabled}
           className={cn(
-            "rounded-full p-0.5 text-muted-foreground transition hover:bg-muted/60",
+            "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full p-0.5 text-muted-foreground transition hover:bg-muted/60 active:cursor-grabbing",
             disabled && "opacity-60"
           )}
+          style={{ cursor: handleCursor, touchAction: "none" }}
+          aria-label={`Reorder ${field.label || "field"}`}
         >
-          <GripVertical className="h-3 w-3" />
-        </span>
+          <GripVertical className="pointer-events-none h-3 w-3" />
+        </button>
         <div className="text-[10px] uppercase tracking-[0.2em]">
           {field.label}
           {field.required ? " *" : ""}
@@ -2779,7 +2830,13 @@ function LinkModal({
   const [uploadingResume, setUploadingResume] = useState(false);
   const [resumeUploadError, setResumeUploadError] = useState<string | null>(null);
   const isResumeLink = link?.linkType === "resume";
-  const canSave = Boolean(link) && (!isResumeLink || Boolean(link.url.trim())) && !uploadingResume;
+  const linkUrlValue = link && !isResumeLink ? getEditableLinkValue(link.url).trim() : "";
+  const needsLinkUrl = Boolean(link) && !isResumeLink && !linkUrlValue;
+  const canSave =
+    Boolean(link) &&
+    (!isResumeLink || Boolean(link.url.trim())) &&
+    !needsLinkUrl &&
+    !uploadingResume;
   const resumeFileName = link?.url ? formatResumeFileName(link.url) : "";
 
   const handleResumeUpload = useCallback(
@@ -2787,11 +2844,15 @@ function LinkModal({
       if (!file || !link) return;
       setResumeUploadError(null);
       if (file.size > 5 * 1024 * 1024) {
-        setResumeUploadError("Resume PDF must be 5 MB or smaller.");
+        setResumeUploadError(
+          `Resume upload failed. This file is too large. Choose a PDF that is 5 MB or smaller, then upload it again.`
+        );
         return;
       }
       if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-        setResumeUploadError("Upload a PDF resume.");
+        setResumeUploadError(
+          `Resume upload failed. This file is not a PDF. Export or save your resume as a PDF, then upload it again.`
+        );
         return;
       }
       setUploadingResume(true);
@@ -2811,7 +2872,7 @@ function LinkModal({
         });
       } catch (error) {
         setResumeUploadError(
-          error instanceof Error ? error.message : "Unable to upload resume."
+          resumeUploadErrorMessage(getErrorText(error, "Unable to upload resume."))
         );
       } finally {
         setUploadingResume(false);
@@ -2890,7 +2951,10 @@ function LinkModal({
                   </p>
                 ) : null}
                 {resumeUploadError ? (
-                  <p className="break-words text-xs text-destructive">{resumeUploadError}</p>
+                  <p className="break-words rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs leading-5 text-destructive">
+                    <span className="font-semibold">Resume PDF error: </span>
+                    {resumeUploadError}
+                  </p>
                 ) : null}
               </div>
             ) : (
@@ -2911,30 +2975,29 @@ function LinkModal({
                     onSave();
                   }}
                 />
+                {needsLinkUrl ? (
+                  <p className="break-words text-xs text-muted-foreground">
+                    Enter the URL you want visitors to open before saving this link.
+                  </p>
+                ) : null}
               </div>
             )}
             <div className="min-w-0 space-y-3 rounded-xl border border-border/60 px-3 py-3">
-              <label className="flex min-w-0 items-center justify-between gap-3">
-                <span className="min-w-0 space-y-0.5">
-                  <span className="block text-sm font-medium text-foreground">
-                    Visible on public profile
-                  </span>
-                  <span className="block break-words text-xs text-muted-foreground">
-                    Hides this link from your public page when turned off.
-                  </span>
-                </span>
-                <Switch
-                  id="link-visible"
-                  checked={link.visible}
-                  onCheckedChange={(value) =>
-                    onChange({
-                      ...link,
-                      visible: Boolean(value),
-                      isOverride: value ? link.isOverride : false,
-                    })
-                  }
-                />
-              </label>
+              <SwitchRow
+                id="link-visible"
+                label="Visible on public profile"
+                description="Hides this link from your public page when turned off."
+                labelPosition="left"
+                checked={link.visible}
+                onCheckedChange={(value) =>
+                  onChange({
+                    ...link,
+                    visible: Boolean(value),
+                    isOverride: value ? link.isOverride : false,
+                  })
+                }
+                textClassName="text-sm font-medium text-foreground"
+              />
               <div className="flex min-w-0 items-center justify-between gap-3">
                 <span className="min-w-0 space-y-0.5">
                   <span className="block text-sm font-medium text-foreground">

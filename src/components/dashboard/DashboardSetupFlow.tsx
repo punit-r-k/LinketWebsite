@@ -2581,45 +2581,41 @@ export default function DashboardSetupFlow({
                 {SETUP_STEPS.map((step, index) => {
                   const isCurrent = index === currentStepIndex;
                   const isDone = stepCompletion[step.id];
-                  const statusLabel = isCurrent
-                    ? "Current"
+                  const shapeLabel = isCurrent
+                    ? "active step"
                     : isDone
-                      ? "Done"
-                      : index < currentStepIndex
-                        ? "Review"
-                        : index === currentStepIndex + 1
-                          ? "Next"
-                          : "Later";
+                      ? "complete step"
+                      : "incomplete step";
 
                   return (
                     <div
                       key={step.id}
+                      aria-label={`${mobileStepLabels[step.id]}: ${shapeLabel}`}
                       className={cn(
                         "flex min-h-[104px] min-w-0 flex-col items-center justify-center rounded-2xl border px-1.5 py-2 text-center",
                         isCurrent
-                          ? "border-foreground/25 bg-foreground/10 text-foreground"
+                          ? "border-[color:var(--ring)] bg-[color:color-mix(in_srgb,var(--ring)_16%,transparent)] text-foreground"
                           : isDone
                             ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
                             : "border-border/60 bg-background/60 text-muted-foreground"
                       )}
                     >
-                      <p
+                      <span
+                        aria-hidden
                         className={cn(
-                          "flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold leading-none",
+                          "flex h-7 w-7 items-center justify-center",
                           isCurrent
-                            ? "border-foreground/25 bg-background/70 text-foreground"
+                            ? "rounded-full border-2 border-[color:var(--ring)] bg-[color:color-mix(in_srgb,var(--ring)_22%,transparent)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--ring)_10%,transparent)]"
                             : isDone
-                              ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
-                              : "border-border/60 bg-card/80 text-muted-foreground"
+                              ? "h-0 w-0 border-x-[0.9rem] border-b-[1.55rem] border-x-transparent border-b-emerald-500"
+                              : "rounded-[0.32rem] border-2 border-border/70 bg-card/80"
                         )}
-                      >
-                        {index + 1}
-                      </p>
+                      />
                       <p className="mt-2 max-w-full truncate text-[12px] font-semibold leading-4">
                         {mobileStepLabels[step.id]}
                       </p>
-                      <p className="mt-1 max-w-full truncate text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] opacity-80">
-                        {statusLabel}
+                      <p className="mt-1 text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] opacity-75">
+                        Step {index + 1}
                       </p>
                     </div>
                   );

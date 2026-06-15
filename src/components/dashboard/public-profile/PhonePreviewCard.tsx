@@ -506,31 +506,33 @@ function LinkListItem({
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
     zIndex: isDragging ? 1000 : undefined,
-    cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
+    cursor: "default",
     willChange: transform ? "transform" : undefined,
-    touchAction: "none",
+    touchAction: "pan-y",
   };
+  const handleCursor = isDragging ? "grabbing" : "grab";
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={cn(
         "dashboard-drag-item relative flex items-center justify-between gap-3 rounded-2xl border border-border/60 bg-card/80 px-4 py-3 text-xs font-medium shadow-[0_12px_24px_-18px_rgba(15,23,42,0.2)]",
-        !disabled && "active:cursor-grabbing",
         isDragging && "is-dragging"
       )}
     >
       <div className="flex min-w-0 items-center gap-3">
         {showHandle ? (
-          <span
-            aria-hidden
-            className="rounded-full p-1 text-muted-foreground transition hover:bg-muted/60"
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full p-1 text-muted-foreground transition hover:bg-muted/60 active:cursor-grabbing"
+            style={{ cursor: handleCursor, touchAction: "none" }}
+            aria-label={`Reorder ${link.label || "link"}`}
           >
-            <GripVertical className="h-4 w-4" />
-          </span>
+            <GripVertical className="pointer-events-none h-4 w-4" />
+          </button>
         ) : null}
         {resumeLink ? (
           <span className="public-profile-resume-icon-shell flex h-10 w-10 shrink-0 items-center justify-center">
@@ -584,31 +586,33 @@ function SortableLeadFieldItem({
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
     zIndex: isDragging ? 1000 : undefined,
-    cursor: disabled ? "default" : isDragging ? "grabbing" : "grab",
+    cursor: "default",
     willChange: transform ? "transform" : undefined,
-    touchAction: "none",
+    touchAction: "pan-y",
   };
+  const handleCursor = isDragging ? "grabbing" : "grab";
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={cn(
         "preview-lead-item dashboard-drag-item rounded-2xl border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground",
-        !disabled && "active:cursor-grabbing",
         isDragging && "is-dragging"
       )}
     >
       <div className="flex items-center gap-2">
         {showHandle ? (
-          <span
-            aria-hidden
-            className="rounded-full p-0.5 text-muted-foreground transition hover:bg-muted/60"
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full p-0.5 text-muted-foreground transition hover:bg-muted/60 active:cursor-grabbing"
+            style={{ cursor: handleCursor, touchAction: "none" }}
+            aria-label={`Reorder ${field.label || "field"}`}
           >
-            <GripVertical className="h-3 w-3" />
-          </span>
+            <GripVertical className="pointer-events-none h-3 w-3" />
+          </button>
         ) : null}
         <div className="text-[10px] uppercase tracking-[0.2em]">
           {field.label}

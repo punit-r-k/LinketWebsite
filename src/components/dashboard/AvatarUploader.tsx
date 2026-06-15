@@ -760,7 +760,12 @@ export default function AvatarUploader({
             </div>
           </div>
         )}
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive">
+            <span className="font-semibold">Avatar upload error: </span>
+            {error} Try a different image or retry the upload. If it keeps happening, contact support@linketconnect.com.
+          </p>
+        )}
       </section>
     );
   }
@@ -899,7 +904,12 @@ export default function AvatarUploader({
             )}
           </div>
           <p className="text-xs text-muted-foreground">{helperText}</p>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive">
+              <span className="font-semibold">Avatar upload error: </span>
+              {error} Try a different image or retry the upload. If it keeps happening, contact support@linketconnect.com.
+            </p>
+          )}
         </section>
 
         <aside className={cn("w-full max-w-sm", isCompact && "max-w-[280px]")}>

@@ -31,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { SwitchRow } from "@/components/ui/switch-row";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -439,22 +439,18 @@ export default function NotificationsManager() {
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="grid gap-2">
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <Switch
-                    checked={isActive}
-                    onCheckedChange={setIsActive}
-                    disabled={composerDisabled}
-                  />
-                  Publish immediately
-                </label>
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <Switch
-                    checked={sendAsNotification}
-                    onCheckedChange={setSendAsNotification}
-                    disabled={composerDisabled}
-                  />
-                  Show in dashboard notifications
-                </label>
+                <SwitchRow
+                  label="Publish immediately"
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                  disabled={composerDisabled}
+                />
+                <SwitchRow
+                  label="Show in dashboard notifications"
+                  checked={sendAsNotification}
+                  onCheckedChange={setSendAsNotification}
+                  disabled={composerDisabled}
+                />
               </div>
               <Button type="submit" disabled={composerDisabled}>
                 {saving ? "Publishing..." : "Publish notification"}

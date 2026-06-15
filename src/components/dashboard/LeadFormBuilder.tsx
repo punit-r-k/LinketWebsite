@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { SwitchRow } from "@/components/ui/switch-row";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
 import { confirmRemove } from "@/lib/confirm-remove";
@@ -77,6 +77,21 @@ import type {
 } from "@/types/lead-form";
 
 const SAVE_DEBOUNCE_MS = 900;
+const SUPPORT_EMAIL = "support@linketconnect.com";
+
+function getErrorText(error: unknown, fallback: string) {
+  return error instanceof Error && error.message.trim()
+    ? error.message.trim()
+    : fallback;
+}
+
+function leadFormLoadErrorMessage(message: string) {
+  return `Lead form editor could not load. Refresh the page and try again. Details: ${message} If this keeps happening, contact ${SUPPORT_EMAIL}.`;
+}
+
+function leadFormSaveErrorMessage(message: string) {
+  return `Lead form changes did not save. Your edits are still on this screen and we will retry automatically. Details: ${message} If this keeps happening, contact ${SUPPORT_EMAIL}.`;
+}
 
 const FIELD_PRESETS: Array<{
   id: string;
@@ -306,8 +321,9 @@ export default function LeadFormBuilder({
         lastSnapshot.current = JSON.stringify(resolvedForm);
         setLastSavedAt(resolvedForm.meta.updatedAt || null);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Unable to load form";
+        const message = leadFormLoadErrorMessage(
+          getErrorText(error, "Unable to load form")
+        );
         setSaveError(message);
         setForm(
           canCustomizeLeadForm
@@ -354,8 +370,9 @@ export default function LeadFormBuilder({
       lastSnapshot.current = JSON.stringify(resolvedForm);
       setLastSavedAt(resolvedForm.meta.updatedAt);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unable to save form";
+      const message = leadFormSaveErrorMessage(
+        getErrorText(error, "Unable to save form")
+      );
       setSaveError(message);
       if (saveError !== message) {
         toast({ title: "Save failed", description: message, variant: "destructive" });
@@ -772,48 +789,45 @@ export default function LeadFormBuilder({
                   </AccordionTrigger>
                   <AccordionContent className="pb-4">
                     <div className="space-y-4">
-                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                        <span>Allow edit after submit</span>
-                        <Switch
-                          checked={form.settings.allowEditAfterSubmit}
-                          onCheckedChange={(value) =>
-                            updateForm({
-                              settings: {
-                                ...form.settings,
-                                allowEditAfterSubmit: Boolean(value),
-                              },
-                            })
-                          }
-                        />
-                      </label>
-                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                        <span>Limit one response</span>
-                        <Switch
-                          checked={form.settings.limitOneResponse === "on"}
-                          onCheckedChange={(value) =>
-                            updateForm({
-                              settings: {
-                                ...form.settings,
-                                limitOneResponse: value ? "on" : "off",
-                              },
-                            })
-                          }
-                        />
-                      </label>
-                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                        <span>Verify email on email fields</span>
-                        <Switch
-                          checked={form.settings.collectEmail === "verified"}
-                          onCheckedChange={(value) =>
-                            updateForm({
-                              settings: {
-                                ...form.settings,
-                                collectEmail: value ? "verified" : "user_input",
-                              },
-                            })
-                          }
-                        />
-                      </label>
+                      <SwitchRow
+                        label="Allow edit after submit"
+                        labelPosition="left"
+                        checked={form.settings.allowEditAfterSubmit}
+                        onCheckedChange={(value) =>
+                          updateForm({
+                            settings: {
+                              ...form.settings,
+                              allowEditAfterSubmit: Boolean(value),
+                            },
+                          })
+                        }
+                      />
+                      <SwitchRow
+                        label="Limit one response"
+                        labelPosition="left"
+                        checked={form.settings.limitOneResponse === "on"}
+                        onCheckedChange={(value) =>
+                          updateForm({
+                            settings: {
+                              ...form.settings,
+                              limitOneResponse: value ? "on" : "off",
+                            },
+                          })
+                        }
+                      />
+                      <SwitchRow
+                        label="Verify email on email fields"
+                        labelPosition="left"
+                        checked={form.settings.collectEmail === "verified"}
+                        onCheckedChange={(value) =>
+                          updateForm({
+                            settings: {
+                              ...form.settings,
+                              collectEmail: value ? "verified" : "user_input",
+                            },
+                          })
+                        }
+                      />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -834,34 +848,32 @@ export default function LeadFormBuilder({
                   </AccordionTrigger>
                   <AccordionContent className="pb-4">
                     <div className="space-y-4">
-                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                        <span>Show progress bar</span>
-                        <Switch
-                          checked={form.settings.showProgressBar}
-                          onCheckedChange={(value) =>
-                            updateForm({
-                              settings: {
-                                ...form.settings,
-                                showProgressBar: Boolean(value),
-                              },
-                            })
-                          }
-                        />
-                      </label>
-                      <label className="flex items-center justify-between gap-3 text-sm text-foreground">
-                        <span>Shuffle question order</span>
-                        <Switch
-                          checked={form.settings.shuffleQuestionOrder}
-                          onCheckedChange={(value) =>
-                            updateForm({
-                              settings: {
-                                ...form.settings,
-                                shuffleQuestionOrder: Boolean(value),
-                              },
-                            })
-                          }
-                        />
-                      </label>
+                      <SwitchRow
+                        label="Show progress bar"
+                        labelPosition="left"
+                        checked={form.settings.showProgressBar}
+                        onCheckedChange={(value) =>
+                          updateForm({
+                            settings: {
+                              ...form.settings,
+                              showProgressBar: Boolean(value),
+                            },
+                          })
+                        }
+                      />
+                      <SwitchRow
+                        label="Shuffle question order"
+                        labelPosition="left"
+                        checked={form.settings.shuffleQuestionOrder}
+                        onCheckedChange={(value) =>
+                          updateForm({
+                            settings: {
+                              ...form.settings,
+                              shuffleQuestionOrder: Boolean(value),
+                            },
+                          })
+                        }
+                      />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -1038,17 +1050,17 @@ export default function LeadFormBuilder({
                         }
                       />
                     </div>
-                    <label className="flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/45 px-3 py-2 text-sm text-foreground">
-                      <span>Required</span>
-                      <Switch
-                        checked={activeField.required}
-                        onCheckedChange={(value) =>
-                          updateField(activeField.id, {
-                            required: Boolean(value),
-                          })
-                        }
-                      />
-                    </label>
+                    <SwitchRow
+                      label="Required"
+                      labelPosition="left"
+                      checked={activeField.required}
+                      onCheckedChange={(value) =>
+                        updateField(activeField.id, {
+                          required: Boolean(value),
+                        })
+                      }
+                      containerClassName="rounded-xl border border-border/40 bg-background/45 px-3 py-2"
+                    />
                     <div className="space-y-2">
                       <Label>Field type</Label>
                       <select
@@ -1095,7 +1107,10 @@ export default function LeadFormBuilder({
               )}
 
               {saveError ? (
-                <div className="text-xs text-destructive">{saveError}</div>
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs leading-5 text-destructive">
+                  <p className="font-semibold">Where to look: lead form editor</p>
+                  <p className="mt-1">{saveError}</p>
+                </div>
               ) : null}
             </CardContent>
             </Card>
@@ -1228,25 +1243,34 @@ function LeadFormQuestionItem({
     transform: CSS.Translate.toString(transform),
     transition: isDragging ? "none" : transition,
     zIndex: isDragging ? 1000 : undefined,
-    cursor: isDragging ? "grabbing" : "grab",
+    cursor: "default",
     willChange: transform ? "transform" : undefined,
-    touchAction: "none",
+    touchAction: "pan-y",
   };
+  const handleCursor = isDragging ? "grabbing" : "grab";
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
       className={cn(
-        "dashboard-drag-item lead-form-drag-item grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/60 bg-background/80 p-3 active:cursor-grabbing",
+        "dashboard-drag-item lead-form-drag-item grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-border/60 bg-background/80 p-3",
         selected && "ring-2 ring-primary/20",
         isDragging && "is-dragging"
       )}
       onClick={() => onSelect(field.id)}
     >
-      <GripVertical className="h-4 w-4 text-muted-foreground" />
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted/60 active:cursor-grabbing"
+        style={{ cursor: handleCursor, touchAction: "none" }}
+        onClick={(event) => event.stopPropagation()}
+        aria-label={`Reorder ${field.label || "field"}`}
+      >
+        <GripVertical className="pointer-events-none h-4 w-4" />
+      </button>
       <div className="min-w-0 space-y-1">
         <div className="break-words text-sm font-semibold leading-snug">
           {field.label}
@@ -1535,24 +1559,22 @@ function FieldTypeEditor({
     case "date":
       return (
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Switch
-              checked={field.includeYear}
-              onCheckedChange={(value) =>
-                onChange({ includeYear: Boolean(value) })
-              }
-            />
-            Include year
-          </label>
-          <label className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Switch
-              checked={field.includeTime}
-              onCheckedChange={(value) =>
-                onChange({ includeTime: Boolean(value) })
-              }
-            />
-            Include time
-          </label>
+          <SwitchRow
+            label="Include year"
+            checked={field.includeYear}
+            onCheckedChange={(value) =>
+              onChange({ includeYear: Boolean(value) })
+            }
+            containerClassName="text-muted-foreground"
+          />
+          <SwitchRow
+            label="Include time"
+            checked={field.includeTime}
+            onCheckedChange={(value) =>
+              onChange({ includeTime: Boolean(value) })
+            }
+            containerClassName="text-muted-foreground"
+          />
         </div>
       );
     case "time":
@@ -1718,15 +1740,14 @@ function OptionsEditor({
           </Button>
         </div>
       </div>
-      <label className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Switch
-          checked={field.allowOther}
-          onCheckedChange={(value) =>
-            onChange({ allowOther: Boolean(value) })
-          }
-        />
-        Allow other
-      </label>
+      <SwitchRow
+        label="Allow other"
+        checked={field.allowOther}
+        onCheckedChange={(value) =>
+          onChange({ allowOther: Boolean(value) })
+        }
+        containerClassName="text-muted-foreground"
+      />
       {field.allowOther && (
         <Input
           value={field.otherLabel}
@@ -1734,20 +1755,19 @@ function OptionsEditor({
           placeholder="Other"
         />
       )}
-      <label className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Switch
-          checked={Boolean(field.presentation?.shuffleOptions)}
-          onCheckedChange={(value) =>
-            onChange({
-              presentation: {
-                ...field.presentation,
-                shuffleOptions: Boolean(value),
-              },
-            })
-          }
-        />
-        Shuffle options
-      </label>
+      <SwitchRow
+        label="Shuffle options"
+        checked={Boolean(field.presentation?.shuffleOptions)}
+        onCheckedChange={(value) =>
+          onChange({
+            presentation: {
+              ...field.presentation,
+              shuffleOptions: Boolean(value),
+            },
+          })
+        }
+        containerClassName="text-muted-foreground"
+      />
     </div>
   );
 }
@@ -1864,34 +1884,32 @@ function GridEditor({
           Add column
         </Button>
       </div>
-      <label className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Switch
-          checked={gridRules.requireResponsePerRow}
-          onCheckedChange={(value) =>
-            onChange({
-              gridRules: {
-                ...gridRules,
-                requireResponsePerRow: Boolean(value),
-              },
-            })
-          }
-        />
-        Require response per row
-      </label>
-      <label className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Switch
-          checked={gridRules.limitOneResponsePerColumn}
-          onCheckedChange={(value) =>
-            onChange({
-              gridRules: {
-                ...gridRules,
-                limitOneResponsePerColumn: Boolean(value),
-              },
-            })
-          }
-        />
-        Limit one response per column
-      </label>
+      <SwitchRow
+        label="Require response per row"
+        checked={gridRules.requireResponsePerRow}
+        onCheckedChange={(value) =>
+          onChange({
+            gridRules: {
+              ...gridRules,
+              requireResponsePerRow: Boolean(value),
+            },
+          })
+        }
+        containerClassName="text-muted-foreground"
+      />
+      <SwitchRow
+        label="Limit one response per column"
+        checked={gridRules.limitOneResponsePerColumn}
+        onCheckedChange={(value) =>
+          onChange({
+            gridRules: {
+              ...gridRules,
+              limitOneResponsePerColumn: Boolean(value),
+            },
+          })
+        }
+        containerClassName="text-muted-foreground"
+      />
     </div>
   );
 }

@@ -17,6 +17,24 @@ export type ToastOptions = {
 type ToastInternal = Required<ToastOptions> & { id: string };
 
 const TOAST_EVENT = "app:toast";
+const DEFAULT_TOAST_DURATION_MS = 6000;
+const DESTRUCTIVE_TOAST_DURATION_MS = 9000;
+const DEFAULT_TOAST_MAX_DURATION_MS = 12000;
+const DESTRUCTIVE_TOAST_MAX_DURATION_MS = 18000;
+
+function getToastDuration(opts: ToastOptions) {
+  if (typeof opts.durationMs === "number") return opts.durationMs;
+  const base =
+    opts.variant === "destructive"
+      ? DESTRUCTIVE_TOAST_DURATION_MS
+      : DEFAULT_TOAST_DURATION_MS;
+  const max =
+    opts.variant === "destructive"
+      ? DESTRUCTIVE_TOAST_MAX_DURATION_MS
+      : DEFAULT_TOAST_MAX_DURATION_MS;
+  const readableText = `${opts.title ?? ""} ${opts.description ?? ""}`.trim();
+  return Math.min(max, Math.max(base, 3000 + readableText.length * 55));
+}
 
 export function toast(opts: ToastOptions) {
   const detail: ToastInternal = {
@@ -24,7 +42,7 @@ export function toast(opts: ToastOptions) {
     title: opts.title || "",
     description: opts.description || "",
     variant: opts.variant || "default",
-    durationMs: opts.durationMs ?? 3200,
+    durationMs: getToastDuration(opts),
     actionLabel: opts.actionLabel || "",
     onAction: opts.onAction || (() => undefined),
   };
@@ -73,7 +91,7 @@ export function Toaster() {
               transition={{ duration: 0.18 }}
             >
               <div
-                role="status"
+                role={t.variant === "destructive" ? "alert" : "status"}
                 aria-label={t.title || t.description}
                 className="pointer-events-auto rounded-xl border bg-card p-4 text-card-foreground shadow-[var(--shadow-ambient)] outline-none"
                 style={{

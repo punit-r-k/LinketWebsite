@@ -763,10 +763,10 @@ export default function VCardContent({
     if (status === "error") {
       if (savedLocally) {
         return isOnline
-          ? "Saved on this phone. Retrying sync automatically..."
-          : "Saved on this phone. Waiting for connection...";
+          ? "Contact card saved on this device. We are retrying sync automatically."
+          : "Contact card saved on this device. Reconnect to the internet to sync it.";
       }
-      return `${error ?? "Save failed"} Retrying automatically...`;
+      return `Contact card changes did not save. We will retry automatically. Details: ${error ?? "Save failed"} If this keeps happening, contact support@linketconnect.com.`;
     }
     if (savedLocally && isDirty) {
       return restoredLocalDraft
@@ -1042,11 +1042,18 @@ export default function VCardContent({
           <Field label="Notes" id="note" component="textarea" value={fields.note} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
         </div>
         <div className="dashboard-mobile-sticky-actions flex flex-wrap items-center justify-between gap-2">
-          <span
-            className={`text-sm ${status === "error" ? "text-destructive" : "text-muted-foreground"}${status === "saving" ? " dashboard-saving-indicator" : ""}`}
-          >
-            {statusMessage}
-          </span>
+          {status === "error" ? (
+            <div className="w-full rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive">
+              <p className="font-semibold">Where to look: contact card editor</p>
+              <p className="mt-1">{statusMessage}</p>
+            </div>
+          ) : (
+            <span
+              className={`text-sm text-muted-foreground${status === "saving" ? " dashboard-saving-indicator" : ""}`}
+            >
+              {statusMessage}
+            </span>
+          )}
         </div>
       </CardContent>
     </Card>
