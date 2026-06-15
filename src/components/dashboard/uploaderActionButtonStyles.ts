@@ -5,7 +5,7 @@ export const UPLOADER_TWO_COLUMN_ROW_CLASS =
   "grid w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(7rem,12rem)_minmax(0,1fr)] sm:items-center sm:gap-5";
 
 export const UPLOADER_MEDIA_COLUMN_CLASS =
-  "flex w-full justify-center sm:justify-start";
+  "flex w-full justify-center";
 
 export const UPLOADER_CONTROL_COLUMN_CLASS =
   "min-w-0 w-full space-y-2 text-left";

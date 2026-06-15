@@ -1460,10 +1460,10 @@ export default function PublicProfileEditorPage() {
         </Select>
       </div>
       <div
-        className="dashboard-mobile-status-strip flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl border border-border/70 bg-card px-3 py-4 text-sm shadow-[var(--shadow-grounded)] min-[420px]:px-4"
+        className="dashboard-mobile-status-strip flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-2xl border border-border/70 bg-card px-3 py-4 text-center text-sm shadow-[var(--shadow-grounded)] min-[420px]:px-4 sm:justify-between sm:text-left"
         aria-live="polite"
       >
-        <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden min-[420px]:gap-3">
+        <div className="flex min-w-0 flex-wrap items-center justify-center gap-2 overflow-visible min-[420px]:gap-3 sm:flex-nowrap sm:justify-start sm:overflow-hidden">
           <span className="shrink-0 text-sm font-semibold leading-none text-foreground min-[420px]:text-base">
             {liveStatusLabel}
           </span>
@@ -1528,7 +1528,7 @@ export default function PublicProfileEditorPage() {
             </div>
           </div>
         ) : (
-          <p className="ml-auto min-w-0 text-right text-sm leading-5 text-muted-foreground">
+          <p className="mx-auto min-w-0 text-center text-sm leading-5 text-muted-foreground sm:ml-auto sm:mr-0 sm:text-right">
             Preview and public page use this same saved profile data.
           </p>
         )}
