@@ -1372,7 +1372,7 @@ that the subject of colour “ought not to be chopped up into the art bit, the s
 Jennifer Cohlman Bracchi
 also highlighted the intersections of art and science in  describing two exhibitions she curated and co-curated,
 Color in a New Light
-(February 2016 – May 2017, Smithsonian Libraries, ‪National Museum of Natural History) and
+(February 2016 – May 2017, Smithsonian Libraries, National Museum of Natural History) and
 Saturated: The Allure and Science of Color
 (May 2018 – March 2019, Cooper Hewitt, Smithsonian Design Museum). These exhibitions emphasized the diversity of backgrounds of the people who made contributions to our understanding of colour, featuring works by physicists from Isaac Newton to Henry Roscoe, the poet Johann Wolfgang von Goethe, chemists Michel-Eugene Chevreul and Wilhelm Ostwald, entomologist Moses Harris, ornithologist Robert Ridgway, engraver Jacob Le Blon, board game manufacturer Milton Bradley, and artists and art teachers including Munsell, Itten and Albers. Jennifer then gave a detailed account of a historical exhibition from 1960,
 The Logic and Magic of Color

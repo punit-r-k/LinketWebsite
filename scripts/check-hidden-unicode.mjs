@@ -62,6 +62,7 @@ const offenders = [];
 for (const relativePath of getTrackedFiles()) {
   if (!textExtensions.has(path.extname(relativePath).toLowerCase())) continue;
   const absolutePath = path.join(projectRoot, relativePath);
+  if (!fs.existsSync(absolutePath)) continue;
   const contents = fs.readFileSync(absolutePath, "utf8").replace(/^\uFEFF/u, "");
   if (bidiOrHiddenPattern.test(contents)) {
     offenders.push(relativePath);

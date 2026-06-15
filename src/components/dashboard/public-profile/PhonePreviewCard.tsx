@@ -29,7 +29,7 @@ import { isDarkTheme, type ThemeName } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import type { LeadFormConfig, LeadFormField } from "@/types/lead-form";
 
-export type PhonePreviewLinkIconKey = "instagram" | "globe" | "twitter" | "link";
+type PhonePreviewLinkIconKey = "instagram" | "globe" | "twitter" | "link";
 
 export type PhonePreviewLinkItem = {
   id: string;

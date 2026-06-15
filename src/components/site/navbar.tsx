@@ -137,7 +137,7 @@ async function persistDashboardNotificationState(
   throw new Error(payload?.error || "Unable to save notification state.");
 }
 
-export function Navbar() {
+function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<UserLite>(null);

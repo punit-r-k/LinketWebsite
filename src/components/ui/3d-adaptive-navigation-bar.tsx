@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-export interface NavItem {
+interface NavItem {
   label: string;
   id: string;
   gradient?: string;

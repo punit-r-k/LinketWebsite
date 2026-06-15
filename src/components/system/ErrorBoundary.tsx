@@ -12,7 +12,7 @@ type Props = {
 
 type State = { hasError: boolean; error?: Error | null; key: number };
 
-export class ErrorBoundary extends React.Component<Props, State> {
+class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null, key: 0 };

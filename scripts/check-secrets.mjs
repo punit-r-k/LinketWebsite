@@ -71,6 +71,7 @@ for (const relativePath of getTrackedFiles()) {
   if (!textExtensions.has(path.extname(relativePath).toLowerCase())) continue;
   if (allowListFiles.has(relativePath)) continue;
   const absolutePath = path.join(projectRoot, relativePath);
+  if (!fs.existsSync(absolutePath)) continue;
   const contents = fs.readFileSync(absolutePath, "utf8");
   for (const pattern of patterns) {
     if (pattern.regex.test(contents)) {

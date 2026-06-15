@@ -16,7 +16,7 @@ const FOOTER_LEGAL_LINKS = [
   { label: "Warranty", href: "/warranty" },
 ] as const;
 
-export function Footer() {
+function Footer() {
   const currentYear = new Date().getFullYear();
   const pathname = usePathname();
   const isDashboard = pathname?.startsWith("/dashboard");
