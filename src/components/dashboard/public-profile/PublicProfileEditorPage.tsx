@@ -1311,26 +1311,20 @@ export default function PublicProfileEditorPage() {
         detail: hasLeadFields ? "Fields ready" : "Optional",
         completed: hasLeadFields,
       },
-      {
-        id: "preview",
-        label: "Preview",
-        detail: hasUnsavedChanges ? "Review changes" : "Current",
-        completed: !hasUnsavedChanges && saveState === "saved",
-      },
     ];
   }, [
     draft?.handle,
     draft?.links,
     draft?.name,
     hasContactDetails,
-    hasUnsavedChanges,
     leadFormPreview?.fields,
-    saveState,
     vcardSnapshot.contactButtonVisible,
   ]);
   const completedSectionCount = sectionProgressItems.filter(
     (item) => item.completed
   ).length;
+  const shouldShowSectionProgress =
+    completedSectionCount < sectionProgressItems.length;
 
   const retryFailedSave = useCallback(() => {
     if (failedSaveSection === "contact") {
@@ -1466,7 +1460,7 @@ export default function PublicProfileEditorPage() {
         </Select>
       </div>
       <div
-        className="dashboard-mobile-status-strip flex flex-col gap-3 rounded-2xl border border-border/70 bg-card px-3 py-4 text-sm shadow-[var(--shadow-grounded)] min-[420px]:px-4"
+        className="dashboard-mobile-status-strip flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl border border-border/70 bg-card px-3 py-4 text-sm shadow-[var(--shadow-grounded)] min-[420px]:px-4"
         aria-live="polite"
       >
         <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden min-[420px]:gap-3">
@@ -1486,7 +1480,7 @@ export default function PublicProfileEditorPage() {
           </span>
         </div>
         {saveDetail ? (
-          <div className="rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-3 text-sm leading-5 text-destructive">
+          <div className="w-full rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-3 text-sm leading-5 text-destructive">
             <div className="flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
               <div className="min-w-0 flex-1">
@@ -1534,17 +1528,19 @@ export default function PublicProfileEditorPage() {
             </div>
           </div>
         ) : (
-          <p className="text-sm leading-5 text-muted-foreground">
+          <p className="ml-auto min-w-0 text-right text-sm leading-5 text-muted-foreground">
             Preview and public page use this same saved profile data.
           </p>
         )}
       </div>
-      <ProfileSectionProgressRail
-        items={sectionProgressItems}
-        activeSection={activeSection}
-        completedCount={completedSectionCount}
-        onSelect={setActiveSection}
-      />
+      {shouldShowSectionProgress ? (
+        <ProfileSectionProgressRail
+          items={sectionProgressItems}
+          activeSection={activeSection}
+          completedCount={completedSectionCount}
+          onSelect={setActiveSection}
+        />
+      ) : null}
       {/*
         On phones, the preview lives in its own "Preview" section.
         Keep the live preview column on desktop/tablet.

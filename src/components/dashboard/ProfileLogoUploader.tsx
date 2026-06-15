@@ -11,7 +11,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { UPLOADER_ACTION_BUTTON_CLASS } from "@/components/dashboard/uploaderActionButtonStyles";
+import {
+  UPLOADER_ACTION_BUTTON_CLASS,
+  UPLOADER_CONTROL_COLUMN_CLASS,
+  UPLOADER_MEDIA_COLUMN_CLASS,
+  UPLOADER_TWO_COLUMN_ROW_CLASS,
+} from "@/components/dashboard/uploaderActionButtonStyles";
 import { uploadProfileLogoImage } from "@/lib/supabase-storage";
 import { supabase } from "@/lib/supabase";
 import { appendVersion } from "@/lib/avatar-utils";
@@ -418,8 +423,8 @@ export default function ProfileLogoUploader({
     return (
       <section className="flex flex-col gap-3 p-3 sm:gap-4 sm:p-4">
         {!sourceUrl ? (
-          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
-            <div className="flex w-full justify-center sm:w-auto sm:justify-start">
+          <div className={UPLOADER_TWO_COLUMN_ROW_CLASS}>
+            <div className={UPLOADER_MEDIA_COLUMN_CLASS}>
               <div
                 className={cn(
                   "h-32 w-32 overflow-hidden border-2 border-[var(--accent)] sm:h-28 sm:w-28",
@@ -437,7 +442,7 @@ export default function ProfileLogoUploader({
                 )}
               </div>
             </div>
-            <div className="min-w-0 flex-1 space-y-2 sm:max-w-sm">
+            <div className={UPLOADER_CONTROL_COLUMN_CLASS}>
               <Label htmlFor={inputTargetId}>Logo badge</Label>
               <input
                 ref={fileInputRef}

@@ -16,7 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { SwitchRow } from "@/components/ui/switch-row";
-import { UPLOADER_ACTION_BUTTON_CLASS } from "@/components/dashboard/uploaderActionButtonStyles";
+import {
+  UPLOADER_ACTION_BUTTON_CLASS,
+  UPLOADER_CONTROL_COLUMN_CLASS,
+  UPLOADER_MEDIA_COLUMN_CLASS,
+  UPLOADER_TWO_COLUMN_ROW_CLASS,
+} from "@/components/dashboard/uploaderActionButtonStyles";
 import { supabase } from "@/lib/supabase";
 import { confirmRemove } from "@/lib/confirm-remove";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
@@ -862,17 +867,19 @@ export default function VCardContent({
       >
         <section className="flex flex-col gap-3 rounded-2xl border border-dashed border-muted/70 p-3 sm:gap-4 sm:p-4">
           {!photoSourceUrl ? (
-            <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-center sm:gap-4">
-              <div className="h-24 w-24 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
-                {visiblePhotoPreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={visiblePhotoPreview} alt="Selected profile" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">150x150</div>
-                )}
+            <div className={UPLOADER_TWO_COLUMN_ROW_CLASS}>
+              <div className={UPLOADER_MEDIA_COLUMN_CLASS}>
+                <div className="h-24 w-24 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
+                  {visiblePhotoPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={visiblePhotoPreview} alt="Selected profile" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">150x150</div>
+                  )}
+                </div>
               </div>
-              <div className="min-w-0 w-full flex-1 space-y-2 text-center sm:text-left">
-                <Label htmlFor="profile-photo" className="block text-center sm:text-left">Profile photo</Label>
+              <div className={UPLOADER_CONTROL_COLUMN_CLASS}>
+                <Label htmlFor="profile-photo">Profile photo</Label>
                 <input
                   ref={photoFileInputRef}
                   id="profile-photo"
@@ -900,7 +907,7 @@ export default function VCardContent({
                     Choose file
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground text-center sm:text-left">
+                <p className="text-xs text-muted-foreground">
                   Crop to fit the circle. JPG/PNG/WebP.
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
