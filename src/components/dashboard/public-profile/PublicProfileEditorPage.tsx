@@ -33,6 +33,10 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  AlertCircle,
+  CheckCircle2,
+  Circle,
+  Copy,
   Eye,
   EyeOff,
   FileText,
@@ -41,6 +45,7 @@ import {
   Instagram,
   Link2,
   Pencil,
+  RotateCcw,
   Star,
   Trash2,
   Upload,
@@ -134,11 +139,18 @@ type VCardSnapshot = {
   email: string;
   phone: string;
   hasPhoto: boolean;
+  contactButtonVisible: boolean;
   status: "idle" | "saving" | "saved" | "error";
   isDirty: boolean;
   error: string | null;
 };
 
+type SectionProgressItem = {
+  id: SectionId;
+  label: string;
+  detail: string;
+  completed: boolean;
+};
 
 const ICON_OPTIONS: Array<{
   value: LinkIconKey;
@@ -206,6 +218,13 @@ const MOBILE_PROFILE_SECTIONS: Array<{ id: SectionId; label: string }> = [
 ];
 const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 
+function getSectionLabel(section: SectionId) {
+  return (
+    MOBILE_PROFILE_SECTIONS.find((item) => item.id === section)?.label ??
+    "Profile"
+  );
+}
+
 export default function PublicProfileEditorPage() {
   const dashboardUser = useDashboardUser();
   const { theme } = useThemeOptional();
@@ -216,6 +235,8 @@ export default function PublicProfileEditorPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveErrorSection, setSaveErrorSection] =
+    useState<SectionId | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [handleError, setHandleError] = useState<string | null>(null);
   const [accountHandle, setAccountHandle] = useState<string | null>(null);
@@ -236,24 +257,32 @@ export default function PublicProfileEditorPage() {
     email: "",
     phone: "",
     hasPhoto: false,
+    contactButtonVisible: true,
     status: "idle",
     isDirty: false,
     error: null,
   });
   const [vcardLoaded, setVcardLoaded] = useState(false);
   const handleVCardFieldsChange = useCallback(
-    (fields: { email: string; phone: string; photoData: string | null }) => {
+    (fields: {
+      email: string;
+      phone: string;
+      photoData: string | null;
+      contactButtonVisible?: boolean;
+    }) => {
       setVcardSnapshot((prev) => {
         const next = {
           ...prev,
           email: fields.email ?? "",
           phone: fields.phone ?? "",
           hasPhoto: Boolean(fields.photoData),
+          contactButtonVisible: fields.contactButtonVisible !== false,
         };
         if (
           prev.email === next.email &&
           prev.phone === next.phone &&
-          prev.hasPhoto === next.hasPhoto
+          prev.hasPhoto === next.hasPhoto &&
+          prev.contactButtonVisible === next.contactButtonVisible
         ) {
           return prev;
         }
@@ -320,7 +349,11 @@ export default function PublicProfileEditorPage() {
         );
         if (!response.ok) return;
         const payload = (await response.json()) as {
-          fields?: { email?: string; phone?: string };
+          fields?: {
+            email?: string;
+            phone?: string;
+            contactButtonVisible?: boolean;
+          };
         };
         if (cancelled) return;
         setVcardSnapshot((prev) => {
@@ -329,6 +362,8 @@ export default function PublicProfileEditorPage() {
             ...prev,
             email: payload.fields?.email ?? "",
             phone: payload.fields?.phone ?? "",
+            contactButtonVisible:
+              payload.fields?.contactButtonVisible !== false,
           };
         });
         setVcardLoaded(true);
@@ -607,6 +642,7 @@ export default function PublicProfileEditorPage() {
         );
       }
       setHandleError(null);
+      setSaveErrorSection(null);
       setSavedProfile(saved);
       setLastSavedAt(new Date().toISOString());
       const currentDraft = draftRef.current;
@@ -616,6 +652,7 @@ export default function PublicProfileEditorPage() {
     } catch (err) {
       const rawMessage = getErrorText(err, "Unable to save profile");
       const message = profileSaveErrorMessage(rawMessage);
+      setSaveErrorSection("profile");
       setSaveError(message);
       if (
         !rawMessage.toLowerCase().includes("handle already taken") &&
@@ -803,6 +840,8 @@ export default function PublicProfileEditorPage() {
             const message = leadFormSaveErrorMessage(
               getErrorText(error, "Unable to save form")
             );
+            setSaveErrorSection("lead");
+            setSaveError(message);
             toast({
               title: "Lead form save failed",
               description: message,
@@ -873,6 +912,7 @@ export default function PublicProfileEditorPage() {
   const handleProfileChange = useCallback(
     (patch: Partial<ProfileDraft>) => {
       setSaveError(null);
+      setSaveErrorSection(null);
       setDraft((prev) => {
         if (prev) {
           return { ...prev, ...patch, updatedAt: new Date().toISOString() };
@@ -1187,6 +1227,8 @@ export default function PublicProfileEditorPage() {
   const hasContactDetails = Boolean(
     vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
   );
+  const showContactDownloadButton =
+    hasContactDetails && vcardSnapshot.contactButtonVisible;
 
   const hasUnsavedChanges = Boolean(isDirty || vcardSnapshot.isDirty);
   const saveState = saveError || vcardSnapshot.status === "error"
@@ -1224,6 +1266,114 @@ export default function PublicProfileEditorPage() {
   const liveStatusLabel = draft?.active ? "Live profile" : "Draft profile";
   const displayedLastSavedAt = lastSavedAt ?? savedProfile?.updatedAt ?? null;
   const saveDetail = saveError || vcardSnapshot.error || null;
+  const failedSaveSection: SectionId | null = saveError
+    ? saveErrorSection ?? "profile"
+    : vcardSnapshot.status === "error"
+    ? "contact"
+    : null;
+  const failedSaveSectionLabel = failedSaveSection
+    ? getSectionLabel(failedSaveSection)
+    : null;
+  const sectionProgressItems = useMemo<SectionProgressItem[]>(() => {
+    const visibleCompleteLinks = draft?.links.filter(
+      (link) =>
+        link.visible &&
+        Boolean(link.label.trim()) &&
+        Boolean(link.url.trim())
+    ) ?? [];
+    const hasLeadFields = Boolean(
+      leadFormPreview?.fields.some((field) => field.type !== "section")
+    );
+    return [
+      {
+        id: "profile",
+        label: "Profile",
+        detail: "Name and handle",
+        completed: Boolean(draft?.name.trim() && draft?.handle.trim()),
+      },
+      {
+        id: "contact",
+        label: "Contact",
+        detail: vcardSnapshot.contactButtonVisible
+          ? "Button visible"
+          : "Button hidden",
+        completed: hasContactDetails,
+      },
+      {
+        id: "links",
+        label: "Links",
+        detail: `${visibleCompleteLinks.length} visible`,
+        completed: visibleCompleteLinks.length > 0,
+      },
+      {
+        id: "lead",
+        label: "Lead Form",
+        detail: hasLeadFields ? "Fields ready" : "Optional",
+        completed: hasLeadFields,
+      },
+      {
+        id: "preview",
+        label: "Preview",
+        detail: hasUnsavedChanges ? "Review changes" : "Current",
+        completed: !hasUnsavedChanges && saveState === "saved",
+      },
+    ];
+  }, [
+    draft?.handle,
+    draft?.links,
+    draft?.name,
+    hasContactDetails,
+    hasUnsavedChanges,
+    leadFormPreview?.fields,
+    saveState,
+    vcardSnapshot.contactButtonVisible,
+  ]);
+  const completedSectionCount = sectionProgressItems.filter(
+    (item) => item.completed
+  ).length;
+
+  const retryFailedSave = useCallback(() => {
+    if (failedSaveSection === "contact") {
+      window.dispatchEvent(new Event("linket:save-request"));
+      return;
+    }
+    if (failedSaveSection === "lead" && leadFormPreview) {
+      scheduleLeadFormReorderSave(leadFormPreview);
+      toast({
+        title: "Retrying lead form save",
+        description: "We are sending the latest lead form order again.",
+      });
+      return;
+    }
+    void handleSave();
+  }, [
+    failedSaveSection,
+    handleSave,
+    leadFormPreview,
+    scheduleLeadFormReorderSave,
+  ]);
+
+  const copySaveError = useCallback(() => {
+    if (!saveDetail) return;
+    const write = navigator.clipboard?.writeText(saveDetail);
+    if (!write) {
+      toast({
+        title: "Copy unavailable",
+        description: "Select the error text and copy it manually.",
+        variant: "destructive",
+      });
+      return;
+    }
+    void write.then(
+      () => toast({ title: "Error copied", variant: "success" }),
+      () =>
+        toast({
+          title: "Copy failed",
+          description: "Select the error text and copy it manually.",
+          variant: "destructive",
+        })
+    );
+  }, [saveDetail]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1336,9 +1486,52 @@ export default function PublicProfileEditorPage() {
           </span>
         </div>
         {saveDetail ? (
-          <div className="rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-2 text-sm leading-5 text-destructive">
-            <p className="font-semibold">Where to look: public profile save status</p>
+          <div className="rounded-xl border border-destructive/35 bg-destructive/10 px-3 py-3 text-sm leading-5 text-destructive">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold">Where to look: public profile save status</p>
+                {failedSaveSectionLabel ? (
+                  <p className="mt-0.5 text-xs text-destructive/80">
+                    Affected section: {failedSaveSectionLabel}
+                  </p>
+                ) : null}
+              </div>
+            </div>
             <p className="mt-1">{saveDetail}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="h-8 rounded-full px-3 text-xs"
+                onClick={retryFailedSave}
+              >
+                <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Retry now
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 rounded-full px-3 text-xs"
+                onClick={copySaveError}
+              >
+                <Copy className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Copy error
+              </Button>
+              {failedSaveSection ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 rounded-full px-3 text-xs"
+                  onClick={() => setActiveSection(failedSaveSection)}
+                >
+                  Open section
+                </Button>
+              ) : null}
+            </div>
           </div>
         ) : (
           <p className="text-sm leading-5 text-muted-foreground">
@@ -1346,15 +1539,21 @@ export default function PublicProfileEditorPage() {
           </p>
         )}
       </div>
-        {/*
-          On phones, the preview lives in its own "Preview" section.
-          Keep the live preview column on desktop/tablet.
-        */}
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-4" data-tour="profile-editor-panel">
-            {/*
-              Keep a single preview instance for reuse.
-            */}
+      <ProfileSectionProgressRail
+        items={sectionProgressItems}
+        activeSection={activeSection}
+        completedCount={completedSectionCount}
+        onSelect={setActiveSection}
+      />
+      {/*
+        On phones, the preview lives in its own "Preview" section.
+        Keep the live preview column on desktop/tablet.
+      */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-4" data-tour="profile-editor-panel">
+          {/*
+            Keep a single preview instance for reuse.
+          */}
             <EditorPanel
               activeSection={activeSection}
               draft={draft}
@@ -1374,8 +1573,12 @@ export default function PublicProfileEditorPage() {
                   logoShape={draft?.logoShape ?? "circle"}
                   logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
                   themeName={draft?.theme ?? theme}
-                  contactEnabled={hasContactDetails}
-                  contactDisabledText="Add email or phone to enable Save contact"
+                  contactEnabled={showContactDownloadButton}
+                  contactDisabledText={
+                    vcardSnapshot.contactButtonVisible
+                      ? "Add email or phone to enable Save contact"
+                      : ""
+                  }
                   onContactClick={handleContactCta}
                   links={draft?.links ?? []}
                   leadFormPreview={leadFormPreview}
@@ -1506,8 +1709,12 @@ export default function PublicProfileEditorPage() {
                 logoShape={draft?.logoShape ?? "circle"}
                 logoBackgroundWhite={draft?.logoBackgroundWhite ?? false}
                 themeName={draft?.theme ?? theme}
-                contactEnabled={hasContactDetails}
-                contactDisabledText="Add email or phone to enable Save contact"
+                contactEnabled={showContactDownloadButton}
+                contactDisabledText={
+                  vcardSnapshot.contactButtonVisible
+                    ? "Add email or phone to enable Save contact"
+                    : ""
+                }
                 onContactClick={handleContactCta}
                 links={draft?.links ?? []}
                 leadFormPreview={leadFormPreview}
@@ -2803,6 +3010,69 @@ function SortableLeadFieldItem({
       </div>
       <PreviewLeadField field={field} />
     </div>
+  );
+}
+
+function ProfileSectionProgressRail({
+  items,
+  activeSection,
+  completedCount,
+  onSelect,
+}: {
+  items: SectionProgressItem[];
+  activeSection: SectionId;
+  completedCount: number;
+  onSelect: (section: SectionId) => void;
+}) {
+  return (
+    <section className="rounded-2xl border border-border/70 bg-card/80 px-3 py-3 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Profile progress
+          </p>
+          <p className="mt-1 text-sm font-medium text-foreground">
+            {completedCount}/{items.length} sections ready
+          </p>
+        </div>
+        <div className="grid min-w-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+          {items.map((item) => {
+            const isActive = item.id === activeSection;
+            const Icon = item.completed ? CheckCircle2 : Circle;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                aria-current={isActive ? "step" : undefined}
+                onClick={() => onSelect(item.id)}
+                className={cn(
+                  "flex min-w-0 items-center gap-2 rounded-full border px-3 py-2 text-left transition-[background-color,border-color,color,box-shadow,transform] active:scale-[0.98]",
+                  isActive
+                    ? "border-primary/45 bg-primary/10 text-foreground shadow-sm"
+                    : "border-border/60 bg-background/70 text-muted-foreground hover:border-foreground/25 hover:text-foreground"
+                )}
+              >
+                <Icon
+                  className={cn(
+                    "h-4 w-4 shrink-0",
+                    item.completed ? "text-primary" : "text-muted-foreground"
+                  )}
+                  aria-hidden
+                />
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold">
+                    {item.label}
+                  </span>
+                  <span className="block truncate text-[11px] text-muted-foreground">
+                    {item.detail}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 

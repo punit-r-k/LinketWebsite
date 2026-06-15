@@ -1,21 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import {
   Activity,
+  ArrowRight,
   BarChart3,
   Calendar,
   CheckCircle2,
   Circle,
+  Crown,
+  MessageSquare,
   Star,
+  Tags,
+  UserRound,
   Users,
   type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
+import {
+  useDashboardPlanAccess,
+  useDashboardUser,
+} from "@/components/dashboard/DashboardSessionContext";
 import { useThemeOptional } from "@/components/theme/theme-provider";
 import PublicProfilePreviewLoader from "@/components/public/PublicProfilePreviewLoader";
 import NetworkingModePanel from "@/components/dashboard/overview/NetworkingModePanel";
@@ -46,8 +54,17 @@ type ViewState = {
   analytics: UserAnalytics | null;
 };
 
+type DashboardNextAction = {
+  title: string;
+  detail: string;
+  href: string;
+  buttonLabel: string;
+  icon: LucideIcon;
+};
+
 export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
+  const planAccess = useDashboardPlanAccess();
   const userId = dashboardUser?.id ?? null;
   const [reloadToken, setReloadToken] = useState(0);
   const [isChecklistDismissed, setIsChecklistDismissed] = useState(false);
@@ -189,6 +206,14 @@ export default function OverviewContent() {
   const isFreeAnalytics =
     analytics?.meta.analyticsScope === "public_profile_visits";
   const leads = analytics?.recentLeads ?? [];
+  const nextAction = useMemo(
+    () =>
+      buildDashboardNextAction({
+        analytics,
+        hasPaidAccess: planAccess.hasPaidAccess,
+      }),
+    [analytics, planAccess.hasPaidAccess]
+  );
 
   const overviewItems = [
     {
@@ -299,6 +324,8 @@ export default function OverviewContent() {
         </Card>
       ) : null}
 
+      {nextAction ? <DashboardNextActionCard action={nextAction} /> : null}
+
       <div className="dashboard-overview-grid grid min-w-0 gap-6 lg:grid-cols-12">
         <div className="dashboard-overview-column min-w-0 space-y-6 lg:col-span-7">
           <Card className="dashboard-overview-card dashboard-overview-section-card min-w-0 w-full rounded-3xl border border-border/70 bg-card/90 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
@@ -407,6 +434,112 @@ export default function OverviewContent() {
 
       </div>
     </div>
+  );
+}
+
+function buildDashboardNextAction({
+  analytics,
+  hasPaidAccess,
+}: {
+  analytics: UserAnalytics | null;
+  hasPaidAccess: boolean;
+}): DashboardNextAction | null {
+  if (!analytics) return null;
+
+  const pending = new Set(
+    analytics.onboarding.items
+      .filter((item) => !item.completed)
+      .map((item) => item.id)
+  );
+
+  if (analytics.recentLeads.length > 0 && hasPaidAccess) {
+    return {
+      title: "Review new leads",
+      detail: `${analytics.recentLeads.length} recent lead${
+        analytics.recentLeads.length === 1 ? "" : "s"
+      } ready for follow-up.`,
+      href: "/dashboard/leads",
+      buttonLabel: "Open leads",
+      icon: MessageSquare,
+    };
+  }
+
+  if (analytics.totals.activeTags === 0) {
+    return {
+      title: "Claim your first Linket",
+      detail: "Connect a physical Linket so scans route to this dashboard.",
+      href: "/dashboard/linkets",
+      buttonLabel: "Claim Linket",
+      icon: Tags,
+    };
+  }
+
+  if (
+    pending.has("set_handle") ||
+    pending.has("add_three_links") ||
+    pending.has("publish_profile")
+  ) {
+    return {
+      title: "Finish your public profile",
+      detail: "Complete the basics, links, and publish state visitors see first.",
+      href: "/dashboard/profiles",
+      buttonLabel: "Finish profile",
+      icon: UserRound,
+    };
+  }
+
+  if (pending.has("publish_lead_form")) {
+    return {
+      title: "Add a lead form",
+      detail: "Turn visits into follow-up opportunities from your public page.",
+      href: "/dashboard/profiles",
+      buttonLabel: "Open profile builder",
+      icon: Users,
+    };
+  }
+
+  if (!hasPaidAccess) {
+    return {
+      title: "Upgrade for full dashboard signal",
+      detail: "Unlock lead workflow labels, deeper analytics, and customization.",
+      href: "/dashboard/billing",
+      buttonLabel: "View upgrade",
+      icon: Crown,
+    };
+  }
+
+  return null;
+}
+
+function DashboardNextActionCard({ action }: { action: DashboardNextAction }) {
+  const Icon = action.icon;
+  return (
+    <Card className="dashboard-overview-section-card rounded-3xl border border-primary/25 bg-primary/5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
+      <CardContent className="flex flex-col gap-4 px-5 py-5 text-center sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:text-left">
+        <div className="flex min-w-0 flex-col items-center gap-3 sm:flex-row sm:items-start">
+          <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+            <Icon className="h-5 w-5" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Next action
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-foreground">
+              {action.title}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {action.detail}
+            </p>
+          </div>
+        </div>
+        <Button asChild className="w-full rounded-full sm:w-auto">
+          <Link href={action.href}>
+            {action.buttonLabel}
+            <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

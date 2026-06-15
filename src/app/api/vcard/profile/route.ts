@@ -25,6 +25,7 @@ type VCardFields = {
   photoData: string | null;
   photoName: string | null;
   photoRemoved: boolean;
+  contactButtonVisible: boolean;
 };
 
 const EMPTY_FIELDS: VCardFields = {
@@ -43,6 +44,7 @@ const EMPTY_FIELDS: VCardFields = {
   photoData: null,
   photoName: null,
   photoRemoved: false,
+  contactButtonVisible: true,
 };
 
 type VCardProfileResponse = {
@@ -71,6 +73,7 @@ const vcardBodySchema = z.object({
     photoData: z.string().nullable(),
     photoName: z.string().max(255).nullable(),
     photoRemoved: z.boolean().optional(),
+    contactButtonVisible: z.boolean().optional(),
     title: z.string().max(240),
   }),
   userId: z.string().uuid(),
@@ -199,7 +202,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("vcard_profiles")
-      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at")
+      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at,contact_button_visible")
       .eq("user_id", userId)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw error;
@@ -226,6 +229,7 @@ export async function GET(request: NextRequest) {
       photoData,
       photoName: photoData ? data.photo_name ?? null : null,
       photoRemoved: !photoData && Boolean(data.photo_removed_at),
+      contactButtonVisible: data.contact_button_visible !== false,
     }, defaults);
     const response: VCardProfileResponse = {
       fields: payload,
@@ -268,6 +272,7 @@ export async function POST(request: NextRequest) {
       photoData,
       photoName: photoData ? fields.photoName : null,
       photoRemoved: photoData ? false : Boolean(fields.photoRemoved),
+      contactButtonVisible: fields.contactButtonVisible !== false,
     };
 
     const payload = {
@@ -282,6 +287,7 @@ export async function POST(request: NextRequest) {
       photo_data: savedFields.photoData,
       photo_name: savedFields.photoName,
       photo_removed_at: savedFields.photoRemoved ? new Date().toISOString() : null,
+      contact_button_visible: savedFields.contactButtonVisible,
       updated_at: new Date().toISOString(),
     };
 

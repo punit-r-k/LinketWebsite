@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { SwitchRow } from "@/components/ui/switch-row";
 import { UPLOADER_ACTION_BUTTON_CLASS } from "@/components/dashboard/uploaderActionButtonStyles";
 import { supabase } from "@/lib/supabase";
 import { confirmRemove } from "@/lib/confirm-remove";
@@ -41,6 +42,7 @@ type VCardFields = {
   photoData: string | null;
   photoName: string | null;
   photoRemoved: boolean;
+  contactButtonVisible: boolean;
 };
 
 type VCardStatusPayload = {
@@ -79,7 +81,8 @@ function hasVCardContent(fields: VCardFields) {
       fields.addressCountry ||
       fields.note ||
       fields.photoData ||
-      fields.photoName
+      fields.photoName ||
+      fields.contactButtonVisible === false
   );
 }
 
@@ -90,6 +93,7 @@ function sanitizeVCardFields(fields: VCardFields): VCardFields {
     photoData,
     photoName: photoData ? fields.photoName : null,
     photoRemoved: photoData ? false : Boolean(fields.photoRemoved),
+    contactButtonVisible: fields.contactButtonVisible !== false,
   };
 }
 
@@ -165,6 +169,7 @@ export default function VCardContent({
     photoData: null,
     photoName: null,
     photoRemoved: false,
+    contactButtonVisible: true,
   });
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -218,6 +223,10 @@ export default function VCardContent({
 
   function updateField(key: keyof VCardFields, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateContactButtonVisible(value: boolean) {
+    setFields((prev) => ({ ...prev, contactButtonVisible: value }));
   }
 
   const baseScale = useMemo(() => {
@@ -1021,6 +1030,21 @@ export default function VCardContent({
           This contact-page photo is the only image embedded in the downloaded vCard.
         </p>
 
+        <section className="rounded-2xl border border-border/60 bg-background/70 px-3 py-3">
+          <SwitchRow
+            id="contact-button-visible"
+            label="Show Save contact button on public page"
+            description="Turn this off when you want the public page to hide the contact download action."
+            labelPosition="left"
+            checked={fields.contactButtonVisible}
+            disabled={inputsDisabled}
+            onCheckedChange={(value) =>
+              updateContactButtonVisible(Boolean(value))
+            }
+            textClassName="text-sm font-medium text-foreground"
+          />
+        </section>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name" id="fullName" value={fields.fullName} onChange={updateField} onBlur={handleFieldBlur} required disabled={inputsDisabled} idPrefix={idPrefix} />
           <Field label="Title" id="title" value={fields.title} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
@@ -1176,7 +1200,8 @@ function areVCardFieldsEqual(a: VCardFields, b: VCardFields) {
     a.note === b.note &&
     a.photoData === b.photoData &&
     a.photoName === b.photoName &&
-    a.photoRemoved === b.photoRemoved
+    a.photoRemoved === b.photoRemoved &&
+    a.contactButtonVisible === b.contactButtonVisible
   );
 }
 

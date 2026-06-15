@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Check,
   CheckCircle2,
+  Gift,
   Languages,
   Link2,
   Loader2,
@@ -75,10 +76,20 @@ import {
   LOCALE_OPTIONS,
   type SupportedLocale,
 } from "@/lib/i18n";
+import {
+  formatClaimCodeDisplay,
+  normalizeClaimCodeInput,
+} from "@/lib/linket-claim-code";
+import type { TagAssignmentDetail } from "@/lib/linket-tags";
 
 type SetupStepId = "language" | "profile" | "contact" | "links" | "publish";
 type SaveStatus = "idle" | "saving" | "saved" | "error" | "publishing";
 type FieldSaveState = "saved" | "saving" | "unsaved" | "error";
+
+type OnboardingLinketClaimResult = {
+  title: string;
+  description: string;
+};
 
 type ProfileLinkDraft = {
   id?: string;
@@ -154,6 +165,11 @@ const ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX =
 const ONBOARDING_LANGUAGE_STORAGE_PREFIX =
   "linket:onboarding:language-selected";
 const SAVE_RETRY_DELAYS_MS = [1500, 4000, 8000, 15000] as const;
+const onboardingTrialDateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 
 function getSaveRetryDelay(attempt: number) {
   return SAVE_RETRY_DELAYS_MS[
@@ -170,6 +186,13 @@ function formatPhoneNumber(value: string) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   }
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+}
+
+function formatTrialDate(value: string | null | undefined) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return onboardingTrialDateFormatter.format(parsed);
 }
 
 function getOnboardingCompletionSessionKey(userId: string) {
@@ -862,6 +885,11 @@ export default function DashboardSetupFlow({
   const [showContactExtras, setShowContactExtras] = useState(false);
   const [showPhoneField, setShowPhoneField] = useState(false);
   const [avatarSaveState, setAvatarSaveState] = useState<FieldSaveState>("saved");
+  const [linketClaimCode, setLinketClaimCode] = useState("");
+  const [linketClaiming, setLinketClaiming] = useState(false);
+  const [linketClaimError, setLinketClaimError] = useState<string | null>(null);
+  const [linketClaimResult, setLinketClaimResult] =
+    useState<OnboardingLinketClaimResult | null>(null);
   const [completedSetupSteps, setCompletedSetupSteps] = useState<
     Record<SetupStepId, boolean>
   >({
@@ -2253,6 +2281,166 @@ export default function DashboardSetupFlow({
     }
   }
 
+  async function loadClaimedLinketAssignment(assignmentId: string | null) {
+    if (!userId || !assignmentId) return null;
+    const response = await fetch(
+      `/api/linkets?userId=${encodeURIComponent(userId)}`,
+      { cache: "no-store" }
+    );
+    if (!response.ok) return null;
+    const assignments = (await response.json().catch(() => [])) as
+      | TagAssignmentDetail[]
+      | null;
+    return (
+      assignments?.find((item) => item.assignment.id === assignmentId) ?? null
+    );
+  }
+
+  async function claimComplimentaryTrialForOnboarding(
+    item: TagAssignmentDetail
+  ) {
+    const response = await fetch("/api/linkets/complimentary-trial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tagId: item.tag.id,
+        assignmentId: item.assignment.id,
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as
+      | {
+          error?: string;
+          trial?: { endsAt?: string | null };
+        }
+      | null;
+    if (!response.ok) {
+      throw new Error(payload?.error || "Unable to claim complimentary trial.");
+    }
+    return payload?.trial?.endsAt ?? null;
+  }
+
+  async function handleClaimLinketCode() {
+    if (!userId) {
+      setLinketClaimError("Sign in to claim a Linket.");
+      return;
+    }
+
+    const normalizedClaimCode = normalizeClaimCodeInput(linketClaimCode);
+    if (!normalizedClaimCode) {
+      setLinketClaimError("Enter a Linket code to claim it.");
+      focusFieldById("setup-linket-code");
+      return;
+    }
+
+    setLinketClaiming(true);
+    setLinketClaimError(null);
+    setLinketClaimResult(null);
+    void trackEvent(
+      "onboarding_linket_claim_started",
+      trackingMeta({ source_cta: "review_step" })
+    );
+
+    try {
+      const savedProfile = await saveProfileDraft({ quiet: true });
+      if (!savedProfile) {
+        throw new Error("Save your profile before claiming a Linket.");
+      }
+
+      const response = await fetch("/api/linkets/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          claimCode: normalizedClaimCode,
+          profileId:
+            savedProfile.id && savedProfile.id !== "preview-profile"
+              ? savedProfile.id
+              : null,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { assignmentId?: string | null; error?: string }
+        | null;
+      if (!response.ok) {
+        throw new Error(payload?.error || "Unable to claim Linket.");
+      }
+
+      const claimedAssignment = await loadClaimedLinketAssignment(
+        payload?.assignmentId ?? null
+      );
+      let result: OnboardingLinketClaimResult = {
+        title: "Linket claimed",
+        description:
+          "This Linket is now attached to your account and ready to manage after setup.",
+      };
+
+      if (claimedAssignment?.complimentaryTrial?.claimable) {
+        try {
+          const trialEndsAt = await claimComplimentaryTrialForOnboarding(
+            claimedAssignment
+          );
+          const trialEndsAtLabel = formatTrialDate(trialEndsAt);
+          result = {
+            title: "Linket and free trial claimed",
+            description: trialEndsAtLabel
+              ? `Complimentary Pro is active through ${trialEndsAtLabel}.`
+              : "Complimentary Pro is active.",
+          };
+        } catch (error) {
+          result = {
+            title: "Linket claimed",
+            description:
+              error instanceof Error
+                ? `The Linket is claimed. Free trial claim needs attention: ${error.message}`
+                : "The Linket is claimed. You can finish the free trial claim from the Linkets dashboard.",
+          };
+        }
+      } else if (claimedAssignment?.complimentaryTrial?.claimedByCurrentUser) {
+        const trialEndsAtLabel = formatTrialDate(
+          claimedAssignment.complimentaryTrial.endsAt
+        );
+        result = {
+          title: "Linket claimed",
+          description: trialEndsAtLabel
+            ? `The included free trial was already active through ${trialEndsAtLabel}.`
+            : "The included free trial was already active.",
+        };
+      }
+
+      setLinketClaimCode("");
+      setLinketClaimResult(result);
+      void trackEvent(
+        "onboarding_linket_claim_succeeded",
+        trackingMeta({
+          source_cta: "review_step",
+          claimed_trial: result.title.includes("free trial"),
+        })
+      );
+      toast({
+        title: result.title,
+        description: result.description,
+        variant: "success",
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to claim Linket.";
+      setLinketClaimError(message);
+      void trackEvent(
+        "onboarding_linket_claim_failed",
+        trackingMeta({
+          source_cta: "review_step",
+          reason: message,
+        })
+      );
+      toast({
+        title: "Claim failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setLinketClaiming(false);
+    }
+  }
+
   function handleOpenLiveProfile() {
     if (!publicUrl) return;
     setShareTestComplete(true);
@@ -2555,6 +2743,7 @@ export default function DashboardSetupFlow({
   const showAvatarSavePill =
     Boolean(account.avatarPath || avatarPreviewUrl) || avatarFieldState !== "saved";
   const showHandleSavePill = handleTouched || Boolean(handleError);
+  const normalizedLinketClaimCode = normalizeClaimCodeInput(linketClaimCode);
 
   return (
     <div className="dashboard-overview-page dashboard-setup-page min-h-[100svh] bg-[var(--background)] px-4 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-4 text-foreground sm:px-6 sm:py-5 lg:px-10 lg:py-6">
@@ -3557,6 +3746,85 @@ export default function DashboardSetupFlow({
                             </Button>
                           </div>
                         </div>
+                        <div className={cn("space-y-4 p-4", softPanelClassName)}>
+                          <div className="flex items-start gap-3">
+                            <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+                              <Gift className="h-4 w-4" aria-hidden="true" />
+                            </span>
+                            <div className="min-w-0 space-y-1">
+                              <p className="text-sm font-semibold text-foreground">
+                                Claim your Linket
+                              </p>
+                              <p className="text-sm leading-6 text-muted-foreground">
+                                Have a printed Linket code? Claim it now. If that
+                                Linket includes complimentary Pro time, we&apos;ll
+                                claim that too.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                            <div className="space-y-2">
+                              <Label
+                                htmlFor="setup-linket-code"
+                                className={fieldLabelClassName}
+                              >
+                                Linket code
+                              </Label>
+                              <Input
+                                id="setup-linket-code"
+                                value={linketClaimCode}
+                                placeholder="ABCD-1234-EFGH"
+                                className={fieldInputClassName}
+                                inputMode="text"
+                                autoCapitalize="characters"
+                                autoComplete="off"
+                                onChange={(event) => {
+                                  setLinketClaimCode(
+                                    formatClaimCodeDisplay(event.target.value)
+                                  );
+                                  setLinketClaimError(null);
+                                }}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              className="h-12 rounded-2xl px-5 text-sm"
+                              disabled={!normalizedLinketClaimCode || linketClaiming}
+                              onClick={() => void handleClaimLinketCode()}
+                            >
+                              {linketClaiming ? (
+                                <>
+                                  <Loader2
+                                    className="mr-2 h-4 w-4 animate-spin"
+                                    aria-hidden="true"
+                                  />
+                                  Claiming...
+                                </>
+                              ) : (
+                                "Claim Linket"
+                              )}
+                            </Button>
+                          </div>
+                          {linketClaimResult ? (
+                            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                              <p className="font-semibold">
+                                {linketClaimResult.title}
+                              </p>
+                              <p className="mt-1 leading-6">
+                                {linketClaimResult.description}
+                              </p>
+                            </div>
+                          ) : null}
+                          {linketClaimError ? (
+                            <div
+                              role="alert"
+                              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                            >
+                              {linketClaimError}
+                            </div>
+                          ) : null}
+                        </div>
                         <div className={cn("space-y-3 p-4", softPanelClassName)}>
                           <div>
                             <p className="text-sm font-semibold text-foreground">
@@ -3624,7 +3892,10 @@ export default function DashboardSetupFlow({
                           <Button
                             type="button"
                             className="h-12 rounded-2xl px-6 text-sm"
-                            disabled={profileSaveStatus === "publishing"}
+                            disabled={
+                              profileSaveStatus === "publishing" ||
+                              linketClaiming
+                            }
                             onClick={() => void handlePublish()}
                           >
                             {continueButtonLabel}
@@ -3786,7 +4057,7 @@ export default function DashboardSetupFlow({
               )}
               disabled={
                 currentStep.id === "publish" &&
-                profileSaveStatus === "publishing"
+                (profileSaveStatus === "publishing" || linketClaiming)
               }
               onClick={() =>
                 currentStep.id === "publish"

@@ -19,6 +19,7 @@ type PreviewState = {
     avatarPath: string | null;
     avatarUpdatedAt: string | null;
   } | null;
+  contactEnabled: boolean;
 };
 
 function PublicProfilePreviewPageContent() {
@@ -33,6 +34,7 @@ function PublicProfilePreviewPageContent() {
     error: null,
     profile: null,
     account: null,
+    contactEnabled: false,
   });
 
   useEffect(() => {
@@ -60,10 +62,14 @@ function PublicProfilePreviewPageContent() {
           ) ?? profiles[0];
         if (!profile) throw new Error("Profile not found.");
 
-        const accountRes = await fetch(
-          `/api/account/handle?userId=${encodeURIComponent(userId)}`,
-          { cache: "no-store" }
-        );
+        const [accountRes, contactRes] = await Promise.all([
+          fetch(`/api/account/handle?userId=${encodeURIComponent(userId)}`, {
+            cache: "no-store",
+          }),
+          fetch(`/api/vcard/profile?userId=${encodeURIComponent(userId)}`, {
+            cache: "no-store",
+          }),
+        ]);
         const accountPayload = accountRes.ok
           ? ((await accountRes.json()) as {
               handle?: string | null;
@@ -72,6 +78,20 @@ function PublicProfilePreviewPageContent() {
               avatarUpdatedAt?: string | null;
             })
           : null;
+        const contactPayload = contactRes.ok
+          ? ((await contactRes.json().catch(() => null)) as {
+              fields?: {
+                email?: string | null;
+                phone?: string | null;
+                contactButtonVisible?: boolean;
+              };
+            } | null)
+          : null;
+        const contactFields = contactPayload?.fields;
+        const contactEnabled = Boolean(
+          contactFields?.contactButtonVisible !== false &&
+            (contactFields?.email?.trim() || contactFields?.phone?.trim())
+        );
 
         if (!active) return;
         setState({
@@ -84,6 +104,7 @@ function PublicProfilePreviewPageContent() {
             avatarPath: accountPayload?.avatarPath ?? null,
             avatarUpdatedAt: accountPayload?.avatarUpdatedAt ?? null,
           },
+          contactEnabled,
         });
       } catch (err) {
         if (!active) return;
@@ -92,6 +113,7 @@ function PublicProfilePreviewPageContent() {
           error: err instanceof Error ? err.message : "Unable to load preview.",
           profile: null,
           account: null,
+          contactEnabled: false,
         });
       }
     })();
@@ -128,7 +150,7 @@ function PublicProfilePreviewPageContent() {
     );
   }
 
-  const { profile, account } = state;
+  const { profile, account, contactEnabled } = state;
 
   return (
     <PublicProfilePreview
@@ -136,6 +158,7 @@ function PublicProfilePreviewPageContent() {
       account={account}
       handle={handle}
       themeOverride={requestedTheme}
+      contactEnabled={contactEnabled}
     />
   );
 }

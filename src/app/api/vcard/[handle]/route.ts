@@ -21,6 +21,7 @@ type VCardRecord = {
   photo_data: string | null;
   photo_name: string | null;
   photo_removed_at: string | null;
+  contact_button_visible: boolean | null;
   updated_at: string | null;
 };
 
@@ -135,7 +136,7 @@ async function fetchVCardRecord(userId: string) {
   if (!isSupabaseAdminAvailable) return null;
   const { data, error } = await supabaseAdmin
     .from("vcard_profiles")
-    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at,updated_at")
+    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at,contact_button_visible,updated_at")
     .eq("user_id", userId)
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw error;
@@ -164,6 +165,12 @@ export async function GET(
     const fallbackTitle = profile.headline?.trim() || "";
 
     const vcardRecord = await fetchVCardRecord(account.user_id);
+    if (vcardRecord?.contact_button_visible === false) {
+      return NextResponse.json(
+        { error: "Contact download unavailable" },
+        { status: 404 }
+      );
+    }
     const displayedLinks = getDisplayedProfileLinks(profile.links);
     const updatedAt = getLatestTimestamp([
       vcardRecord?.updated_at,

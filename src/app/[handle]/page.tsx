@@ -140,18 +140,24 @@ export default async function PublicProfilePage({ params }: Props) {
   const { data: vcardData } = isSupabaseAdminAvailable
     ? await supabaseAdmin
         .from("vcard_profiles")
-        .select("email, phone")
+        .select("email, phone, contact_button_visible")
         .eq("user_id", account.user_id)
         .maybeSingle()
     : await supabase
         .from("vcard_profiles")
-        .select("email, phone")
+        .select("email, phone, contact_button_visible")
         .eq("user_id", account.user_id)
         .maybeSingle();
+  const vcardSettings = vcardData as {
+    email?: string | null;
+    phone?: string | null;
+    contact_button_visible?: boolean | null;
+  } | null;
   const hasContactDetails = Boolean(
-    (vcardData as { email?: string | null; phone?: string | null } | null)?.email?.trim() ||
-      (vcardData as { email?: string | null; phone?: string | null } | null)?.phone?.trim()
+    vcardSettings?.email?.trim() || vcardSettings?.phone?.trim()
   );
+  const showContactDownload =
+    hasContactDetails && vcardSettings?.contact_button_visible !== false;
 
   const leadFormTitle = resolvedLeadForm?.title ?? "Contact";
   const hasLeadForm = Boolean(resolvedLeadForm?.fields?.length);
@@ -362,7 +368,7 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
 
               <div className="public-profile-actions flex flex-wrap items-center gap-3 public-profile-load public-profile-load-3">
-                {hasContactDetails ? (
+                {showContactDownload ? (
                   <VCardDownload
                     handle={publicHandle}
                     label="Save Contact Information"

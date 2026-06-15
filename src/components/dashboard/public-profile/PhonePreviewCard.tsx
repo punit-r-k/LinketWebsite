@@ -196,7 +196,8 @@ export default function PhonePreviewCard({
   );
   const submitLabel = "Submit";
   const resolvedTheme = themeName;
-  const showContactButton = contactEnabled || Boolean(contactDisabledText);
+  const showContactButton =
+    contactEnabled || Boolean(contactDisabledText.trim());
   const useDarkThemeIcons = resolvedTheme ? isDarkTheme(resolvedTheme) : false;
   const profileInitials = useMemo(
     () => buildPreviewInitials(profile.name),
