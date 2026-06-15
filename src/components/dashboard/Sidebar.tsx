@@ -173,8 +173,8 @@ export default function Sidebar({
       aria-label="Primary"
     >
       <div className="flex min-h-full flex-col">
-        <div className="flex items-center justify-end gap-2 px-4 py-5">
-          {canCollapse && (
+        {canCollapse ? (
+          <div className="dashboard-sidebar-header flex items-center justify-end gap-2 px-4 py-2">
             <button
               aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               onClick={() => setCollapsed((v) => !v)}
@@ -186,8 +186,8 @@ export default function Sidebar({
                 <ChevronLeft className="h-4 w-4" />
               )}
             </button>
-          )}
-        </div>
+          </div>
+        ) : null}
         {!onboardingState?.requiresOnboarding ? (
           <div className={cn("px-3 pb-2", isCollapsed && "flex justify-center")}>
             <ThemeToggle showLabel={!isCollapsed || isMobile} />
