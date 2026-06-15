@@ -142,26 +142,37 @@ export default function DashboardAppShell({
     <div
       id="dashboard-theme-scope"
       className={cn(
-        "font-dashboard flex min-h-[100svh] bg-[var(--background)]",
+        "font-dashboard flex min-h-0 overflow-hidden bg-[var(--background)]",
         `theme-${theme}`,
         isDarkTheme(theme) && "dark"
       )}
-      style={{ "--dashboard-nav-height": `${dashboardNavHeight}px` } as CSSProperties}
+      style={
+        {
+          "--dashboard-nav-height": `${dashboardNavHeight}px`,
+          height: `calc(100svh - ${dashboardNavHeight}px)`,
+        } as CSSProperties
+      }
     >
       {!shouldHideChrome ? (
-        <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
+        <div
+          className="relative z-30 hidden min-h-0 lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block"
+          style={{ height: `calc(100svh - ${dashboardNavHeight}px)` }}
+        >
           <Sidebar onboardingState={effectiveOnboardingState} />
         </div>
       ) : null}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <div
           className={cn(
-            "dashboard-scroll-area scroll-native-y flex-1 overflow-auto",
+            "dashboard-scroll-area scroll-native-y min-h-0 flex-1 overflow-x-hidden overflow-y-auto",
             shouldHideChrome
               ? "px-0 pb-0 pt-0"
               : "px-5 pb-6 pt-4 sm:px-6 sm:pb-8 sm:pt-5 lg:px-8 lg:pb-10"
           )}
           data-page-scroll
+          role="region"
+          aria-label="Dashboard content"
+          tabIndex={0}
         >
           <div
             className={cn(
