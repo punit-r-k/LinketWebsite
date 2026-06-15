@@ -49,6 +49,16 @@ export default function DashboardAppShell({
     effectiveRequiresOnboarding && !isSetupRoute;
 
   useLayoutEffect(() => {
+    document.documentElement.classList.add("dashboard-scroll-locked");
+    document.body.classList.add("dashboard-scroll-locked");
+
+    return () => {
+      document.documentElement.classList.remove("dashboard-scroll-locked");
+      document.body.classList.remove("dashboard-scroll-locked");
+    };
+  }, []);
+
+  useLayoutEffect(() => {
     const measureNavbarHeight = () => {
       const navbar = document.querySelector<HTMLElement>(".dashboard-navbar");
       if (!navbar) return;
