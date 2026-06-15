@@ -46,6 +46,7 @@ type Props = {
 
 const OUTPUT_WIDTH = 1200;
 const OUTPUT_HEIGHT = 600;
+const OUTPUT_ASPECT_RATIO = OUTPUT_WIDTH / OUTPUT_HEIGHT;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.01;
@@ -82,13 +83,7 @@ export default function ProfileHeaderUploader({
     : isSmallScreen
       ? 300
       : 360;
-  const cropHeight = isCompact
-    ? isSmallScreen
-      ? 120
-      : 150
-    : isSmallScreen
-      ? 150
-      : 180;
+  const cropHeight = Math.round(cropWidth / OUTPUT_ASPECT_RATIO);
   const cropHalfWidth = cropWidth / 2;
   const cropHalfHeight = cropHeight / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -461,7 +456,10 @@ export default function ProfileHeaderUploader({
         {!sourceUrl ? (
           <div className={UPLOADER_TWO_COLUMN_ROW_CLASS}>
             <div className={UPLOADER_MEDIA_COLUMN_CLASS}>
-              <div className="h-32 w-full max-w-[20rem] overflow-hidden rounded-xl border-2 border-[var(--accent)] bg-muted sm:h-28 sm:max-w-none">
+              <div
+                className="w-full max-w-[20rem] overflow-hidden rounded-xl border-2 border-[var(--accent)] bg-muted sm:max-w-none"
+                style={{ aspectRatio: `${OUTPUT_WIDTH} / ${OUTPUT_HEIGHT}` }}
+              >
                 {displayUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={displayUrl} alt="Header image" className="h-full w-full object-cover" />
