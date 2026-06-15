@@ -154,10 +154,7 @@ export default function DashboardAppShell({
       }
     >
       {!shouldHideChrome ? (
-        <div
-          className="relative z-30 hidden min-h-0 lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block"
-          style={{ height: `calc(100svh - ${dashboardNavHeight}px)` }}
-        >
+        <div className="relative z-30 hidden h-[calc(100vh-var(--dashboard-nav-height))] lg:sticky lg:top-[var(--dashboard-nav-height)] lg:block">
           <Sidebar onboardingState={effectiveOnboardingState} />
         </div>
       ) : null}
