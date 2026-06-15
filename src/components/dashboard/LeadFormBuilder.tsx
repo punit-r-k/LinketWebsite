@@ -33,6 +33,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from "lucide-react";
 
 import { useDashboardPlanAccess } from "@/components/dashboard/DashboardSessionContext";
+import { scrollElementIntoView } from "@/lib/scroll";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -467,9 +468,10 @@ export default function LeadFormBuilder({
       return;
     }
     window.requestAnimationFrame(() => {
-      document
-        .getElementById("lead-form-field-settings-panel")
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollElementIntoView(
+        document.getElementById("lead-form-field-settings-panel"),
+        { behavior: "smooth", block: "start" }
+      );
     });
   }, [columns, layout, showPreview]);
 

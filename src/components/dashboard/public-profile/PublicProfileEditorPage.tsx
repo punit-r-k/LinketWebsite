@@ -1466,22 +1466,22 @@ export default function PublicProfileEditorPage() {
         </Select>
       </div>
       <div
-        className="dashboard-mobile-status-strip flex flex-col gap-3 rounded-2xl border border-border/70 bg-card px-4 py-4 text-sm shadow-[var(--shadow-grounded)]"
+        className="dashboard-mobile-status-strip flex flex-col gap-3 rounded-2xl border border-border/70 bg-card px-3 py-4 text-sm shadow-[var(--shadow-grounded)] min-[420px]:px-4"
         aria-live="polite"
       >
-        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2">
-          <span className="text-base font-semibold leading-none text-foreground">
+        <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden min-[420px]:gap-3">
+          <span className="shrink-0 text-sm font-semibold leading-none text-foreground min-[420px]:text-base">
             {liveStatusLabel}
           </span>
           <span
             className={cn(
-              "inline-flex h-7 items-center rounded-full border px-3 text-xs font-semibold leading-none",
+              "inline-flex h-7 shrink-0 items-center rounded-full border px-2.5 text-xs font-semibold leading-none min-[420px]:px-3",
               saveStatusMeta.className
             )}
           >
             {saveStatusMeta.label}
           </span>
-          <span className="whitespace-nowrap text-sm leading-none text-muted-foreground">
+          <span className="shrink-0 whitespace-nowrap text-xs leading-none text-muted-foreground min-[420px]:text-sm">
             Last saved: {displayedLastSavedAt ? formatShortDate(displayedLastSavedAt) : "Not yet"}
           </span>
         </div>

@@ -50,6 +50,7 @@ import {
   isThemeAvailableForPlan,
   sanitizeThemeForPlan,
 } from "@/lib/plan-access";
+import { scrollPageToTop } from "@/lib/scroll";
 import { normalizeThemeName, type ThemeName } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -2148,7 +2149,7 @@ export default function DashboardSetupFlow({
     setCurrentStepIndex((current) =>
       Math.min(current + 1, SETUP_STEPS.length - 1)
     );
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPageToTop({ behavior: "smooth" });
   }
 
   async function handlePublish() {
@@ -2165,7 +2166,7 @@ export default function DashboardSetupFlow({
         setCurrentStepIndex(getSetupStepIndex("links"));
         focusFirstMissingField("links");
       }
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      scrollPageToTop({ behavior: "smooth" });
       return;
     }
 
@@ -2205,7 +2206,7 @@ export default function DashboardSetupFlow({
       description: "Test it once, then start sharing it.",
       variant: "success",
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPageToTop({ behavior: "smooth" });
   }
 
   function handleBackStep() {
@@ -2221,7 +2222,7 @@ export default function DashboardSetupFlow({
     );
     setCurrentStepIndex((current) => Math.max(current - 1, 0));
     setStepError(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPageToTop({ behavior: "smooth" });
   }
 
   async function copyTextToClipboard(value: string) {
@@ -2463,7 +2464,7 @@ export default function DashboardSetupFlow({
   function handleEditPublicUrl() {
     setCurrentStepIndex(0);
     setStepError(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPageToTop({ behavior: "smooth" });
     focusFieldById("setup-handle");
   }
 

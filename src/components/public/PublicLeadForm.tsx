@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
 import { emitAnalyticsEvent } from "@/lib/analytics";
+import { scrollElementIntoView } from "@/lib/scroll";
 import { cn } from "@/lib/utils";
 import {
   shuffleFields,
@@ -263,7 +264,7 @@ export default function PublicLeadForm({
         ) ||
         fieldContainer;
 
-      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrollElementIntoView(target, { behavior: "smooth", block: "center" });
       if (target && "focus" in target) {
         target.focus({ preventScroll: true });
       }

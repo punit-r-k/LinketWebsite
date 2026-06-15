@@ -43,6 +43,7 @@ import { toast } from "@/components/system/toaster";
 import { LEGAL_PAGE_LINKS } from "@/components/site/legal-page-actions";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { getSiteOrigin } from "@/lib/site-url";
+import { scrollWindowTo } from "@/lib/scroll";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
 import { confirmRemove } from "@/lib/confirm-remove";
 import { isSavedAccount, saveAccount } from "@/lib/saved-accounts";
@@ -809,12 +810,25 @@ function Navbar() {
       setIsAtTop(true);
       return;
     }
+    let frame: number | null = null;
     const handleScroll = () => {
-      setIsAtTop(window.scrollY <= 16);
+      if (frame !== null) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+        const nextIsAtTop = window.scrollY <= 16;
+        setIsAtTop((current) =>
+          current === nextIsAtTop ? current : nextIsAtTop
+        );
+      });
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+    return () => {
+      if (frame !== null) {
+        window.cancelAnimationFrame(frame);
+      }
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, [isPublic]);
 
   if (isPublicProfile || isLegalPage) {
@@ -858,7 +872,7 @@ function Navbar() {
     const headerOffset = 80;
     const offsetPosition =
       element.getBoundingClientRect().top + window.scrollY - headerOffset;
-    window.scrollTo({
+    scrollWindowTo({
       top: Math.max(offsetPosition, 0),
       behavior: "smooth",
     });
@@ -1582,6 +1596,7 @@ function usePopoverPosition(
 
   useLayoutEffect(() => {
     if (!open) return;
+    let frame: number | null = null;
     const update = () => {
       const anchor = anchorRef.current;
       if (!anchor) return;
@@ -1597,12 +1612,23 @@ function usePopoverPosition(
         left,
       });
     };
+    const scheduleUpdate = () => {
+      if (frame !== null) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = null;
+        update();
+      });
+    };
+    const scrollOptions = { capture: true, passive: true } as const;
     update();
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("scroll", scheduleUpdate, scrollOptions);
     return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
+      if (frame !== null) {
+        window.cancelAnimationFrame(frame);
+      }
+      window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("scroll", scheduleUpdate, scrollOptions);
     };
   }, [anchorRef, open, align]);
 

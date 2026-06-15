@@ -16,6 +16,7 @@ import {
   type DashboardTourStatus,
 } from "@/lib/dashboard-onboarding-tour";
 import { trackEvent } from "@/lib/analytics";
+import { scrollElementIntoView } from "@/lib/scroll";
 
 type TourStep = {
   id: string;
@@ -522,7 +523,7 @@ export default function DashboardOnboardingTour({
       }
 
       focusTargetRef.current = target;
-      target.scrollIntoView({
+      scrollElementIntoView(target, {
         block: currentStep.scrollBlock ?? "center",
         inline: "nearest",
         behavior: "smooth",

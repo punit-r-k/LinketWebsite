@@ -118,9 +118,38 @@ input[type="reset"]:disabled,
   }
 }
 
-/* Smooth anchor scrolling */
+/* Native scroll defaults */
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
+}
+
+body {
+  overflow-x: clip;
+}
+
+:where(.scroll-native, .dashboard-scroll-area, [data-scroll-native="true"]) {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+:where(.scroll-native-y, .dashboard-scroll-area, [data-scroll-native="y"]) {
+  touch-action: pan-y;
+}
+
+:where(.scroll-native-x, [data-scroll-native="x"]) {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-x;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  :where(.scroll-native, .scroll-native-x, .scroll-native-y, .dashboard-scroll-area, [data-scroll-native]) {
+    scroll-behavior: auto;
+  }
 }
 
 /* Auth page */
