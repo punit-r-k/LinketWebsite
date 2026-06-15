@@ -9,3 +9,6 @@ export const UPLOADER_MEDIA_COLUMN_CLASS =
 
 export const UPLOADER_CONTROL_COLUMN_CLASS =
   "min-w-0 w-full space-y-2 text-left";
+
+export const UPLOADER_AVATAR_PREVIEW_CLASS =
+  "h-32 w-32 overflow-hidden rounded-full border bg-muted sm:h-28 sm:w-28";

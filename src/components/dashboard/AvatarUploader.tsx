@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import {
   UPLOADER_ACTION_BUTTON_CLASS,
+  UPLOADER_AVATAR_PREVIEW_CLASS,
   UPLOADER_CONTROL_COLUMN_CLASS,
   UPLOADER_MEDIA_COLUMN_CLASS,
   UPLOADER_TWO_COLUMN_ROW_CLASS,
@@ -567,7 +568,7 @@ export default function AvatarUploader({
         {!sourceUrl ? (
           <div className={UPLOADER_TWO_COLUMN_ROW_CLASS}>
             <div className={UPLOADER_MEDIA_COLUMN_CLASS}>
-              <div className="h-32 w-32 overflow-hidden rounded-full border-2 border-[var(--accent)] bg-muted sm:h-28 sm:w-28">
+              <div className={cn(UPLOADER_AVATAR_PREVIEW_CLASS, "border-2 border-[var(--accent)]")}>
                 {displayUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={displayUrl} alt="Profile photo" className="h-full w-full object-cover" />

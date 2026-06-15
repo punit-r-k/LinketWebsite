@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { SwitchRow } from "@/components/ui/switch-row";
 import {
   UPLOADER_ACTION_BUTTON_CLASS,
+  UPLOADER_AVATAR_PREVIEW_CLASS,
   UPLOADER_CONTROL_COLUMN_CLASS,
   UPLOADER_MEDIA_COLUMN_CLASS,
   UPLOADER_TWO_COLUMN_ROW_CLASS,
@@ -869,7 +870,7 @@ export default function VCardContent({
           {!photoSourceUrl ? (
             <div className={UPLOADER_TWO_COLUMN_ROW_CLASS}>
               <div className={UPLOADER_MEDIA_COLUMN_CLASS}>
-                <div className="h-24 w-24 overflow-hidden rounded-full border bg-muted sm:h-20 sm:w-20">
+                <div className={UPLOADER_AVATAR_PREVIEW_CLASS}>
                   {visiblePhotoPreview ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={visiblePhotoPreview} alt="Selected profile" className="h-full w-full object-cover" />
