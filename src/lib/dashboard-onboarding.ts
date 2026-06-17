@@ -107,7 +107,7 @@ async function loadContactState(userId: string) {
   try {
     return await supabase
       .from("vcard_profiles")
-      .select("full_name, email, phone, company, title")
+      .select("full_name, email, phone, company, title, contact_button_visible")
       .eq("user_id", userId)
       .maybeSingle();
   } catch {
@@ -151,6 +151,7 @@ export async function getDashboardOnboardingState(
     phone: contactResult.data?.phone ?? "",
     company: contactResult.data?.company ?? "",
     title: contactResult.data?.title ?? "",
+    contactButtonVisible: contactResult.data?.contact_button_visible !== false,
   };
 
   const fallbackHandle = `user-${userId.slice(0, 8)}`;

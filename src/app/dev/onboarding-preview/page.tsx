@@ -89,6 +89,7 @@ function buildPreviewState(
       phone: step === "publish" ? "(555) 123-4567" : "",
       company: step === "publish" ? "Linket Connect" : "",
       title: step === "publish" ? "Founder" : "",
+      contactButtonVisible: true,
     },
     activeProfile: {
       id: "preview-profile",

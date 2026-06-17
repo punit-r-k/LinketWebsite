@@ -21,6 +21,7 @@ export type DashboardOnboardingContactState = {
   phone: string;
   company: string;
   title: string;
+  contactButtonVisible: boolean;
 };
 
 export type DashboardOnboardingProfileState = {
