@@ -2932,7 +2932,7 @@ export default function DashboardSetupFlow({
       : currentStep.id === "links"
         ? "This updates your first link."
       : showLaunchHub
-        ? "Your live page is ready to share."
+        ? ""
       : currentStep.id === "publish"
         ? "Check this once before you publish."
       : "This updates as you type.";
@@ -3200,20 +3200,51 @@ export default function DashboardSetupFlow({
       )}
     >
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
-        <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3">
-          <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">
-              {ui.onboarding.stepPrefix} {currentStepIndex + 1}{" "}
-              {ui.onboarding.stepOf} {SETUP_STEPS.length}: {stepHeading.title}
-            </p>
-            <h1 className="text-[2rem] font-semibold tracking-tight text-foreground sm:text-4xl">
-              {pageHeading.title}
-            </h1>
-            <p className="max-w-2xl text-sm leading-5 text-muted-foreground sm:text-base sm:leading-6">
-              {pageHeading.description}
-            </p>
-          </div>
-        </header>
+        {showLaunchHub ? (
+          <nav
+            className="dashboard-navbar relative z-20 rounded-[24px] border border-border/70 px-4 py-3 shadow-[var(--shadow-grounded)]"
+            aria-label="Live status"
+          >
+            <div className="dashboard-navbar-inner flex flex-col gap-3 p-0 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Live status
+                </p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Next step: continue to the dashboard.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                {postPublishStatusItems.map((item) => (
+                  <span
+                    key={item.label}
+                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-sm font-medium shadow-sm"
+                  >
+                    <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
+                    <span className={item.tone}>{item.label}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </nav>
+        ) : null}
+
+        {!showLaunchHub ? (
+          <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3">
+            <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                {ui.onboarding.stepPrefix} {currentStepIndex + 1}{" "}
+                {ui.onboarding.stepOf} {SETUP_STEPS.length}: {stepHeading.title}
+              </p>
+              <h1 className="text-[2rem] font-semibold tracking-tight text-foreground sm:text-4xl">
+                {pageHeading.title}
+              </h1>
+              <p className="max-w-2xl text-sm leading-5 text-muted-foreground sm:text-base sm:leading-6">
+                {pageHeading.description}
+              </p>
+            </div>
+          </header>
+        ) : null}
 
         {!showLaunchHub ? (
           <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
@@ -3273,14 +3304,6 @@ export default function DashboardSetupFlow({
           <div className="space-y-5">
             {showLaunchHub ? (
               <Card className={setupCardClassName}>
-                <CardHeader className="gap-2 border-b border-border/60 pb-5">
-                  <CardTitle className="text-3xl font-semibold tracking-tight text-foreground">
-                    You&apos;re live
-                  </CardTitle>
-                  <CardDescription className="max-w-2xl text-sm text-muted-foreground">
-                    Your page is live. Continue to the dashboard to keep building.
-                  </CardDescription>
-                </CardHeader>
                 <CardContent className="space-y-5 px-5 py-5 sm:px-6">
                   <div className={cn("space-y-3 p-4", softPanelClassName)}>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
@@ -4236,9 +4259,11 @@ export default function DashboardSetupFlow({
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <CardTitle className="text-lg font-semibold text-foreground">Live preview</CardTitle>
-                      <CardDescription className="text-sm text-muted-foreground">
-                      {previewDescription}
-                      </CardDescription>
+                      {previewDescription ? (
+                        <CardDescription className="text-sm text-muted-foreground">
+                          {previewDescription}
+                        </CardDescription>
+                      ) : null}
                     </div>
                 </div>
               </CardHeader>
@@ -4262,45 +4287,28 @@ export default function DashboardSetupFlow({
                     showClicks={false}
                   />
                 </div>
-                <div className="space-y-2 border-t border-border/60 pt-4">
-                  {showLaunchHub ? (
-                    <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                        Live status
-                      </p>
-                      <p className="px-1 text-sm text-muted-foreground">
-                        Next step: continue to the dashboard.
-                      </p>
-                      {postPublishStatusItems.map((item) => (
-                        <div key={item.label} className="flex items-center gap-3 px-1 py-1.5">
-                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground">
-                            <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
-                          </span>
-                          <p className={cn("text-sm font-medium", item.tone)}>{item.label}</p>
-                        </div>
-                      ))}
-                    </>
-                  ) : currentStep.id === "publish" ? (
-                    <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                        Status
-                      </p>
-                      {prePublishStatusItems.map((item) => (
-                        <div key={item.label} className="flex items-center gap-3 px-1 py-1.5">
-                          <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground">
-                            <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
-                          </span>
-                          <p className={cn("text-sm font-medium", item.tone)}>{item.label}</p>
-                        </div>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                        To finish setup
-                      </p>
-                      {checklistItems.map((item) => (
-                        (() => {
+                {!showLaunchHub ? (
+                  <div className="space-y-2 border-t border-border/60 pt-4">
+                    {currentStep.id === "publish" ? (
+                      <>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                          Status
+                        </p>
+                        {prePublishStatusItems.map((item) => (
+                          <div key={item.label} className="flex items-center gap-3 px-1 py-1.5">
+                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground">
+                              <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
+                            </span>
+                            <p className={cn("text-sm font-medium", item.tone)}>{item.label}</p>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                          To finish setup
+                        </p>
+                        {checklistItems.map((item) => {
                           const ItemIcon = item.icon;
                           return (
                             <div
@@ -4320,11 +4328,11 @@ export default function DashboardSetupFlow({
                               <p className="text-sm font-medium text-foreground">{item.label}</p>
                             </div>
                           );
-                        })()
-                      ))}
-                    </>
-                  )}
-                </div>
+                        })}
+                      </>
+                    )}
+                  </div>
+                ) : null}
               </CardContent>
             </Card>
           </aside>
