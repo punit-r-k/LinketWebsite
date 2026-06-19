@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -173,8 +174,6 @@ type SetupDraftCache<T> = {
 const AUTO_HANDLE_PATTERN = /^user-[0-9a-f]{8}$/i;
 const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 const MAX_LINK_ROWS = 5;
-const PROFILE_EDITOR_SECTION_STORAGE_KEY =
-  "linket:profile-editor:active-section";
 const ONBOARDING_COMPLETION_SESSION_KEY_PREFIX =
   "linket:onboarding-complete";
 const ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX =
@@ -482,6 +481,18 @@ function clearOnboardingStepIndex(userId: string) {
 
 function canPersistOnboardingTheme(theme: ThemeName) {
   return theme === "light" || theme === "dark";
+}
+
+function applyDashboardScopeTheme(theme: ThemeName) {
+  if (typeof document === "undefined") return;
+  const scope = document.getElementById("dashboard-theme-scope");
+  if (!scope) return;
+
+  Array.from(scope.classList)
+    .filter((className) => className.startsWith("theme-"))
+    .forEach((className) => scope.classList.remove(className));
+  scope.classList.add(`theme-${theme}`);
+  scope.classList.toggle("dark", isDarkTheme(theme));
 }
 
 function buildEmptyLink(partial?: Partial<ProfileLinkDraft>): ProfileLinkDraft {
@@ -950,7 +961,7 @@ export default function DashboardSetupFlow({
   const { locale, setLocale, ui } = useI18n();
   const user = useDashboardUser();
   const planAccess = useDashboardPlanAccess();
-  const { setTheme } = useThemeOptional();
+  const { theme: dashboardTheme, setTheme } = useThemeOptional();
   const userId = user?.id ?? null;
   const userEmail = user?.email ?? null;
   const previewProfileDraft = useMemo(
@@ -1065,6 +1076,22 @@ export default function DashboardSetupFlow({
     () => buildContactDraftSignature(contactDraft, profileDraft?.name ?? ""),
     [contactDraft, profileDraft?.name]
   );
+  const selectedOnboardingThemeForScope = sanitizeThemeForPlan(
+    profileDraft?.theme ?? initialOnboardingState.activeProfile.theme,
+    planAccess
+  );
+  const activeOnboardingThemeForScope =
+    themePreview !== null && !canPersistOnboardingTheme(themePreview)
+      ? themePreview
+      : selectedOnboardingThemeForScope;
+
+  useLayoutEffect(() => {
+    applyDashboardScopeTheme(activeOnboardingThemeForScope);
+    return () => {
+      applyDashboardScopeTheme(dashboardTheme);
+    };
+  }, [activeOnboardingThemeForScope, dashboardTheme]);
+
   useEffect(() => {
     profileDraftRef.current = profileDraft;
   }, [profileDraft]);
@@ -2395,6 +2422,57 @@ export default function DashboardSetupFlow({
     scrollPageToTop({ behavior: "smooth" });
   }
 
+  function handleStepNavigation(targetStepIndex: number) {
+    if (targetStepIndex === currentStepIndex) {
+      return;
+    }
+
+    const targetStep = SETUP_STEPS[targetStepIndex];
+    if (!targetStep) {
+      return;
+    }
+
+    void trackEvent(
+      "onboarding_step_navigation_clicked",
+      trackingMeta({
+        step_id: SETUP_STEPS[currentStepIndex]?.id ?? "unknown",
+        step_index: currentStepIndex + 1,
+        target_step_id: targetStep.id,
+        target_step_index: targetStepIndex + 1,
+      })
+    );
+
+    if (targetStepIndex > currentStepIndex) {
+      for (let index = currentStepIndex; index < targetStepIndex; index += 1) {
+        const error = validateStep(index);
+        if (error) {
+          const blockedStep = SETUP_STEPS[index];
+          setStepError(error);
+          setCurrentStepIndex(index);
+          if (blockedStep) {
+            focusFirstMissingField(blockedStep.id);
+          }
+          void trackEvent(
+            "onboarding_step_navigation_blocked",
+            trackingMeta({
+              step_id: blockedStep?.id ?? "unknown",
+              step_index: index + 1,
+              target_step_id: targetStep.id,
+              target_step_index: targetStepIndex + 1,
+              reason: error,
+            })
+          );
+          scrollPageToTop({ behavior: "smooth" });
+          return;
+        }
+      }
+    }
+
+    setCurrentStepIndex(targetStepIndex);
+    setStepError(null);
+    scrollPageToTop({ behavior: "smooth" });
+  }
+
   async function copyTextToClipboard(value: string) {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(value);
@@ -2639,15 +2717,6 @@ export default function DashboardSetupFlow({
     setStepError(null);
     scrollPageToTop({ behavior: "smooth" });
     focusFieldById("setup-handle");
-  }
-
-  function handleOpenProfileSection(
-    section: "profile" | "contact" | "links" | "lead" | "preview"
-  ) {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(PROFILE_EDITOR_SECTION_STORAGE_KEY, section);
-    }
-    handleContinueToDashboard("/dashboard/profiles");
   }
 
   if (loading || !profileDraft || !contactDraft || !userId || !previewProfile) {
@@ -2989,7 +3058,6 @@ export default function DashboardSetupFlow({
 
                     themePreviewRef.current = themeOption.value;
                     setThemePreview(themeOption.value);
-                    setTheme(themeOption.value);
                     void trackEvent(
                       "theme_previewed",
                       trackingMeta({
@@ -3056,7 +3124,6 @@ export default function DashboardSetupFlow({
                       onClick={() => {
                         themePreviewRef.current = themeOption.value;
                         setThemePreview(themeOption.value);
-                        setTheme(themeOption.value);
                         void trackEvent(
                           "theme_previewed",
                           trackingMeta({
@@ -3162,16 +3229,19 @@ export default function DashboardSetupFlow({
                       : "incomplete step";
 
                   return (
-                    <div
+                    <button
                       key={step.id}
+                      type="button"
                       aria-label={`${mobileStepLabels[step.id]}: ${shapeLabel}`}
+                      aria-current={isCurrent ? "step" : undefined}
+                      onClick={() => handleStepNavigation(index)}
                       className={cn(
-                        "flex min-h-[104px] min-w-0 flex-col items-center justify-center rounded-2xl border px-1.5 py-2 text-center",
+                        "flex min-h-[104px] min-w-0 flex-col items-center justify-center rounded-2xl border px-1.5 py-2 text-center transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         isCurrent
                           ? "border-[color:var(--ring)] bg-[color:color-mix(in_srgb,var(--ring)_16%,transparent)] text-foreground"
                           : isDone
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
-                            : "border-border/60 bg-background/60 text-muted-foreground"
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:border-emerald-500/50 hover:bg-emerald-500/15 dark:text-emerald-200"
+                            : "border-border/60 bg-background/60 text-muted-foreground hover:border-border hover:bg-background"
                       )}
                     >
                       <span
@@ -3191,7 +3261,7 @@ export default function DashboardSetupFlow({
                       <p className="mt-1 text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] opacity-75">
                         Step {index + 1}
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -3270,48 +3340,6 @@ export default function DashboardSetupFlow({
                       >
                         Show QR
                       </Button>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        Keep building
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        These are optional next steps after sharing your page.
-                      </p>
-                    </div>
-                    <div className="grid gap-3 lg:grid-cols-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          void trackEvent(
-                            "linket_claim_started",
-                            trackingMeta({ source_cta: "launch_hub" })
-                          );
-                          handleContinueToDashboard("/dashboard/linkets");
-                        }}
-                        className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
-                      >
-                        <p className="text-sm font-semibold text-foreground">
-                          Pair your Linket
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Connect your device next.
-                        </p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenProfileSection("lead")}
-                        className={cn("p-4 text-left transition hover:border-border hover:bg-card", softPanelClassName)}
-                      >
-                        <p className="text-sm font-semibold text-foreground">
-                          Set up lead capture
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          Open the lead form builder.
-                        </p>
-                      </button>
                     </div>
                   </div>
                 </CardContent>
