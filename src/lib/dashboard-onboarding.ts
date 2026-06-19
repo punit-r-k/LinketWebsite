@@ -107,12 +107,27 @@ async function loadContactState(userId: string) {
   try {
     return await supabase
       .from("vcard_profiles")
-      .select("full_name, email, phone, company, title, contact_button_visible")
+      .select("full_name, email, additional_emails, phone, additional_phones, company, title, contact_button_visible")
       .eq("user_id", userId)
       .maybeSingle();
   } catch {
     return { data: null, error: null };
   }
+}
+
+function normalizeContactList(values: string[] | null | undefined, primary = "") {
+  const seen = new Set<string>();
+  const normalizedPrimary = primary.trim().toLowerCase();
+  if (normalizedPrimary) seen.add(normalizedPrimary);
+  return (values ?? [])
+    .map((value) => value.trim())
+    .filter((value) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 }
 
 export async function getDashboardOnboardingState(
@@ -148,7 +163,15 @@ export async function getDashboardOnboardingState(
   const contact = {
     fullName: contactResult.data?.full_name ?? "",
     email: contactResult.data?.email ?? "",
+    additionalEmails: normalizeContactList(
+      contactResult.data?.additional_emails as string[] | null | undefined,
+      contactResult.data?.email ?? ""
+    ),
     phone: contactResult.data?.phone ?? "",
+    additionalPhones: normalizeContactList(
+      contactResult.data?.additional_phones as string[] | null | undefined,
+      contactResult.data?.phone ?? ""
+    ),
     company: contactResult.data?.company ?? "",
     title: contactResult.data?.title ?? "",
     contactButtonVisible: contactResult.data?.contact_button_visible !== false,
@@ -170,7 +193,12 @@ export async function getDashboardOnboardingState(
 
   const activeLinks = activeProfileState.links.filter((link) => link.is_active);
   const hasMeaningfulLink = activeLinks.some((link) => isMeaningfulLink(link.url));
-  const hasContact = Boolean(contact.email.trim() || contact.phone.trim());
+  const hasContact = Boolean(
+    contact.email.trim() ||
+      contact.phone.trim() ||
+      contact.additionalEmails.some((value) => value.trim()) ||
+      contact.additionalPhones.some((value) => value.trim())
+  );
   const hasCustomHandle =
     Boolean(activeProfileState.handle.trim()) &&
     !AUTO_HANDLE_PATTERN.test(activeProfileState.handle.trim());

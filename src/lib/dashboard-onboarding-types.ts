@@ -18,7 +18,9 @@ export type DashboardOnboardingAccountState = {
 export type DashboardOnboardingContactState = {
   fullName: string;
   email: string;
+  additionalEmails: string[];
   phone: string;
+  additionalPhones: string[];
   company: string;
   title: string;
   contactButtonVisible: boolean;

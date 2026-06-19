@@ -97,6 +97,21 @@ function sortLinks(links: ProfileLinkRecord[] | null | undefined) {
     );
 }
 
+function normalizeContactList(values: string[] | null | undefined, primary = "") {
+  const seen = new Set<string>();
+  const normalizedPrimary = primary.trim().toLowerCase();
+  if (normalizedPrimary) seen.add(normalizedPrimary);
+  return (values ?? [])
+    .map((value) => value.trim())
+    .filter((value) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 export default async function PublicProfilePage({ params }: Props) {
   const { handle: rawHandle } = await params;
   const handle = rawHandle?.trim().toLowerCase();
@@ -111,12 +126,12 @@ export default async function PublicProfilePage({ params }: Props) {
   const vcardLookup = isSupabaseAdminAvailable
     ? supabaseAdmin
         .from("vcard_profiles")
-        .select("email, phone, contact_button_visible")
+        .select("email, additional_emails, phone, additional_phones, contact_button_visible")
         .eq("user_id", account.user_id)
         .maybeSingle()
     : supabase
         .from("vcard_profiles")
-        .select("email, phone, contact_button_visible")
+        .select("email, additional_emails, phone, additional_phones, contact_button_visible")
         .eq("user_id", account.user_id)
         .maybeSingle();
   const [
@@ -154,11 +169,27 @@ export default async function PublicProfilePage({ params }: Props) {
   const { data: vcardData } = vcardResult;
   const vcardSettings = vcardData as {
     email?: string | null;
+    additional_emails?: string[] | null;
     phone?: string | null;
+    additional_phones?: string[] | null;
     contact_button_visible?: boolean | null;
   } | null;
+  const contactEmails = [
+    vcardSettings?.email?.trim() ?? "",
+    ...normalizeContactList(
+      vcardSettings?.additional_emails,
+      vcardSettings?.email ?? ""
+    ),
+  ].filter(Boolean);
+  const contactPhones = [
+    vcardSettings?.phone?.trim() ?? "",
+    ...normalizeContactList(
+      vcardSettings?.additional_phones,
+      vcardSettings?.phone ?? ""
+    ),
+  ].filter(Boolean);
   const hasContactDetails = Boolean(
-    vcardSettings?.email?.trim() || vcardSettings?.phone?.trim()
+    contactEmails.length || contactPhones.length
   );
   const showContactDownload =
     hasContactDetails && vcardSettings?.contact_button_visible !== false;
@@ -372,6 +403,8 @@ export default async function PublicProfilePage({ params }: Props) {
                     handle={publicHandle}
                     label="Save Contact Information"
                     className="public-profile-cta-primary w-full rounded-full sm:w-auto"
+                    emails={contactEmails}
+                    phones={contactPhones}
                   />
                 ) : null}
                 <ShareContactButton

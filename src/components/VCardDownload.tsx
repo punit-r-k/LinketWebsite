@@ -1,7 +1,9 @@
 "use client";
 import * as React from "react";
+import { ChevronDown, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trackEvent } from "@/lib/analytics";
+import { cn } from "@/lib/utils";
 
 type ButtonVariant = React.ComponentProps<typeof Button>["variant"];
 
@@ -12,6 +14,8 @@ export default function VCardDownload({
   variant,
   iconSrc,
   iconAlt = "Site icon",
+  emails = [],
+  phones = [],
 }: {
   handle: string;
   label?: string;
@@ -19,9 +23,13 @@ export default function VCardDownload({
   variant?: ButtonVariant;
   iconSrc?: string;
   iconAlt?: string;
+  emails?: string[];
+  phones?: string[];
 }) {
   const hrefBase = `/api/vcard/${encodeURIComponent(handle)}`;
   const [downloading, setDownloading] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const hasDetails = emails.length > 0 || phones.length > 0;
 
   function buildFreshHref() {
     return `${hrefBase}?download=${Date.now()}`;
@@ -69,24 +77,110 @@ export default function VCardDownload({
   }
 
   return (
-    <Button
-      onClick={download}
-      disabled={downloading}
-      aria-label={label}
-      title={label}
-      className={className}
-      variant={variant}
-    >
-      {iconSrc ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={iconSrc}
-          alt={iconAlt}
-          className="mr-2 h-4 w-4"
-          aria-hidden
-        />
+    <div className="relative w-full sm:w-auto">
+      <div className="flex w-full items-center gap-2 sm:w-auto">
+        <Button
+          onClick={download}
+          disabled={downloading}
+          aria-label={label}
+          title={label}
+          className={cn("min-w-0 flex-1 sm:flex-none", className)}
+          variant={variant}
+        >
+          {iconSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={iconSrc}
+              alt={iconAlt}
+              className="mr-2 h-4 w-4"
+              aria-hidden
+            />
+          ) : null}
+          <span className="truncate">{downloading ? "Preparing..." : label}</span>
+        </Button>
+        {hasDetails ? (
+          <button
+            type="button"
+            aria-label={open ? "Hide contact details" : "Show contact details"}
+            aria-expanded={open}
+            onClick={() => setOpen((current) => !current)}
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card/80 text-foreground shadow-sm transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <ChevronDown
+              className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                open ? "rotate-180" : "rotate-0"
+              )}
+              aria-hidden
+            />
+          </button>
+        ) : null}
+      </div>
+      {hasDetails ? (
+        <div
+          className={cn(
+            "absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/95 text-card-foreground shadow-xl backdrop-blur transition-all duration-200 ease-out sm:right-auto sm:min-w-[20rem]",
+            open
+              ? "max-h-80 translate-y-0 opacity-100"
+              : "pointer-events-none max-h-0 -translate-y-1 opacity-0"
+          )}
+        >
+          <div className="space-y-3 p-3">
+            {emails.length ? (
+              <ContactDetailGroup
+                icon={Mail}
+                label="Emails"
+                values={emails}
+                hrefPrefix="mailto:"
+              />
+            ) : null}
+            {phones.length ? (
+              <ContactDetailGroup
+                icon={Phone}
+                label="Phone numbers"
+                values={phones}
+                hrefPrefix="tel:"
+              />
+            ) : null}
+          </div>
+        </div>
       ) : null}
-      {downloading ? "Preparing..." : label}
-    </Button>
+    </div>
+  );
+}
+
+function ContactDetailGroup({
+  icon: Icon,
+  label,
+  values,
+  hrefPrefix,
+}: {
+  icon: typeof Mail;
+  label: string;
+  values: string[];
+  hrefPrefix: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <Icon className="h-3.5 w-3.5" aria-hidden />
+        {label}
+      </div>
+      <div className="space-y-1">
+        {values.map((value) => (
+          <a
+            key={`${label}-${value}`}
+            href={`${hrefPrefix}${
+              hrefPrefix === "tel:"
+                ? value.replace(/[^\d+]/g, "") || value.trim()
+                : value.trim()
+            }`}
+            className="block truncate rounded-xl border border-border/50 bg-background/70 px-3 py-2 text-sm text-foreground transition hover:bg-background"
+          >
+            {value}
+          </a>
+        ))}
+      </div>
+    </div>
   );
 }

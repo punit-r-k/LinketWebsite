@@ -167,7 +167,6 @@ function Navbar() {
   const [dashboardSetupLiveStatus, setDashboardSetupLiveStatus] =
     useState<OnboardingLiveStatusDetail>({
       visible: false,
-      languageReady: false,
       profileReady: false,
       contactReady: false,
       linksReady: false,
@@ -334,7 +333,6 @@ function Navbar() {
       setDashboardSidebarOpen(false);
       setDashboardSetupLiveStatus({
         visible: false,
-        languageReady: false,
         profileReady: false,
         contactReady: false,
         linksReady: false,
@@ -356,7 +354,6 @@ function Navbar() {
     if (!isDashboardSetupRoute) {
       setDashboardSetupLiveStatus({
         visible: false,
-        languageReady: false,
         profileReady: false,
         contactReady: false,
         linksReady: false,
@@ -371,7 +368,6 @@ function Navbar() {
       ).detail;
       setDashboardSetupLiveStatus({
         visible: Boolean(detail?.visible),
-        languageReady: Boolean(detail?.languageReady),
         profileReady: Boolean(detail?.profileReady),
         contactReady: Boolean(detail?.contactReady),
         linksReady: Boolean(detail?.linksReady),

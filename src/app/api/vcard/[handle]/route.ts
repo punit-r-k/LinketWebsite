@@ -14,7 +14,9 @@ type VCardRecord = {
   full_name: string | null;
   title: string | null;
   email: string | null;
+  additional_emails: string[] | null;
   phone: string | null;
+  additional_phones: string[] | null;
   company: string | null;
   address: string | null;
   note: string | null;
@@ -35,6 +37,22 @@ function splitName(fullName: string) {
   };
 }
 
+function normalizeContactList(values: string[] | null | undefined, primary = "") {
+  const seen = new Set<string>();
+  const normalizedPrimary = primary.trim().toLowerCase();
+  if (normalizedPrimary) seen.add(normalizedPrimary);
+  return (values ?? [])
+    .map((value) => value.trim())
+    .filter((value) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 5);
+}
+
 function buildContactProfile(
   handle: string,
   record: VCardRecord | null,
@@ -49,17 +67,35 @@ function buildContactProfile(
   const parsedAddress = parseAddress(record?.address ?? null);
   const photoData = sanitizeVCardPhotoData(record?.photo_data);
   const title = record?.title?.trim() || fallbackTitle.trim();
+  const primaryEmail = record?.email?.trim() ?? "";
+  const primaryPhone = record?.phone?.trim() ?? "";
+  const emails = [
+    primaryEmail,
+    ...normalizeContactList(record?.additional_emails, primaryEmail),
+  ].filter(Boolean);
+  const phones = [
+    primaryPhone,
+    ...normalizeContactList(record?.additional_phones, primaryPhone),
+  ].filter(Boolean);
   return {
     handle,
     firstName,
     lastName,
     org: record?.company ?? undefined,
     title: title || undefined,
-    emails: record?.email
-      ? [{ value: record.email, type: "work", pref: true }]
+    emails: emails.length
+      ? emails.map((value, index) => ({
+          value,
+          type: "work" as const,
+          pref: index === 0,
+        }))
       : undefined,
-    phones: record?.phone
-      ? [{ value: record.phone, type: "cell", pref: true }]
+    phones: phones.length
+      ? phones.map((value, index) => ({
+          value,
+          type: "cell" as const,
+          pref: index === 0,
+        }))
       : undefined,
     note: record?.note ?? undefined,
     address: parsedAddress ?? undefined,
@@ -136,7 +172,7 @@ async function fetchVCardRecord(userId: string) {
   if (!isSupabaseAdminAvailable) return null;
   const { data, error } = await supabaseAdmin
     .from("vcard_profiles")
-    .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at,contact_button_visible,updated_at")
+    .select("full_name,title,email,additional_emails,phone,additional_phones,company,address,note,photo_data,photo_name,photo_removed_at,contact_button_visible,updated_at")
     .eq("user_id", userId)
     .maybeSingle();
   if (error && error.code !== "PGRST116") throw error;

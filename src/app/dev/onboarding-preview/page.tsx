@@ -86,7 +86,9 @@ function buildPreviewState(
     contact: {
       fullName: "Jordan Lee",
       email: step === "profile" ? "" : "jordan@linketconnect.com",
+      additionalEmails: [],
       phone: step === "publish" ? "(555) 123-4567" : "",
+      additionalPhones: [],
       company: step === "publish" ? "Linket Connect" : "",
       title: step === "publish" ? "Founder" : "",
       contactButtonVisible: true,

@@ -137,7 +137,9 @@ type ProfileDraft = {
 
 type VCardSnapshot = {
   email: string;
+  additionalEmails: string[];
   phone: string;
+  additionalPhones: string[];
   hasPhoto: boolean;
   contactButtonVisible: boolean;
   status: "idle" | "saving" | "saved" | "error";
@@ -151,6 +153,11 @@ type SectionProgressItem = {
   detail: string;
   completed: boolean;
 };
+
+function areStringArraysEqual(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
+}
 
 const ICON_OPTIONS: Array<{
   value: LinkIconKey;
@@ -255,7 +262,9 @@ export default function PublicProfileEditorPage() {
   );
   const [vcardSnapshot, setVcardSnapshot] = useState<VCardSnapshot>({
     email: "",
+    additionalEmails: [],
     phone: "",
+    additionalPhones: [],
     hasPhoto: false,
     contactButtonVisible: true,
     status: "idle",
@@ -266,7 +275,9 @@ export default function PublicProfileEditorPage() {
   const handleVCardFieldsChange = useCallback(
     (fields: {
       email: string;
+      additionalEmails?: string[];
       phone: string;
+      additionalPhones?: string[];
       photoData: string | null;
       contactButtonVisible?: boolean;
     }) => {
@@ -274,13 +285,17 @@ export default function PublicProfileEditorPage() {
         const next = {
           ...prev,
           email: fields.email ?? "",
+          additionalEmails: fields.additionalEmails ?? [],
           phone: fields.phone ?? "",
+          additionalPhones: fields.additionalPhones ?? [],
           hasPhoto: Boolean(fields.photoData),
           contactButtonVisible: fields.contactButtonVisible !== false,
         };
         if (
           prev.email === next.email &&
+          areStringArraysEqual(prev.additionalEmails, next.additionalEmails) &&
           prev.phone === next.phone &&
+          areStringArraysEqual(prev.additionalPhones, next.additionalPhones) &&
           prev.hasPhoto === next.hasPhoto &&
           prev.contactButtonVisible === next.contactButtonVisible
         ) {
@@ -351,17 +366,28 @@ export default function PublicProfileEditorPage() {
         const payload = (await response.json()) as {
           fields?: {
             email?: string;
+            additionalEmails?: string[];
             phone?: string;
+            additionalPhones?: string[];
             contactButtonVisible?: boolean;
           };
         };
         if (cancelled) return;
         setVcardSnapshot((prev) => {
-          if (prev.email || prev.phone) return prev;
+          if (
+            prev.email ||
+            prev.phone ||
+            prev.additionalEmails.length ||
+            prev.additionalPhones.length
+          ) {
+            return prev;
+          }
           return {
             ...prev,
             email: payload.fields?.email ?? "",
+            additionalEmails: payload.fields?.additionalEmails ?? [],
             phone: payload.fields?.phone ?? "",
+            additionalPhones: payload.fields?.additionalPhones ?? [],
             contactButtonVisible:
               payload.fields?.contactButtonVisible !== false,
           };
@@ -1225,7 +1251,10 @@ export default function PublicProfileEditorPage() {
   );
 
   const hasContactDetails = Boolean(
-    vcardSnapshot.email?.trim() || vcardSnapshot.phone?.trim()
+    vcardSnapshot.email?.trim() ||
+      vcardSnapshot.phone?.trim() ||
+      vcardSnapshot.additionalEmails.some((value) => value.trim()) ||
+      vcardSnapshot.additionalPhones.some((value) => value.trim())
   );
   const showContactDownloadButton =
     hasContactDetails && vcardSnapshot.contactButtonVisible;
@@ -1816,7 +1845,9 @@ function EditorPanel({
   setDraggingLinkId: (id: string | null) => void;
   onVCardFields: (fields: {
     email: string;
+    additionalEmails?: string[];
     phone: string;
+    additionalPhones?: string[];
     photoData: string | null;
   }) => void;
   onVCardStatus: (payload: {
@@ -1829,10 +1860,18 @@ function EditorPanel({
 }) {
   const { theme } = useThemeOptional();
   const handleFieldsChange = useCallback(
-    (fields: { email: string; phone: string; photoData: string | null }) => {
+    (fields: {
+      email: string;
+      additionalEmails?: string[];
+      phone: string;
+      additionalPhones?: string[];
+      photoData: string | null;
+    }) => {
       onVCardFields({
         email: fields.email,
+        additionalEmails: fields.additionalEmails ?? [],
         phone: fields.phone,
+        additionalPhones: fields.additionalPhones ?? [],
         photoData: fields.photoData,
       });
     },

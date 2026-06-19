@@ -13,7 +13,6 @@ import {
   Check,
   CheckCircle2,
   Gift,
-  Languages,
   Link2,
   Loader2,
   Palette,
@@ -92,16 +91,12 @@ import { SwitchRow } from "@/components/ui/switch-row";
 import { Textarea } from "@/components/ui/textarea";
 import { useI18n } from "@/components/i18n/LocaleProvider";
 import {
-  LOCALE_OPTIONS,
-  type SupportedLocale,
-} from "@/lib/i18n";
-import {
   formatClaimCodeDisplay,
   normalizeClaimCodeInput,
 } from "@/lib/linket-claim-code";
 import type { TagAssignmentDetail } from "@/lib/linket-tags";
 
-type SetupStepId = "language" | "profile" | "contact" | "links" | "publish";
+type SetupStepId = "profile" | "contact" | "links" | "publish";
 type SaveStatus = "idle" | "saving" | "saved" | "error" | "publishing";
 type FieldSaveState = "saved" | "saving" | "unsaved" | "error";
 
@@ -142,7 +137,9 @@ type ContactDraft = {
   fullName: string;
   title: string;
   email: string;
+  additionalEmails: string[];
   phone: string;
+  additionalPhones: string[];
   company: string;
   addressLine1: string;
   addressLine2: string;
@@ -180,8 +177,6 @@ const ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX =
   "linket:onboarding:profile-draft";
 const ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX =
   "linket:onboarding:contact-draft";
-const ONBOARDING_LANGUAGE_STORAGE_PREFIX =
-  "linket:onboarding:language-selected";
 const ONBOARDING_STEP_STORAGE_PREFIX =
   "linket:onboarding:current-step";
 const SAVE_RETRY_DELAYS_MS = [1500, 4000, 8000, 15000] as const;
@@ -208,6 +203,22 @@ function formatPhoneNumber(value: string) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
 }
 
+function normalizeContactList(values: string[] | null | undefined, primary = "") {
+  const seen = new Set<string>();
+  const normalizedPrimary = primary.trim().toLowerCase();
+  if (normalizedPrimary) seen.add(normalizedPrimary);
+  return (values ?? [])
+    .map((value) => value.trim())
+    .filter((value) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 5);
+}
+
 function formatTrialDate(value: string | null | undefined) {
   if (!value) return null;
   const parsed = new Date(value);
@@ -228,10 +239,6 @@ function getOnboardingDraftStorageKey(
       ? ONBOARDING_PROFILE_DRAFT_STORAGE_PREFIX
       : ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX
   }:${userId}`;
-}
-
-function getOnboardingLanguageStorageKey(userId: string) {
-  return `${ONBOARDING_LANGUAGE_STORAGE_PREFIX}:${userId}`;
 }
 
 function getOnboardingStepStorageKey(userId: string) {
@@ -288,12 +295,6 @@ const SETUP_STEPS: Array<{
   description: string;
   icon: LucideIcon;
 }> = [
-  {
-    id: "language",
-    label: "Language",
-    description: "Choose how to continue",
-    icon: Languages,
-  },
   {
     id: "profile",
     label: "Profile",
@@ -547,7 +548,15 @@ function mapContactFields(
     fullName: fields?.fullName?.trim() || fallbackName,
     title: fields?.title ?? "",
     email: fields?.email ?? "",
+    additionalEmails: normalizeContactList(
+      fields?.additionalEmails,
+      fields?.email ?? ""
+    ),
     phone: fields?.phone ?? "",
+    additionalPhones: normalizeContactList(
+      fields?.additionalPhones,
+      fields?.phone ?? ""
+    ),
     company: fields?.company ?? "",
     addressLine1: fields?.addressLine1 ?? "",
     addressLine2: fields?.addressLine2 ?? "",
@@ -559,6 +568,20 @@ function mapContactFields(
     photoData: fields?.photoData ?? null,
     photoName: fields?.photoName ?? null,
     contactButtonVisible: fields?.contactButtonVisible !== false,
+  };
+}
+
+function normalizeContactDraftCache(
+  cache: SetupDraftCache<ContactDraft> | null,
+  fallbackName: string
+) {
+  if (!cache) return null;
+  return {
+    ...cache,
+    draft: mapContactFields(cache.draft, fallbackName),
+    savedDraft: cache.savedDraft
+      ? mapContactFields(cache.savedDraft, fallbackName)
+      : undefined,
   };
 }
 
@@ -625,8 +648,7 @@ function mapOnboardingStateContact(
 ): ContactDraft {
   const mappedContact = mapContactFields(state.contact, fallbackName);
   if (
-    !mappedContact.email.trim() &&
-    !mappedContact.phone.trim() &&
+    !hasContactMethod(mappedContact) &&
     fallbackEmail
   ) {
     return {
@@ -681,7 +703,15 @@ function buildContactPayload(contact: ContactDraft, fallbackName: string) {
       fullName: contact.fullName.trim() || fallbackName.trim(),
       title: contact.title.trim(),
       email: contact.email.trim(),
+      additionalEmails: normalizeContactList(
+        contact.additionalEmails,
+        contact.email
+      ),
       phone: contact.phone.trim(),
+      additionalPhones: normalizeContactList(
+        contact.additionalPhones,
+        contact.phone
+      ),
       company: contact.company.trim(),
       addressLine1: contact.addressLine1.trim(),
       addressLine2: contact.addressLine2.trim(),
@@ -710,12 +740,10 @@ function getDraftLinkFieldKey(link: ProfileLinkDraft, index: number) {
 }
 
 function getInitialStepIndex(input: {
-  languageComplete: boolean;
   profileComplete: boolean;
   contactComplete: boolean;
   linksComplete: boolean;
 }) {
-  if (!input.languageComplete) return 0;
   if (!input.profileComplete) return getSetupStepIndex("profile");
   if (!input.contactComplete) return getSetupStepIndex("contact");
   if (!input.linksComplete) return getSetupStepIndex("links");
@@ -728,13 +756,14 @@ function getSetupStepIndex(stepId: SetupStepId) {
 }
 
 function hasContactMethod(
-  contact:
-    | Pick<ContactDraft, "email" | "phone">
-    | Partial<ContactDraft>
-    | null
-    | undefined
+  contact: Partial<ContactDraft> | null | undefined
 ) {
-  return Boolean(contact?.email?.trim() || contact?.phone?.trim());
+  return Boolean(
+    contact?.email?.trim() ||
+      contact?.phone?.trim() ||
+      contact?.additionalEmails?.some((value) => value.trim()) ||
+      contact?.additionalPhones?.some((value) => value.trim())
+  );
 }
 
 function isAccountSeededContact(
@@ -753,6 +782,16 @@ function areComparableValuesDifferent(
   saved: string | null | undefined
 ) {
   return normalizeComparableText(current) !== normalizeComparableText(saved);
+}
+
+function areComparableListsDifferent(
+  current: string[] | null | undefined,
+  saved: string[] | null | undefined
+) {
+  const currentValues = normalizeContactList(current);
+  const savedValues = normalizeContactList(saved);
+  if (currentValues.length !== savedValues.length) return true;
+  return currentValues.some((value, index) => value !== savedValues[index]);
 }
 
 function areComparableUrlsDifferent(
@@ -836,7 +875,7 @@ export default function DashboardSetupFlow({
   initialOnboardingState: DashboardOnboardingState;
   previewMode?: boolean;
 }) {
-  const { locale, setLocale, ui } = useI18n();
+  const { ui } = useI18n();
   const user = useDashboardUser();
   const planAccess = useDashboardPlanAccess();
   const { theme: dashboardTheme, setTheme } = useThemeOptional();
@@ -874,16 +913,11 @@ export default function DashboardSetupFlow({
   const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
   const [currentStepIndex, setCurrentStepIndex] = useState(
     getInitialStepIndex({
-      languageComplete: previewMode,
       profileComplete: initialOnboardingState.steps.profile,
       contactComplete: initialOnboardingState.steps.contact,
       linksComplete: initialOnboardingState.steps.links,
     })
   );
-  const [selectedLocale, setSelectedLocale] =
-    useState<SupportedLocale>(locale);
-  const [languagePreferenceLoaded, setLanguagePreferenceLoaded] =
-    useState(previewMode);
   const [contactRequiresReview, setContactRequiresReview] = useState(false);
   const [profileSaveStatus, setProfileSaveStatus] = useState<SaveStatus>("idle");
   const [contactSaveStatus, setContactSaveStatus] = useState<SaveStatus>("idle");
@@ -913,7 +947,6 @@ export default function DashboardSetupFlow({
   const [completedSetupSteps, setCompletedSetupSteps] = useState<
     Record<SetupStepId, boolean>
   >({
-    language: previewMode,
     profile: false,
     contact: false,
     links: false,
@@ -991,47 +1024,6 @@ export default function DashboardSetupFlow({
   }, [completedSetupSteps]);
 
   useEffect(() => {
-    setSelectedLocale(locale);
-  }, [locale]);
-
-  useEffect(() => {
-    if (previewMode || !userId) return;
-
-    let confirmed = false;
-    try {
-      confirmed = window.localStorage.getItem(
-        getOnboardingLanguageStorageKey(userId)
-      ) === "1";
-    } catch {
-      confirmed = false;
-    }
-
-    if (confirmed) {
-      setCompletedSetupSteps((current) => ({
-        ...current,
-        language: true,
-      }));
-      setCurrentStepIndex((current) =>
-        current === getSetupStepIndex("language")
-          ? getInitialStepIndex({
-              languageComplete: true,
-              profileComplete: initialOnboardingState.steps.profile,
-              contactComplete: initialOnboardingState.steps.contact,
-              linksComplete: initialOnboardingState.steps.links,
-            })
-          : current
-      );
-    }
-    setLanguagePreferenceLoaded(true);
-  }, [
-    initialOnboardingState.steps.contact,
-    initialOnboardingState.steps.links,
-    initialOnboardingState.steps.profile,
-    previewMode,
-    userId,
-  ]);
-
-  useEffect(() => {
     showLaunchHubRef.current = showLaunchHub || publishedThisSession;
   }, [publishedThisSession, showLaunchHub]);
 
@@ -1044,7 +1036,10 @@ export default function DashboardSetupFlow({
 
   useEffect(() => {
     if (!contactDraft) return;
-    if (contactDraft.phone.trim()) {
+    if (
+      contactDraft.phone.trim() ||
+      contactDraft.additionalPhones.some((phone) => phone.trim())
+    ) {
       setShowPhoneField(true);
     }
   }, [contactDraft]);
@@ -1206,7 +1201,7 @@ export default function DashboardSetupFlow({
           userId,
           "profile"
         );
-        const localContactDraft = readOnboardingDraftCache<ContactDraft>(
+        const rawLocalContactDraft = readOnboardingDraftCache<ContactDraft>(
           userId,
           "contact"
         );
@@ -1219,6 +1214,10 @@ export default function DashboardSetupFlow({
           localProfileDirty && localProfileDraft
             ? localProfileDraft.draft
             : mappedProfile;
+        const localContactDraft = normalizeContactDraftCache(
+          rawLocalContactDraft,
+          nextProfile.name
+        );
         const localContactDirty = Boolean(
           localContactDraft &&
             buildContactDraftSignature(
@@ -1273,7 +1272,6 @@ export default function DashboardSetupFlow({
         );
         setTheme(nextProfile.theme);
         const inferredStepIndex = getInitialStepIndex({
-          languageComplete: previewMode || languagePreferenceLoaded,
           profileComplete:
             Boolean(nextProfile.name.trim()) &&
             !isAutoHandle(nextProfile.handle),
@@ -1295,7 +1293,7 @@ export default function DashboardSetupFlow({
           userId,
           "profile"
         );
-        const localContactDraft = readOnboardingDraftCache<ContactDraft>(
+        const rawLocalContactDraft = readOnboardingDraftCache<ContactDraft>(
           userId,
           "contact"
         );
@@ -1305,6 +1303,10 @@ export default function DashboardSetupFlow({
               localProfileDraft.savedSignature
         );
         const fallbackProfile = localProfileDraft?.draft ?? null;
+        const localContactDraft = normalizeContactDraftCache(
+          rawLocalContactDraft,
+          fallbackProfile?.name ?? ""
+        );
         const localContactDirty = Boolean(
           localContactDraft &&
             buildContactDraftSignature(
@@ -1345,7 +1347,6 @@ export default function DashboardSetupFlow({
             buildContactDraftSignature(fallbackContact, fallbackProfile.name);
           setTheme(fallbackProfile.theme);
           const inferredStepIndex = getInitialStepIndex({
-            languageComplete: previewMode || languagePreferenceLoaded,
             profileComplete:
               Boolean(fallbackProfile.name.trim()) &&
               !isAutoHandle(fallbackProfile.handle),
@@ -1386,7 +1387,6 @@ export default function DashboardSetupFlow({
     initialOnboardingState.activeProfile.handle,
     initialOnboardingState.publishEventCount,
     setTheme,
-    languagePreferenceLoaded,
     userEmail,
     userId,
     previewMode,
@@ -1410,7 +1410,6 @@ export default function DashboardSetupFlow({
       new CustomEvent(ONBOARDING_LIVE_STATUS_EVENT, {
         detail: {
           visible: showLaunchHub || publishedThisSession,
-          languageReady: true,
           profileReady: liveProfileReady,
           contactReady: contactStepComplete,
           linksReady,
@@ -2111,6 +2110,44 @@ export default function DashboardSetupFlow({
     setSaveError(null);
   }
 
+  function updateContactListDraft(
+    key: "additionalEmails" | "additionalPhones",
+    index: number,
+    value: string
+  ) {
+    updateContactDraft(
+      (current) => {
+        const next = [...current[key]];
+        next[index] = key === "additionalPhones" ? formatPhoneNumber(value) : value;
+        return { ...current, [key]: next };
+      },
+      { markReviewed: true }
+    );
+  }
+
+  function addContactListDraft(key: "additionalEmails" | "additionalPhones") {
+    updateContactDraft(
+      (current) => {
+        if (current[key].length >= 5) return current;
+        return { ...current, [key]: [...current[key], ""] };
+      },
+      { markReviewed: true }
+    );
+  }
+
+  function removeContactListDraft(
+    key: "additionalEmails" | "additionalPhones",
+    index: number
+  ) {
+    updateContactDraft(
+      (current) => ({
+        ...current,
+        [key]: current[key].filter((_, itemIndex) => itemIndex !== index),
+      }),
+      { markReviewed: true }
+    );
+  }
+
   function focusFieldById(id: string) {
     if (typeof document === "undefined") return;
     window.setTimeout(() => {
@@ -2122,10 +2159,6 @@ export default function DashboardSetupFlow({
   }
 
   function focusFirstMissingField(stepId: SetupStepId) {
-    if (stepId === "language") {
-      focusFieldById(`setup-language-${selectedLocale}`);
-      return;
-    }
     if (stepId === "profile") {
       if (!profileDraftRef.current?.name.trim()) {
         focusFieldById("setup-name");
@@ -2140,7 +2173,7 @@ export default function DashboardSetupFlow({
       return;
     }
     if (stepId === "contact") {
-      if (!contactDraftRef.current?.email.trim() && !contactDraftRef.current?.phone.trim()) {
+      if (!hasContactMethod(contactDraftRef.current)) {
         focusFieldById("setup-email");
       }
       return;
@@ -2156,8 +2189,6 @@ export default function DashboardSetupFlow({
 
   function validateStep(stepIndex: number) {
     switch (SETUP_STEPS[stepIndex]?.id) {
-      case "language":
-        return selectedLocale ? null : "Choose a language to continue.";
       case "profile":
         if (!profileDraft?.name.trim()) {
           return "Add your name to continue.";
@@ -2167,7 +2198,7 @@ export default function DashboardSetupFlow({
         }
         return null;
       case "contact":
-        if (!contactDraft?.email.trim() && !contactDraft?.phone.trim()) {
+        if (!hasContactMethod(contactDraft)) {
           return "Add an email or phone number to continue.";
         }
         return null;
@@ -2210,21 +2241,6 @@ export default function DashboardSetupFlow({
         })
       );
       return;
-    }
-
-    if (stepId === "language") {
-      setLocale(selectedLocale);
-      if (userId) {
-        try {
-          window.localStorage.setItem(
-            getOnboardingLanguageStorageKey(userId),
-            "1"
-          );
-        } catch {
-          // Cookie persistence still keeps the language preference.
-        }
-      }
-      setLanguagePreferenceLoaded(true);
     }
 
     if (stepId === "profile" || stepId === "links") {
@@ -2326,7 +2342,6 @@ export default function DashboardSetupFlow({
     setPublishedThisSession(true);
     setShowLaunchHub(true);
     setCompletedSetupSteps({
-      language: true,
       profile: true,
       contact: true,
       links: true,
@@ -2695,7 +2710,6 @@ export default function DashboardSetupFlow({
   const softPanelClassName =
     "rounded-2xl border border-border/60 bg-background/40";
   const stepCompletion = {
-    language: completedSetupSteps.language,
     profile:
       completedSetupSteps.profile &&
       liveProfileReady &&
@@ -2762,11 +2776,6 @@ export default function DashboardSetupFlow({
           title: "You're live",
           description: "Continue to the dashboard, then share or keep building anytime.",
         }
-      : currentStep.id === "language"
-      ? {
-          title: ui.onboarding.language.stepLabel,
-          description: ui.onboarding.language.stepDescription,
-        }
       : currentStep.id === "profile"
       ? {
           title: "Profile",
@@ -2788,11 +2797,7 @@ export default function DashboardSetupFlow({
             };
   const linkButtonLabel = "Add another link";
   const continueButtonLabel =
-    currentStep.id === "language"
-      ? `${ui.onboarding.language.continuePrefix} ${
-          ui.onboarding.language.options[selectedLocale].title
-        }`
-      : currentStep.id === "profile"
+    currentStep.id === "profile"
       ? "Continue to contact info"
       : currentStep.id === "contact"
         ? "Continue to links"
@@ -2831,10 +2836,18 @@ export default function DashboardSetupFlow({
     areComparableValuesDifferent(profileDraft.headline, savedProfileDraft?.headline)
   );
   const emailFieldState = getContactFieldState(
-    areComparableValuesDifferent(contactDraft.email, savedContactDraft?.email)
+    areComparableValuesDifferent(contactDraft.email, savedContactDraft?.email) ||
+      areComparableListsDifferent(
+        contactDraft.additionalEmails,
+        savedContactDraft?.additionalEmails
+      )
   );
   const phoneFieldState = getContactFieldState(
-    areComparableValuesDifferent(contactDraft.phone, savedContactDraft?.phone)
+    areComparableValuesDifferent(contactDraft.phone, savedContactDraft?.phone) ||
+      areComparableListsDifferent(
+        contactDraft.additionalPhones,
+        savedContactDraft?.additionalPhones
+      )
   );
   const titleFieldState = getContactFieldState(
     areComparableValuesDifferent(contactDraft.title, savedContactDraft?.title)
@@ -2855,7 +2868,6 @@ export default function DashboardSetupFlow({
       selectedThemeValue
   );
   const mobileStepLabels: Record<SetupStepId, string> = {
-    language: ui.onboarding.language.stepLabel,
     profile: "Profile",
     contact: "Contact",
     links: "Links",
@@ -2863,15 +2875,13 @@ export default function DashboardSetupFlow({
   };
   const previewContactEnabled =
     (showLaunchHub ||
-      (currentStep.id !== "language" && currentStep.id !== "profile")) &&
+      currentStep.id !== "profile") &&
     contactReady &&
     contactButtonVisible;
   const previewContactDisabledText =
     !contactButtonVisible
       ? ""
-      : currentStep.id === "language"
-        ? ui.onboarding.language.stepDescription
-        : currentStep.id === "profile"
+      : currentStep.id === "profile"
           ? "Contact card comes next"
           : "Add email or phone";
   const showAvatarSavePill =
@@ -3229,72 +3239,6 @@ export default function DashboardSetupFlow({
                     ) : null}
                   </CardHeader>
                   <CardContent className="space-y-6 px-5 py-5 sm:px-6">
-                    {currentStep.id === "language" ? (
-                      <div className="space-y-5">
-                        <div className={cn("space-y-2 p-4", softPanelClassName)}>
-                          <p className="text-sm font-semibold text-foreground">
-                            {ui.onboarding.language.cardTitle}
-                          </p>
-                          <p className={fieldHelperClassName}>
-                            {ui.onboarding.language.cardDescription}
-                          </p>
-                        </div>
-                        <div className="grid gap-3 md:grid-cols-3">
-                          {LOCALE_OPTIONS.map((option) => {
-                            const optionCopy =
-                              ui.onboarding.language.options[option.code];
-                            const selected = selectedLocale === option.code;
-                            const detected = locale === option.code;
-
-                            return (
-                              <button
-                                key={option.code}
-                                id={`setup-language-${option.code}`}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedLocale(option.code as SupportedLocale);
-                                  setLocale(option.code as SupportedLocale);
-                                  setStepError(null);
-                                }}
-                                className={cn(
-                                  "min-h-[148px] rounded-2xl border p-4 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--ring)]",
-                                  selected
-                                    ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
-                                    : "border-border/60 bg-background/55 text-foreground hover:border-border hover:bg-card"
-                                )}
-                                aria-pressed={selected}
-                              >
-                                <span className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-70">
-                                  {option.nativeLabel}
-                                </span>
-                                <span className="mt-3 block text-lg font-semibold">
-                                  {optionCopy.title}
-                                </span>
-                                <span className="mt-2 block text-sm leading-6 opacity-80">
-                                  {optionCopy.description}
-                                </span>
-                                <span className="mt-4 flex flex-wrap gap-2">
-                                  {selected ? (
-                                    <span className="rounded-full border border-current/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]">
-                                      {ui.onboarding.language.selectedBadge}
-                                    </span>
-                                  ) : null}
-                                  {detected && !selected ? (
-                                    <span className="rounded-full border border-current/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] opacity-80">
-                                      {ui.onboarding.language.detectedBadge}
-                                    </span>
-                                  ) : null}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <p className="text-sm leading-6 text-muted-foreground">
-                          {ui.onboarding.language.helper}
-                        </p>
-                      </div>
-                    ) : null}
-
                     {currentStep.id === "profile" ? (
                       <div className="space-y-6">
                         <div className="space-y-3">
@@ -3520,6 +3464,54 @@ export default function DashboardSetupFlow({
                             }
                             onBlur={requestContactSaveSoon}
                           />
+                          {contactDraft.additionalEmails.length ? (
+                            <div className="space-y-2">
+                              {contactDraft.additionalEmails.map((email, index) => (
+                                <div
+                                  key={`setup-additional-email-${index}`}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Input
+                                    type="email"
+                                    value={email}
+                                    placeholder="another@company.com"
+                                    className={fieldInputClassName}
+                                    onChange={(event) =>
+                                      updateContactListDraft(
+                                        "additionalEmails",
+                                        index,
+                                        event.target.value
+                                      )
+                                    }
+                                    onBlur={requestContactSaveSoon}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-11 rounded-full px-3 text-xs"
+                                    onClick={() =>
+                                      removeContactListDraft(
+                                        "additionalEmails",
+                                        index
+                                      )
+                                    }
+                                  >
+                                    Remove
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className="h-11 w-full justify-between rounded-2xl border-border/60 bg-background/55 px-4 text-sm font-medium text-foreground"
+                            onClick={() => addContactListDraft("additionalEmails")}
+                            disabled={contactDraft.additionalEmails.length >= 5}
+                          >
+                            Add another email
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </div>
                         <div className="space-y-3">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -3562,6 +3554,56 @@ export default function DashboardSetupFlow({
                                 }
                                 onBlur={requestContactSaveSoon}
                               />
+                              {contactDraft.additionalPhones.length ? (
+                                <div className="space-y-2">
+                                  {contactDraft.additionalPhones.map((phone, index) => (
+                                    <div
+                                      key={`setup-additional-phone-${index}`}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <Input
+                                        type="tel"
+                                        value={phone}
+                                        placeholder="(555) 123-4567"
+                                        className={fieldInputClassName}
+                                        onChange={(event) =>
+                                          updateContactListDraft(
+                                            "additionalPhones",
+                                            index,
+                                            event.target.value
+                                          )
+                                        }
+                                        onBlur={requestContactSaveSoon}
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="h-11 rounded-full px-3 text-xs"
+                                        onClick={() =>
+                                          removeContactListDraft(
+                                            "additionalPhones",
+                                            index
+                                          )
+                                        }
+                                      >
+                                        Remove
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : null}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-11 w-full justify-between rounded-2xl border-border/60 bg-background/55 px-4 text-sm font-medium text-foreground"
+                                onClick={() =>
+                                  addContactListDraft("additionalPhones")
+                                }
+                                disabled={contactDraft.additionalPhones.length >= 5}
+                              >
+                                Add another phone
+                                <Plus className="h-4 w-4" />
+                              </Button>
                             </div>
                           ) : (
                             <Button

@@ -3,7 +3,6 @@ export const ONBOARDING_MILESTONE_NAV_EVENT =
   "linket:onboarding-milestone-nav";
 
 export type OnboardingMilestoneTarget =
-  | "language"
   | "profile"
   | "contact"
   | "links"
@@ -11,7 +10,6 @@ export type OnboardingMilestoneTarget =
 
 export type OnboardingLiveStatusDetail = {
   visible: boolean;
-  languageReady: boolean;
   profileReady: boolean;
   contactReady: boolean;
   linksReady: boolean;
@@ -22,17 +20,11 @@ export const ONBOARDING_MILESTONE_DEFINITIONS: Array<{
   label: string;
   target: OnboardingMilestoneTarget;
   statusKey:
-    | "languageReady"
     | "profileReady"
     | "contactReady"
     | "linksReady"
     | "publishReady";
 }> = [
-  {
-    label: "Language",
-    target: "language",
-    statusKey: "languageReady",
-  },
   {
     label: "Profile",
     target: "profile",

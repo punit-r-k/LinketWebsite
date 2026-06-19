@@ -14,7 +14,9 @@ type VCardFields = {
   fullName: string;
   title: string;
   email: string;
+  additionalEmails: string[];
   phone: string;
+  additionalPhones: string[];
   company: string;
   addressLine1: string;
   addressLine2: string;
@@ -33,7 +35,9 @@ const EMPTY_FIELDS: VCardFields = {
   fullName: "",
   title: "",
   email: "",
+  additionalEmails: [],
   phone: "",
+  additionalPhones: [],
   company: "",
   addressLine1: "",
   addressLine2: "",
@@ -68,9 +72,11 @@ const vcardBodySchema = z.object({
     addressRegion: z.string().max(240),
     company: z.string().max(240),
     email: z.string().max(320),
+    additionalEmails: z.array(z.string().max(320)).max(5).optional(),
     fullName: z.string().max(240),
     note: z.string().max(4000),
     phone: z.string().max(64),
+    additionalPhones: z.array(z.string().max(64)).max(5).optional(),
     photoData: z.string().nullable(),
     photoName: z.string().max(255).nullable(),
     photoRemoved: z.boolean().optional(),
@@ -135,6 +141,22 @@ function parseAddress(value: string | null) {
     addressPostal: "",
     addressCountry: "",
   };
+}
+
+function normalizeContactList(values: string[] | null | undefined, primary = "") {
+  const seen = new Set<string>();
+  const normalizedPrimary = primary.trim().toLowerCase();
+  if (normalizedPrimary) seen.add(normalizedPrimary);
+  return (values ?? [])
+    .map((value) => value.trim())
+    .filter((value) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 5);
 }
 
 async function loadPublicProfileDefaults(userId: string) {
@@ -203,7 +225,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from("vcard_profiles")
-      .select("full_name,title,email,phone,company,address,note,photo_data,photo_name,photo_removed_at,contact_button_visible")
+      .select("full_name,title,email,additional_emails,phone,additional_phones,company,address,note,photo_data,photo_name,photo_removed_at,contact_button_visible")
       .eq("user_id", userId)
       .maybeSingle();
     if (error && error.code !== "PGRST116") throw error;
@@ -223,7 +245,15 @@ export async function GET(request: NextRequest) {
       fullName: data.full_name ?? "",
       title: data.title ?? "",
       email: data.email ?? "",
+      additionalEmails: normalizeContactList(
+        data.additional_emails as string[] | null | undefined,
+        data.email ?? ""
+      ),
       phone: data.phone ?? "",
+      additionalPhones: normalizeContactList(
+        data.additional_phones as string[] | null | undefined,
+        data.phone ?? ""
+      ),
       company: data.company ?? "",
       ...parseAddress(data.address ?? null),
       note: data.note ?? "",
@@ -273,6 +303,14 @@ export async function POST(request: NextRequest) {
     const photoData = sanitizeVCardPhotoData(fields.photoData);
     const savedFields: VCardFields = {
       ...fields,
+      additionalEmails: normalizeContactList(
+        fields.additionalEmails,
+        fields.email
+      ),
+      additionalPhones: normalizeContactList(
+        fields.additionalPhones,
+        fields.phone
+      ),
       photoData,
       photoName: photoData ? fields.photoName : null,
       photoRemoved: photoData ? false : Boolean(fields.photoRemoved),
@@ -284,7 +322,15 @@ export async function POST(request: NextRequest) {
       full_name: savedFields.fullName?.trim() || null,
       title: savedFields.title?.trim() || null,
       email: savedFields.email?.trim() || null,
+      additional_emails: normalizeContactList(
+        savedFields.additionalEmails,
+        savedFields.email
+      ),
       phone: savedFields.phone?.trim() || null,
+      additional_phones: normalizeContactList(
+        savedFields.additionalPhones,
+        savedFields.phone
+      ),
       company: savedFields.company?.trim() || null,
       address: serializeAddress(savedFields),
       note: savedFields.note?.trim() || null,

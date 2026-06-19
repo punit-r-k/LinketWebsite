@@ -36,7 +36,9 @@ type VCardFields = {
   fullName: string;
   title: string;
   email: string;
+  additionalEmails: string[];
   phone: string;
+  additionalPhones: string[];
   company: string;
   addressLine1: string;
   addressLine2: string;
@@ -77,7 +79,9 @@ function hasVCardContent(fields: VCardFields) {
     fields.fullName ||
       fields.title ||
       fields.email ||
+      (fields.additionalEmails ?? []).some(Boolean) ||
       fields.phone ||
+      (fields.additionalPhones ?? []).some(Boolean) ||
       fields.company ||
       fields.addressLine1 ||
       fields.addressLine2 ||
@@ -92,10 +96,28 @@ function hasVCardContent(fields: VCardFields) {
   );
 }
 
+function normalizeContactList(values: string[] | null | undefined, primary = "") {
+  const seen = new Set<string>();
+  const normalizedPrimary = primary.trim().toLowerCase();
+  if (normalizedPrimary) seen.add(normalizedPrimary);
+  return (values ?? [])
+    .map((value) => value.trim())
+    .filter((value) => {
+      if (!value) return false;
+      const key = value.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 5);
+}
+
 function sanitizeVCardFields(fields: VCardFields): VCardFields {
   const photoData = sanitizeVCardPhotoData(fields.photoData);
   return {
     ...fields,
+    additionalEmails: normalizeContactList(fields.additionalEmails, fields.email),
+    additionalPhones: normalizeContactList(fields.additionalPhones, fields.phone),
     photoData,
     photoName: photoData ? fields.photoName : null,
     photoRemoved: photoData ? false : Boolean(fields.photoRemoved),
@@ -163,7 +185,9 @@ export default function VCardContent({
     fullName: "",
     title: "",
     email: "",
+    additionalEmails: [],
     phone: "",
+    additionalPhones: [],
     company: "",
     addressLine1: "",
     addressLine2: "",
@@ -229,6 +253,35 @@ export default function VCardContent({
 
   function updateField(key: keyof VCardFields, value: string) {
     setFields((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateContactListField(
+    key: "additionalEmails" | "additionalPhones",
+    index: number,
+    value: string
+  ) {
+    setFields((prev) => {
+      const next = [...prev[key]];
+      next[index] = key === "additionalPhones" ? formatPhoneNumber(value) : value;
+      return { ...prev, [key]: next };
+    });
+  }
+
+  function addContactListField(key: "additionalEmails" | "additionalPhones") {
+    setFields((prev) => {
+      if (prev[key].length >= 5) return prev;
+      return { ...prev, [key]: [...prev[key], ""] };
+    });
+  }
+
+  function removeContactListField(
+    key: "additionalEmails" | "additionalPhones",
+    index: number
+  ) {
+    setFields((prev) => ({
+      ...prev,
+      [key]: prev[key].filter((_, itemIndex) => itemIndex !== index),
+    }));
   }
 
   function updateContactButtonVisible(value: boolean) {
@@ -1056,9 +1109,41 @@ export default function VCardContent({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Full name" id="fullName" value={fields.fullName} onChange={updateField} onBlur={handleFieldBlur} required disabled={inputsDisabled} idPrefix={idPrefix} />
           <Field label="Title" id="title" value={fields.title} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Email" id="email" type="email" value={fields.email} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
-          <Field label="Phone" id="phone" type="tel" value={fields.phone} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
           <Field label="Company" id="company" value={fields.company} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <MultiContactFields
+            label="Email"
+            addLabel="Add email"
+            id="email"
+            additionalKey="additionalEmails"
+            type="email"
+            primaryValue={fields.email}
+            additionalValues={fields.additionalEmails}
+            onPrimaryChange={updateField}
+            onAdditionalChange={updateContactListField}
+            onAdd={addContactListField}
+            onRemove={removeContactListField}
+            onBlur={handleFieldBlur}
+            disabled={inputsDisabled}
+            idPrefix={idPrefix}
+          />
+          <MultiContactFields
+            label="Phone"
+            addLabel="Add phone"
+            id="phone"
+            additionalKey="additionalPhones"
+            type="tel"
+            primaryValue={fields.phone}
+            additionalValues={fields.additionalPhones}
+            onPrimaryChange={updateField}
+            onAdditionalChange={updateContactListField}
+            onAdd={addContactListField}
+            onRemove={removeContactListField}
+            onBlur={handleFieldBlur}
+            disabled={inputsDisabled}
+            idPrefix={idPrefix}
+          />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Address line 1" id="addressLine1" value={fields.addressLine1} onChange={updateField} onBlur={handleFieldBlur} disabled={inputsDisabled} idPrefix={idPrefix} />
@@ -1104,6 +1189,117 @@ type FieldProps = {
   disabled?: boolean;
   idPrefix?: string;
 };
+
+function MultiContactFields({
+  label,
+  addLabel,
+  id,
+  additionalKey,
+  type,
+  primaryValue,
+  additionalValues,
+  onPrimaryChange,
+  onAdditionalChange,
+  onAdd,
+  onRemove,
+  onBlur,
+  disabled = false,
+  idPrefix,
+}: {
+  label: string;
+  addLabel: string;
+  id: "email" | "phone";
+  additionalKey: "additionalEmails" | "additionalPhones";
+  type: "email" | "tel";
+  primaryValue: string;
+  additionalValues: string[];
+  onPrimaryChange: (key: keyof VCardFields, value: string) => void;
+  onAdditionalChange: (
+    key: "additionalEmails" | "additionalPhones",
+    index: number,
+    value: string
+  ) => void;
+  onAdd: (key: "additionalEmails" | "additionalPhones") => void;
+  onRemove: (key: "additionalEmails" | "additionalPhones", index: number) => void;
+  onBlur?: () => void;
+  disabled?: boolean;
+  idPrefix?: string;
+}) {
+  const inputMode = type === "tel" ? "tel" : "email";
+  const autoComplete = type === "tel" ? "tel" : "email";
+  const primaryId = idPrefix ? `${idPrefix}-${id}` : id;
+
+  function handlePrimaryChange(event: ChangeEvent<HTMLInputElement>) {
+    const value =
+      type === "tel" ? formatPhoneNumber(event.target.value) : event.target.value;
+    onPrimaryChange(id, value);
+  }
+
+  return (
+    <div className="space-y-2 rounded-2xl border border-border/60 bg-background/55 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <Label htmlFor={primaryId}>{label}</Label>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 rounded-full px-3 text-xs"
+          onClick={() => onAdd(additionalKey)}
+          disabled={disabled || additionalValues.length >= 5}
+        >
+          {addLabel}
+        </Button>
+      </div>
+      <Input
+        id={primaryId}
+        value={primaryValue}
+        type={type}
+        placeholder="Primary"
+        onChange={handlePrimaryChange}
+        onBlur={onBlur}
+        disabled={disabled}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        enterKeyHint="next"
+      />
+      {additionalValues.length ? (
+        <div className="space-y-2">
+          {additionalValues.map((value, index) => {
+            const rowId = `${primaryId}-additional-${index}`;
+            return (
+              <div key={rowId} className="flex items-center gap-2">
+                <Input
+                  id={rowId}
+                  value={value}
+                  type={type}
+                  placeholder={`Additional ${label.toLowerCase()}`}
+                  onChange={(event) =>
+                    onAdditionalChange(additionalKey, index, event.target.value)
+                  }
+                  onBlur={onBlur}
+                  disabled={disabled}
+                  autoComplete={autoComplete}
+                  inputMode={inputMode}
+                  enterKeyHint="next"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-10 rounded-full px-3 text-xs"
+                  onClick={() => onRemove(additionalKey, index)}
+                  disabled={disabled}
+                >
+                  Remove
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 function Field({
   label,
@@ -1197,7 +1393,9 @@ function areVCardFieldsEqual(a: VCardFields, b: VCardFields) {
     a.fullName === b.fullName &&
     a.title === b.title &&
     a.email === b.email &&
+    areStringArraysEqual(a.additionalEmails, b.additionalEmails) &&
     a.phone === b.phone &&
+    areStringArraysEqual(a.additionalPhones, b.additionalPhones) &&
     a.company === b.company &&
     a.addressLine1 === b.addressLine1 &&
     a.addressLine2 === b.addressLine2 &&
@@ -1211,6 +1409,11 @@ function areVCardFieldsEqual(a: VCardFields, b: VCardFields) {
     a.photoRemoved === b.photoRemoved &&
     a.contactButtonVisible === b.contactButtonVisible
   );
+}
+
+function areStringArraysEqual(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  return a.every((value, index) => value === b[index]);
 }
 
 function formatPhoneNumber(value: string) {
