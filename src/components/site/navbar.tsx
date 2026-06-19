@@ -1102,7 +1102,12 @@ function Navbar() {
       type="button"
       ref={accountButtonRef}
       onClick={() => setAccountMenuOpen(true)}
-      className="dashboard-avatar-button inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/60 bg-card/90 text-sm font-semibold uppercase text-foreground transition hover:bg-card"
+      className={cn(
+        "dashboard-avatar-button inline-flex items-center justify-center rounded-full border border-border/60 bg-card/90 font-semibold uppercase text-foreground transition hover:bg-card",
+        isDashboardSetupRoute && dashboardSetupLiveStatus.visible
+          ? "h-14 w-14 text-base"
+          : "h-11 w-11 text-sm"
+      )}
       aria-label={
         isDashboardSetupRoute
           ? `Signed in as ${user?.email ?? "this account"}`
@@ -1178,33 +1183,48 @@ function Navbar() {
     isDashboardSetupRoute &&
     dashboardSetupLiveStatus.visible ? (
       <div
-        className="dashboard-onboarding-live-status hidden min-w-0 flex-[2] items-center justify-center lg:flex"
+        className="dashboard-onboarding-live-status hidden min-w-0 items-center justify-center lg:flex"
         aria-label="Live status"
       >
         <div className="flex items-center justify-center gap-2">
           {[
-            { label: "Live", tone: "text-emerald-700" },
+            {
+              label: "Live",
+              complete: true,
+              target: "live",
+            },
             {
               label: "Contact card added",
-              tone: dashboardSetupLiveStatus.contactReady
-                ? "text-foreground"
-                : "text-muted-foreground",
+              complete: dashboardSetupLiveStatus.contactReady,
+              target: "contact",
             },
             {
               label: "First link active",
-              tone: dashboardSetupLiveStatus.linksReady
-                ? "text-foreground"
-                : "text-muted-foreground",
+              complete: dashboardSetupLiveStatus.linksReady,
+              target: "links",
             },
-            { label: "QR ready", tone: "text-foreground" },
+            { label: "QR ready", complete: true, target: "publish" },
           ].map((item) => (
-            <span
+            <button
               key={item.label}
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 text-sm font-semibold shadow-sm"
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(
+                  new CustomEvent("linket:onboarding-milestone-nav", {
+                    detail: { target: item.target },
+                  })
+                );
+              }}
+              className={cn(
+                "inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border px-3 text-sm font-semibold shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                item.complete
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 hover:border-emerald-500/50 hover:bg-emerald-500/15 dark:text-emerald-200"
+                  : "border-border/60 bg-background/70 text-muted-foreground hover:border-border hover:bg-background"
+              )}
             >
-              <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden />
-              <span className={item.tone}>{item.label}</span>
-            </span>
+              <CheckCircle2 className="h-4 w-4" aria-hidden />
+              <span>{item.label}</span>
+            </button>
           ))}
         </div>
       </div>
@@ -1216,10 +1236,20 @@ function Navbar() {
         className="dashboard-navbar font-dashboard sticky top-0 z-50 w-full border-b border-border/80 bg-background text-foreground"
       >
         <nav
-          className="dashboard-navbar-inner mx-auto flex max-w-6xl items-center justify-between px-2 py-3 text-foreground sm:px-3 md:px-6"
+          className={cn(
+            "dashboard-navbar-inner mx-auto max-w-6xl items-center px-2 py-3 text-foreground sm:px-3 md:px-6",
+            dashboardSetupLiveStatus.visible
+              ? "grid grid-cols-[minmax(15rem,1fr)_auto_minmax(4rem,1fr)]"
+              : "flex justify-between"
+          )}
           aria-label="Dashboard"
         >
-          <div className="dashboard-navbar-left flex min-w-0 flex-1 items-center gap-4 pr-3">
+          <div
+            className={cn(
+              "dashboard-navbar-left flex min-w-0 items-center gap-4 pr-3",
+              dashboardSetupLiveStatus.visible ? "justify-self-start" : "flex-1"
+            )}
+          >
             <Link
               href="/dashboard"
               className="dashboard-brand ml-0 inline-flex items-center gap-3 md:-ml-8 lg:-ml-10"
@@ -1290,7 +1320,7 @@ function Navbar() {
 
           {dashboardSetupLiveStatusNav}
 
-          <div className="dashboard-navbar-right flex shrink-0 items-center gap-3">
+          <div className="dashboard-navbar-right flex shrink-0 items-center justify-self-end gap-3">
             {!isDashboardSetupRoute ? dashboardProfileActions : null}
             {!isDashboardSetupRoute ? dashboardNotificationsButton : null}
             {showDashboardSignedInChrome && !isDashboardSetupRoute ? (

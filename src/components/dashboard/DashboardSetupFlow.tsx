@@ -1547,6 +1547,49 @@ export default function DashboardSetupFlow({
     };
   }, [contactStepComplete, linksReady, showLaunchHub]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleMilestoneNavigation = (event: Event) => {
+      const target = (
+        event as CustomEvent<{ target?: "live" | "contact" | "links" | "publish" }>
+      ).detail?.target;
+
+      if (target === "live") {
+        setShowLaunchHub(true);
+        setStepError(null);
+        scrollPageToTop({ behavior: "smooth" });
+        return;
+      }
+
+      const targetStepId =
+        target === "contact"
+          ? "contact"
+          : target === "links"
+            ? "links"
+            : target === "publish"
+              ? "publish"
+              : null;
+      if (!targetStepId) return;
+
+      setShowLaunchHub(false);
+      setCurrentStepIndex(getSetupStepIndex(targetStepId));
+      setStepError(null);
+      scrollPageToTop({ behavior: "smooth" });
+    };
+
+    window.addEventListener(
+      "linket:onboarding-milestone-nav",
+      handleMilestoneNavigation
+    );
+    return () => {
+      window.removeEventListener(
+        "linket:onboarding-milestone-nav",
+        handleMilestoneNavigation
+      );
+    };
+  }, []);
+
   const previewProfile = useMemo(() => {
     if (!profileDraft || !userId) return null;
     return buildPreviewProfile(profileDraft, userId);
