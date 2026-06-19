@@ -3986,7 +3986,7 @@ export default function DashboardSetupFlow({
                               </p>
                               <p className="text-sm leading-6 text-muted-foreground">
                                 Have a printed Linket code? Claim it now. If that
-                                Linket includes complimentary Pro time, we&apos;ll
+                                Linket includes complimentary Pro time, we can
                                 claim that too.
                               </p>
                             </div>
