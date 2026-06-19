@@ -2,39 +2,56 @@ export const ONBOARDING_LIVE_STATUS_EVENT = "linket:onboarding-live-status";
 export const ONBOARDING_MILESTONE_NAV_EVENT =
   "linket:onboarding-milestone-nav";
 
-export type OnboardingMilestoneTarget = "live" | "contact" | "links" | "publish";
+export type OnboardingMilestoneTarget =
+  | "language"
+  | "profile"
+  | "contact"
+  | "links"
+  | "publish";
 
 export type OnboardingLiveStatusDetail = {
   visible: boolean;
+  languageReady: boolean;
+  profileReady: boolean;
   contactReady: boolean;
   linksReady: boolean;
+  publishReady: boolean;
 };
 
 export const ONBOARDING_MILESTONE_DEFINITIONS: Array<{
   label: string;
   target: OnboardingMilestoneTarget;
-  completedByDefault?: boolean;
-  statusKey?: "contactReady" | "linksReady";
+  statusKey:
+    | "languageReady"
+    | "profileReady"
+    | "contactReady"
+    | "linksReady"
+    | "publishReady";
 }> = [
   {
-    label: "Live",
-    target: "live",
-    completedByDefault: true,
+    label: "Language",
+    target: "language",
+    statusKey: "languageReady",
   },
   {
-    label: "Contact card added",
+    label: "Profile",
+    target: "profile",
+    statusKey: "profileReady",
+  },
+  {
+    label: "Contact card",
     target: "contact",
     statusKey: "contactReady",
   },
   {
-    label: "First link active",
+    label: "First link",
     target: "links",
     statusKey: "linksReady",
   },
   {
-    label: "QR ready",
+    label: "Review + publish",
     target: "publish",
-    completedByDefault: true,
+    statusKey: "publishReady",
   },
 ];
 
@@ -48,10 +65,6 @@ export const ONBOARDING_MILESTONE_LABELS = Object.fromEntries(
 export function buildOnboardingMilestones(status: OnboardingLiveStatusDetail) {
   return ONBOARDING_MILESTONE_DEFINITIONS.map((milestone) => ({
     ...milestone,
-    complete: milestone.completedByDefault
-      ? true
-      : milestone.statusKey
-        ? status[milestone.statusKey]
-        : false,
+    complete: status[milestone.statusKey],
   }));
 }

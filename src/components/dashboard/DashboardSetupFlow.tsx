@@ -1409,9 +1409,12 @@ export default function DashboardSetupFlow({
     window.dispatchEvent(
       new CustomEvent(ONBOARDING_LIVE_STATUS_EVENT, {
         detail: {
-          visible: showLaunchHub,
+          visible: showLaunchHub || publishedThisSession,
+          languageReady: true,
+          profileReady: liveProfileReady,
           contactReady: contactStepComplete,
           linksReady,
+          publishReady,
         },
       })
     );
@@ -1423,7 +1426,14 @@ export default function DashboardSetupFlow({
         })
       );
     };
-  }, [contactStepComplete, linksReady, showLaunchHub]);
+  }, [
+    contactStepComplete,
+    linksReady,
+    liveProfileReady,
+    publishReady,
+    publishedThisSession,
+    showLaunchHub,
+  ]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1433,25 +1443,9 @@ export default function DashboardSetupFlow({
         event as CustomEvent<{ target?: OnboardingMilestoneTarget }>
       ).detail?.target;
 
-      if (target === "live") {
-        setShowLaunchHub(true);
-        setStepError(null);
-        scrollPageToTop({ behavior: "smooth" });
-        return;
-      }
-
-      const targetStepId =
-        target === "contact"
-          ? "contact"
-          : target === "links"
-            ? "links"
-            : target === "publish"
-              ? "publish"
-              : null;
-      if (!targetStepId) return;
-
+      if (!target) return;
       setShowLaunchHub(false);
-      setCurrentStepIndex(getSetupStepIndex(targetStepId));
+      setCurrentStepIndex(getSetupStepIndex(target));
       setStepError(null);
       scrollPageToTop({ behavior: "smooth" });
     };
