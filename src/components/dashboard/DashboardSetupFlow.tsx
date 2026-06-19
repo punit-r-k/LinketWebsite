@@ -21,7 +21,6 @@ import {
   Leaf,
   Link2,
   Loader2,
-  Mail,
   Moon,
   MoonStar,
   Palette,
@@ -2838,12 +2837,6 @@ export default function DashboardSetupFlow({
       !profileHasUnsavedChanges,
     publish: completedSetupSteps.publish && publishReady,
   };
-  const checklistItems = [
-    { label: "Add profile basics", done: stepCompletion.profile, icon: UserRound },
-    { label: "Add contact info", done: stepCompletion.contact, icon: Mail },
-    { label: "Add your first link", done: stepCompletion.links, icon: Link2 },
-    { label: "Publish page", done: stepCompletion.publish, icon: Rocket },
-  ];
   const previewDisplayName =
     profileDraft.name.trim() || account.displayName?.trim() || "Your Name";
   const previewTagline =
@@ -2890,42 +2883,6 @@ export default function DashboardSetupFlow({
     { label: "First link added", done: linksReady, missing: "Add a first link to continue" },
     { label: `Theme selected: ${selectedThemeOption.label}`, done: true, missing: "Pick a theme" },
   ];
-  const prePublishStatusItems = [
-    { label: "Not live yet", tone: "text-muted-foreground" },
-    { label: "Public URL ready", tone: "text-foreground" },
-    { label: "QR available after publish", tone: "text-muted-foreground" },
-  ];
-  const pageHeading =
-    showLaunchHub
-      ? {
-          title: "You're live",
-          description: "Your page is live. Next, continue to the dashboard.",
-        }
-      : currentStep.id === "language"
-      ? {
-          title: ui.onboarding.language.pageTitle,
-          description: ui.onboarding.language.pageDescription,
-        }
-      : currentStep.id === "profile"
-      ? {
-          title: "Set up your public profile",
-          description: "Add the basics now. You can edit everything later.",
-        }
-      : currentStep.id === "contact"
-        ? {
-            title: "Set up your contact card",
-            description:
-              "Add the details people save when they download your contact. You can add more later.",
-          }
-      : currentStep.id === "links"
-          ? {
-              title: "Add your first link",
-              description: "Add the main link people should open first.",
-            }
-          : {
-              title: "Review and publish",
-              description: "Check your page once, then go live.",
-            };
   const stepHeading =
     showLaunchHub
       ? {
@@ -2977,18 +2934,6 @@ export default function DashboardSetupFlow({
     currentStep.id === "profile"
       ? "max-w-[272px] max-h-[470px]"
       : "max-w-[286px] max-h-[560px]";
-  const previewDescription =
-    currentStep.id === "language"
-      ? ui.onboarding.language.cardDescription
-      : currentStep.id === "contact"
-      ? "This is what someone saves to contacts."
-      : currentStep.id === "links"
-        ? "This updates your first link."
-      : showLaunchHub
-        ? ""
-      : currentStep.id === "publish"
-        ? "Check this once before you publish."
-      : "This updates as you type.";
   const getProfileFieldState = (
     dirty: boolean,
     hasFieldError = false
@@ -3274,23 +3219,6 @@ export default function DashboardSetupFlow({
       )}
     >
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
-        {!showLaunchHub ? (
-          <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3">
-            <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">
-                {ui.onboarding.stepPrefix} {currentStepIndex + 1}{" "}
-                {ui.onboarding.stepOf} {SETUP_STEPS.length}: {stepHeading.title}
-              </p>
-              <h1 className="text-[2rem] font-semibold tracking-tight text-foreground sm:text-4xl">
-                {pageHeading.title}
-              </h1>
-              <p className="max-w-2xl text-sm leading-5 text-muted-foreground sm:text-base sm:leading-6">
-                {pageHeading.description}
-              </p>
-            </div>
-          </header>
-        ) : null}
-
         {!showLaunchHub ? (
           <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
             <CardContent className="px-3 py-3">
@@ -4299,71 +4227,7 @@ export default function DashboardSetupFlow({
           </div>
 
           <aside className="hidden space-y-3 lg:sticky lg:top-5 lg:block" aria-label="Setup preview and checklist">
-            {showLaunchHub ? (
-              sidebarPreview
-            ) : (
-              <Card className={setupCardClassName}>
-                <CardHeader className="gap-2 border-b border-border/60 pb-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg font-semibold text-foreground">Live preview</CardTitle>
-                      {previewDescription ? (
-                        <CardDescription className="text-sm text-muted-foreground">
-                          {previewDescription}
-                        </CardDescription>
-                      ) : null}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4 px-4 py-4">
-                  {sidebarPreview}
-                  <div className="space-y-2 border-t border-border/60 pt-4">
-                    {currentStep.id === "publish" ? (
-                      <>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                          Status
-                        </p>
-                        {prePublishStatusItems.map((item) => (
-                          <div key={item.label} className="flex items-center gap-3 px-1 py-1.5">
-                            <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background text-muted-foreground">
-                              <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
-                            </span>
-                            <p className={cn("text-sm font-medium", item.tone)}>{item.label}</p>
-                          </div>
-                        ))}
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                          To finish setup
-                        </p>
-                        {checklistItems.map((item) => {
-                          const ItemIcon = item.icon;
-                          return (
-                            <div
-                              key={item.label}
-                              className="flex items-center gap-3 px-1 py-1.5"
-                            >
-                              <span
-                                className={cn(
-                                  "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border",
-                                  item.done
-                                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                    : "border-border/60 bg-background text-muted-foreground"
-                                )}
-                              >
-                                <ItemIcon className="h-4 w-4" aria-hidden="true" />
-                              </span>
-                              <p className="text-sm font-medium text-foreground">{item.label}</p>
-                            </div>
-                          );
-                        })}
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {sidebarPreview}
           </aside>
         </div>
       </div>
