@@ -1178,18 +1178,10 @@ function Navbar() {
     isDashboardSetupRoute &&
     dashboardSetupLiveStatus.visible ? (
       <div
-        className="dashboard-onboarding-live-status hidden min-w-0 flex-[2] items-center justify-end gap-3 lg:flex"
+        className="dashboard-onboarding-live-status hidden min-w-0 flex-[2] items-center justify-center lg:flex"
         aria-label="Live status"
       >
-        <div className="min-w-0 text-right">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Live status
-          </p>
-          <p className="truncate text-sm text-muted-foreground">
-            Next step: continue to the dashboard.
-          </p>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           {[
             { label: "Live", tone: "text-emerald-700" },
             {
