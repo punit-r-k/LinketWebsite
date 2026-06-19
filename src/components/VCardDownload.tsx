@@ -77,7 +77,7 @@ export default function VCardDownload({
   }
 
   return (
-    <div className="relative w-full sm:w-auto">
+    <div className="w-full sm:w-auto">
       <div className="flex w-full items-center gap-2 sm:w-auto">
         <Button
           onClick={download}
@@ -119,10 +119,10 @@ export default function VCardDownload({
       {hasDetails ? (
         <div
           className={cn(
-            "absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-2xl border border-border/70 bg-card/95 text-card-foreground shadow-xl backdrop-blur transition-all duration-200 ease-out sm:right-auto sm:min-w-[20rem]",
+            "overflow-hidden rounded-2xl text-card-foreground transition-all duration-200 ease-out sm:min-w-[20rem]",
             open
-              ? "max-h-80 translate-y-0 opacity-100"
-              : "pointer-events-none max-h-0 -translate-y-1 opacity-0"
+              ? "mt-2 max-h-80 translate-y-0 border border-border/70 bg-card/95 opacity-100 shadow-xl backdrop-blur"
+              : "pointer-events-none mt-0 max-h-0 -translate-y-1 border border-transparent opacity-0"
           )}
         >
           <div className="space-y-3 p-3">
