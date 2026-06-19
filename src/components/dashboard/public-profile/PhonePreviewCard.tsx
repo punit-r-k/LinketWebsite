@@ -208,7 +208,8 @@ export default function PhonePreviewCard({
     <div
       className={cn(
         "public-profile-preview h-fit w-full max-w-[340px] overflow-hidden rounded-[36px] border border-border/60 bg-background shadow-[0_20px_40px_-30px_rgba(15,23,42,0.3)]",
-        resolvedTheme ? `theme-${resolvedTheme}` : ""
+        resolvedTheme ? `theme-${resolvedTheme}` : "",
+        useDarkThemeIcons && "dark"
       )}
     >
       <div

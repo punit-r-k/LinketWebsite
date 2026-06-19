@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { brand, hasBrandMark } from "@/config/brand";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
@@ -19,13 +19,11 @@ const FOOTER_LEGAL_LINKS = [
 function Footer() {
   const currentYear = new Date().getFullYear();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const authView = searchParams.get("view");
   const isDashboard = pathname?.startsWith("/dashboard");
+  const isAuthPage = pathname === "/auth";
   const isPublicProfile = isPublicProfilePathname(pathname);
-  const isSignInPage = pathname === "/auth" && (!authView || authView === "signin");
 
-  if (isDashboard || isPublicProfile || isSignInPage) {
+  if (isDashboard || isAuthPage || isPublicProfile) {
     return null;
   }
 

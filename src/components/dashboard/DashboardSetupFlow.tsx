@@ -1,21 +1,37 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Check,
   CheckCircle2,
+  Cloud,
   Gift,
+  Hexagon,
   Languages,
+  Leaf,
   Link2,
   Loader2,
   Mail,
+  Moon,
+  MoonStar,
   Palette,
   Phone,
   Plus,
+  Rose,
   Rocket,
-  Smartphone,
+  Star,
+  Sun,
   Trash2,
+  Trees,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -51,7 +67,7 @@ import {
   sanitizeThemeForPlan,
 } from "@/lib/plan-access";
 import { scrollPageToTop } from "@/lib/scroll";
-import { normalizeThemeName, type ThemeName } from "@/lib/themes";
+import { isDarkTheme, normalizeThemeName, type ThemeName } from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -299,11 +315,40 @@ const SETUP_STEPS: Array<{
   },
 ];
 
+const HookemLonghornIcon = ({ className }: { className?: string }) => (
+  <Image
+    src="/logos/hookem-theme-icon.svg"
+    alt=""
+    width={24}
+    height={24}
+    aria-hidden="true"
+    className={cn("object-contain", className)}
+  />
+);
+
+const AggieWolfIcon = ({ className }: { className?: string }) => (
+  <span
+    aria-hidden="true"
+    className={cn("block bg-[#500000]", className)}
+    style={{
+      WebkitMaskImage: "url('/logos/aggie-theme-icon.png')",
+      maskImage: "url('/logos/aggie-theme-icon.png')",
+      WebkitMaskRepeat: "no-repeat",
+      maskRepeat: "no-repeat",
+      WebkitMaskPosition: "center",
+      maskPosition: "center",
+      WebkitMaskSize: "contain",
+      maskSize: "contain",
+    }}
+  />
+);
+
 const FEATURED_THEMES: Array<{
   value: ThemeName;
   label: string;
   description: string;
   swatchClassName: string;
+  icon: ComponentType<{ className?: string }>;
 }> = [
   {
     value: "light",
@@ -311,6 +356,7 @@ const FEATURED_THEMES: Array<{
     description: "Clean, bright, and minimal",
     swatchClassName:
       "bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_45%,#dbeafe_100%)]",
+    icon: Sun,
   },
   {
     value: "dark",
@@ -318,34 +364,7 @@ const FEATURED_THEMES: Array<{
     description: "Simple, polished, and high contrast",
     swatchClassName:
       "bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#475569_100%)]",
-  },
-  {
-    value: "autumn",
-    label: "Autumn",
-    description: "Warm, premium, approachable",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#fff1e6_0%,#ffb37a_48%,#ff7b6b_100%)]",
-  },
-  {
-    value: "dream",
-    label: "Dream",
-    description: "Soft, modern, polished",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#f8f4ff_0%,#cdb7ff_45%,#7dd3fc_100%)]",
-  },
-  {
-    value: "honey",
-    label: "Honey",
-    description: "Bright, upbeat, friendly",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#fff7cc_0%,#ffd166_42%,#ff9f1c_100%)]",
-  },
-  {
-    value: "forest",
-    label: "Forest",
-    description: "Confident, grounded, rich",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#0f3d2f_0%,#1f7a53_52%,#9ad7b9_100%)]",
+    icon: Moon,
   },
   {
     value: "midnight",
@@ -353,6 +372,31 @@ const FEATURED_THEMES: Array<{
     description: "Bold, sleek, high contrast",
     swatchClassName:
       "bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#4f46e5_100%)]",
+    icon: MoonStar,
+  },
+  {
+    value: "dream",
+    label: "Dream",
+    description: "Soft, modern, polished",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#f8f4ff_0%,#cdb7ff_45%,#7dd3fc_100%)]",
+    icon: Cloud,
+  },
+  {
+    value: "forest",
+    label: "Forest",
+    description: "Confident, grounded, rich",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#0f3d2f_0%,#1f7a53_52%,#9ad7b9_100%)]",
+    icon: Trees,
+  },
+  {
+    value: "gilded",
+    label: "Gilded",
+    description: "Luxurious, refined, dramatic",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#050505_0%,#4a3515_50%,#f5d76e_100%)]",
+    icon: Star,
   },
   {
     value: "rose",
@@ -360,6 +404,39 @@ const FEATURED_THEMES: Array<{
     description: "Editorial, expressive, clean",
     swatchClassName:
       "bg-[linear-gradient(135deg,#fff1f2_0%,#fda4af_42%,#fb7185_100%)]",
+    icon: Rose,
+  },
+  {
+    value: "autumn",
+    label: "Autumn",
+    description: "Warm, premium, approachable",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#fff1e6_0%,#ffb37a_48%,#ff7b6b_100%)]",
+    icon: Leaf,
+  },
+  {
+    value: "honey",
+    label: "Honey",
+    description: "Bright, upbeat, friendly",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#fff7cc_0%,#ffd166_42%,#ff9f1c_100%)]",
+    icon: Hexagon,
+  },
+  {
+    value: "burnt-orange",
+    label: "Hook 'Em",
+    description: "Bold, spirited, burnt orange",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#fff2e6_0%,#bf5700_50%,#7c2d12_100%)]",
+    icon: HookemLonghornIcon,
+  },
+  {
+    value: "maroon",
+    label: "Aggie",
+    description: "Deep, classic, maroon",
+    swatchClassName:
+      "bg-[linear-gradient(135deg,#fff0f2_0%,#500000_48%,#2a0000_100%)]",
+    icon: AggieWolfIcon,
   },
 ];
 
@@ -2570,12 +2647,10 @@ export default function DashboardSetupFlow({
     publish: completedSetupSteps.publish && publishReady,
   };
   const checklistItems = [
-    { label: "Choose language", done: stepCompletion.language, icon: Languages },
     { label: "Add profile basics", done: stepCompletion.profile, icon: UserRound },
     { label: "Add contact info", done: stepCompletion.contact, icon: Mail },
     { label: "Add your first link", done: stepCompletion.links, icon: Link2 },
     { label: "Publish page", done: stepCompletion.publish, icon: Rocket },
-    { label: "Test once", done: shareTestComplete, icon: Smartphone },
   ];
   const previewDisplayName =
     profileDraft.name.trim() || account.displayName?.trim() || "Your Name";
@@ -2802,9 +2877,17 @@ export default function DashboardSetupFlow({
     Boolean(account.avatarPath || avatarPreviewUrl) || avatarFieldState !== "saved";
   const showHandleSavePill = handleTouched || Boolean(handleError);
   const normalizedLinketClaimCode = normalizeClaimCodeInput(linketClaimCode);
+  const onboardingThemeClassName = `theme-${activeThemeValue}`;
+  const onboardingUsesDarkTheme = isDarkTheme(activeThemeValue);
 
   return (
-    <div className="dashboard-overview-page dashboard-setup-page min-h-[100svh] bg-[var(--background)] px-4 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-4 text-foreground sm:px-6 sm:py-5 lg:px-10 lg:py-6">
+    <div
+      className={cn(
+        "dashboard-overview-page dashboard-setup-page min-h-[100svh] bg-[var(--background)] px-4 pb-[calc(env(safe-area-inset-bottom)+8.5rem)] pt-4 text-foreground sm:px-6 sm:py-5 lg:px-10 lg:py-6",
+        onboardingThemeClassName,
+        onboardingUsesDarkTheme && "dark"
+      )}
+    >
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
         <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3">
           <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">
@@ -3347,26 +3430,6 @@ export default function DashboardSetupFlow({
                               <Plus className="h-4 w-4" />
                             </Button>
                           )}
-                          <div className={cn("space-y-3 p-4", softPanelClassName)}>
-                            <SwitchRow
-                              id="setup-contact-button-visible"
-                              label="Show Save contact button on public page"
-                              description="Turn this off if you want people to view your page without the contact download action."
-                              labelPosition="left"
-                              checked={contactButtonVisible}
-                              onCheckedChange={(value) => {
-                                updateContactDraft((current) => ({
-                                  ...current,
-                                  contactButtonVisible: Boolean(value),
-                                }), { markReviewed: true });
-                                requestContactSaveSoon();
-                              }}
-                              textClassName="text-sm font-medium text-foreground"
-                            />
-                            <div className="flex justify-end">
-                              <FieldSavePill state={contactVisibilityFieldState} />
-                            </div>
-                          </div>
                           {showContactExtras ? (
                             <div className={cn("space-y-3 p-4", softPanelClassName)}>
                               <div className="flex items-center justify-between gap-3">
@@ -3449,6 +3512,26 @@ export default function DashboardSetupFlow({
                               <Plus className="h-4 w-4" />
                             </Button>
                           )}
+                          <div className={cn("space-y-3 p-4", softPanelClassName)}>
+                            <SwitchRow
+                              id="setup-contact-button-visible"
+                              label="Show Save contact button on public page"
+                              description="Turn this off if you want people to view your page without the contact download action."
+                              labelPosition="left"
+                              checked={contactButtonVisible}
+                              onCheckedChange={(value) => {
+                                updateContactDraft((current) => ({
+                                  ...current,
+                                  contactButtonVisible: Boolean(value),
+                                }), { markReviewed: true });
+                                requestContactSaveSoon();
+                              }}
+                              textClassName="text-sm font-medium text-foreground"
+                            />
+                            <div className="flex justify-end">
+                              <FieldSavePill state={contactVisibilityFieldState} />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ) : null}
@@ -3702,6 +3785,7 @@ export default function DashboardSetupFlow({
                               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                                 {availableThemeOptions.map((themeOption) => {
                                   const selected = activeThemeValue === themeOption.value;
+                                  const ThemeIcon = themeOption.icon;
                                   return (
                                     <button
                                       key={themeOption.value}
@@ -3747,8 +3831,15 @@ export default function DashboardSetupFlow({
                                       )}
                                     >
                                       <div
-                                        className={cn("h-16 w-full", themeOption.swatchClassName)}
-                                      />
+                                        className={cn(
+                                          "relative h-16 w-full",
+                                          themeOption.swatchClassName
+                                        )}
+                                      >
+                                        <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-900 shadow-sm backdrop-blur">
+                                          <ThemeIcon className="h-5 w-5" />
+                                        </span>
+                                      </div>
                                       <div className="flex items-center justify-between gap-2 px-3 py-3">
                                         <div>
                                           <p className="text-sm font-semibold">
@@ -3779,6 +3870,7 @@ export default function DashboardSetupFlow({
                                       const previewing =
                                         previewingTemporaryTheme &&
                                         themePreview === themeOption.value;
+                                      const ThemeIcon = themeOption.icon;
 
                                       return (
                                         <button
@@ -3805,8 +3897,15 @@ export default function DashboardSetupFlow({
                                           )}
                                         >
                                           <div
-                                            className={cn("h-16 w-full", themeOption.swatchClassName)}
-                                          />
+                                            className={cn(
+                                              "relative h-16 w-full",
+                                              themeOption.swatchClassName
+                                            )}
+                                          >
+                                            <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-900 shadow-sm backdrop-blur">
+                                              <ThemeIcon className="h-5 w-5" />
+                                            </span>
+                                          </div>
                                           <div className="flex items-center justify-between gap-2 px-3 py-3">
                                             <div>
                                               <p className="text-sm font-semibold">

@@ -385,17 +385,10 @@ function AuthPageContent() {
     },
     [email]
   );
-  const authHeadingLead = "Create your";
-  const authCopy =
-    "Create your account, claim your dashboard, and start managing the profile people see after every Linket tap.";
   const formHeading = isSignUp ? "Start your dashboard" : "Access your dashboard";
   const formDescription = isSignUp
     ? "Use email or Google to create your workspace."
     : "Use your saved account, email, or Google to continue.";
-  const activeTabClass =
-    "border-[#f8b878] bg-[#f8b878] text-[#0f172a] shadow-[0_12px_24px_rgba(248,184,120,0.22)]";
-  const inactiveTabClass =
-    "border-slate-200 bg-white/80 text-slate-700 hover:border-[#f8ddba] hover:bg-[#fff9f0] hover:text-slate-900";
 
   return (
     <div className="landing-page-shell landing-alt-font min-h-screen overflow-hidden bg-[#fff7ed] text-slate-900">
@@ -421,96 +414,38 @@ function AuthPageContent() {
           <div className="landing-ring-float-a absolute right-[14%] top-[38rem] h-20 w-20 rounded-full border-[4px] border-[#68d8e0]/48 bg-transparent" />
         </div>
 
-        <section
-          className={`${isSignUp ? "py-8 sm:py-12" : "py-2 sm:py-6"} relative isolate z-10 mx-auto flex min-h-svh w-full max-w-6xl flex-col items-center justify-center px-4 text-center sm:px-6 lg:px-8`}
-        >
-          {isSignUp ? (
-            <div className="mx-auto max-w-4xl pb-8 pt-4 sm:pb-12 sm:pt-8">
-              <h1 className="landing-fade-up landing-delay-1 text-[1.95rem] font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
-                <span className="landing-serif font-normal">
-                  {authHeadingLead}
-                </span>{" "}
-                <span className="block bg-[linear-gradient(100deg,_#f8d058_0%,_#f8b878_34%,_#68d8e0_70%,_#58c0e0_100%)] bg-clip-text text-[3.35rem] font-black italic leading-[0.94] text-transparent sm:text-8xl lg:text-[5.25rem]">
-                  LINKET
-                </span>
-              </h1>
-              <p className="landing-fade-up landing-delay-2 mx-auto mt-5 max-w-[21rem] text-[15px] leading-7 text-slate-600 sm:max-w-2xl sm:text-lg sm:leading-8">
-                {authCopy}
-              </p>
-              <div className="landing-fade-up landing-delay-3 mt-8 flex justify-center">
-                <span className="landing-chip px-4 py-2 text-sm font-semibold text-slate-700">
-                  Dashboard access
-                </span>
-              </div>
-            </div>
-          ) : null}
-
+        <section className="relative isolate z-10 mx-auto flex min-h-svh w-full max-w-6xl flex-col items-center justify-center px-4 py-2 text-center sm:px-6 sm:py-6 lg:px-8">
           <div
-              className={`${isSignUp ? "landing-delay-4 gap-6 p-3 sm:p-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(20rem,1fr)]" : "landing-delay-1 max-w-[24rem] gap-0 p-2 sm:max-w-[26rem] sm:p-3"} landing-fade-up grid w-full rounded-[24px] border border-[#f8ddba]/80 bg-white/90 text-left text-slate-900 shadow-[0_24px_70px_rgba(248,184,120,0.2)] backdrop-blur sm:rounded-[32px] sm:shadow-[0_45px_120px_rgba(248,184,120,0.34)]`}
+            className="landing-fade-up landing-delay-1 grid w-full max-w-[24rem] gap-0 rounded-[24px] border border-[#f8ddba]/80 bg-white/90 p-2 text-left text-slate-900 shadow-[0_24px_70px_rgba(248,184,120,0.2)] backdrop-blur sm:max-w-[26rem] sm:rounded-[32px] sm:p-3 sm:shadow-[0_45px_120px_rgba(248,184,120,0.34)]"
           >
-            {isSignUp ? (
-              <div className="flex flex-col gap-3 border-b border-[#f8edd7] pb-3 sm:gap-4 lg:col-span-2 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex max-w-full items-center gap-3 rounded-[20px] border border-[#f8ddba] bg-[#fff9f0] px-3 py-2 sm:rounded-full sm:px-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#cfeef2] text-sm font-semibold text-slate-900">
-                    LK
-                  </div>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">
-                      Linket dashboard
-                    </p>
-                    <p className="truncate text-xs text-slate-500">
-                      New workspace
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link
-                    href={signInHref}
-                    className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition-[transform,background-color,color,border-color,box-shadow] duration-200 hover:-translate-y-0.5 active:scale-[0.985] ${inactiveTabClass}`}
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    href={signUpHref}
-                    aria-current="page"
-                    className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm font-semibold transition-[transform,background-color,color,border-color,box-shadow] duration-200 hover:-translate-y-0.5 active:scale-[0.985] ${activeTabClass}`}
-                  >
-                    Create account
-                  </Link>
-                </div>
-              </div>
-            ) : null}
-
             <section
-              className={`${isSignUp ? "p-5 sm:p-6" : "relative p-3.5 sm:p-5"} rounded-[22px] border border-[#f8edd7] bg-[#fff9f3]`}
+              className="relative rounded-[22px] border border-[#f8edd7] bg-[#fff9f3] p-3.5 sm:p-5"
             >
-              {!isSignUp ? (
-                <div
-                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-[#f8ddba] bg-white/85 text-xs font-semibold text-slate-900 shadow-[0_8px_20px_rgba(248,184,120,0.18)] sm:right-5 sm:top-5 sm:h-9 sm:w-9"
-                  aria-hidden="true"
-                >
-                  {hasBrandMark() ? (
-                    <Image
-                      src={(brand.logomark || brand.logo) ?? ""}
-                      alt=""
-                      width={20}
-                      height={20}
-                      className="h-[18px] w-[18px] object-contain sm:h-5 sm:w-5"
-                    />
-                  ) : (
-                    <span>{(brand.shortName ?? brand.name).slice(0, 2)}</span>
-                  )}
-                </div>
-              ) : null}
+              <div
+                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-[#f8ddba] bg-white/85 text-xs font-semibold text-slate-900 shadow-[0_8px_20px_rgba(248,184,120,0.18)] sm:right-5 sm:top-5 sm:h-9 sm:w-9"
+                aria-hidden="true"
+              >
+                {hasBrandMark() ? (
+                  <Image
+                    src={(brand.logomark || brand.logo) ?? ""}
+                    alt=""
+                    width={20}
+                    height={20}
+                    className="h-[18px] w-[18px] object-contain sm:h-5 sm:w-5"
+                  />
+                ) : (
+                  <span>{(brand.shortName ?? brand.name).slice(0, 2)}</span>
+                )}
+              </div>
 
-              <header className={isSignUp ? "space-y-2" : "space-y-1.5"}>
-                <p className={`${isSignUp ? "tracking-[0.24em]" : "tracking-[0.2em]"} text-xs font-semibold uppercase text-slate-500`}>
+              <header className="space-y-1.5 pr-10">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                   Secure access
                 </p>
-                <h2 className={`${isSignUp ? "text-2xl sm:text-3xl" : "text-lg sm:text-2xl"} font-semibold leading-tight text-slate-900`}>
+                <h2 className="text-lg font-semibold leading-tight text-slate-900 sm:text-2xl">
                   {formHeading}
                 </h2>
-                <p className={`${isSignUp ? "leading-6" : "leading-5"} text-sm text-slate-600`}>
+                <p className="text-sm leading-5 text-slate-600">
                   {formDescription}
                 </p>
               </header>
@@ -561,9 +496,9 @@ function AuthPageContent() {
 
               <form
                 onSubmit={isSignUp ? handlePasswordSignUp : handlePasswordSignIn}
-                className={isSignUp ? "mt-6 space-y-4" : "mt-4 space-y-3"}
+                className="mt-4 space-y-3"
               >
-                <div className={isSignUp ? "flex flex-col gap-2" : "flex flex-col gap-1.5"}>
+                <div className="flex flex-col gap-1.5">
                   <label htmlFor="email" className="text-sm font-medium text-slate-700">
                     Email
                   </label>
@@ -573,13 +508,13 @@ function AuthPageContent() {
                     value={email}
                     autoComplete="email"
                     onChange={(event) => setEmail(event.target.value)}
-                    className={`${isSignUp ? "px-4 py-3" : "px-3.5 py-2.5"} w-full rounded-2xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus-visible:border-[#58c0e0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#58c0e0] focus-visible:ring-0`}
+                    className="w-full rounded-2xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus-visible:border-[#58c0e0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#58c0e0] focus-visible:ring-0"
                     placeholder="you@example.com"
                     required
                   />
                 </div>
 
-                <div className={isSignUp ? "flex flex-col gap-2" : "flex flex-col gap-1.5"}>
+                <div className="flex flex-col gap-1.5">
                   <label htmlFor="password" className="text-sm font-medium text-slate-700">
                     Password
                   </label>
@@ -599,17 +534,17 @@ function AuthPageContent() {
                         setError(null);
                       }
                     }}
-                    className={`${isSignUp ? "px-4 py-3" : "px-3.5 py-2.5"} w-full rounded-2xl border bg-white text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-0 ${passwordInputBorderClass}`}
+                    className={`w-full rounded-2xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:ring-0 ${passwordInputBorderClass}`}
                     placeholder={
                       isSignUp
                         ? "Create a password (6+ characters)"
                         : "Enter your password"
                     }
-                    style={!isSignUp ? { minHeight: "42px" } : undefined}
+                    style={{ minHeight: "42px" }}
                     required
                   />
                   {isSignUp && (
-                    <ul className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-white/70 px-3 py-3">
+                    <ul className="mt-2 space-y-1.5 rounded-2xl border border-slate-200 bg-white/70 px-3 py-2.5">
                       {passwordChecklistItems.map((item) => (
                         <li
                           key={item.key}
@@ -635,7 +570,7 @@ function AuthPageContent() {
                 <button
                   type="submit"
                   disabled={pending}
-                  className={`${isSignUp ? "px-5 py-3" : "px-4 py-2.5"} button-landing-primary inline-flex w-full items-center justify-center rounded-full border text-sm font-semibold transition-[transform,box-shadow,background] duration-200 hover:-translate-y-0.5 active:scale-[0.985] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none`}
+                  className="button-landing-primary inline-flex w-full items-center justify-center rounded-full border px-4 py-2.5 text-sm font-semibold transition-[transform,box-shadow,background] duration-200 hover:-translate-y-0.5 active:scale-[0.985] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
                 >
                   {pending
                     ? isSignUp
@@ -658,7 +593,7 @@ function AuthPageContent() {
                 )}
               </form>
 
-              <div className={isSignUp ? "mt-6 space-y-3" : "mt-4 space-y-2.5"}>
+              <div className="mt-4 space-y-2.5">
                 <div className="flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-slate-500">
                   <span className="h-px flex-1 bg-[#f8ddba]" />
                   <span>or continue with</span>
@@ -670,7 +605,7 @@ function AuthPageContent() {
                     type="button"
                     onClick={() => handleOAuth("google")}
                     disabled={pending}
-                    className={`${isSignUp ? "px-4 py-3" : "px-3.5 py-2.5"} button-landing-secondary inline-flex w-full items-center justify-center gap-3 rounded-full border text-sm font-semibold transition-[transform,box-shadow,background,color] duration-200 hover:-translate-y-0.5 active:scale-[0.985] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none`}
+                    className="button-landing-secondary inline-flex w-full items-center justify-center gap-3 rounded-full border px-3.5 py-2.5 text-sm font-semibold transition-[transform,box-shadow,background,color] duration-200 hover:-translate-y-0.5 active:scale-[0.985] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-70 disabled:shadow-none"
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24">
                       <path
@@ -696,7 +631,7 @@ function AuthPageContent() {
               </div>
 
               {isSignUp ? (
-                <p className="mt-6 text-center text-sm text-slate-600">
+                <p className="mt-4 text-center text-sm text-slate-600">
                   Already have an account?{" "}
                   <Link
                     href={signInHref}
@@ -718,88 +653,6 @@ function AuthPageContent() {
               )}
             </section>
 
-            {isSignUp ? (
-            <aside className="hidden overflow-hidden rounded-[22px] border border-slate-200 bg-[#fff7ef] p-5 lg:block">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-                    Workspace
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold leading-tight text-slate-900">
-                    Your Linket profile stays ready for every scan.
-                  </h2>
-                </div>
-                <span className="rounded-full border border-[#f8ddba] bg-white px-3 py-1 text-xs font-semibold text-slate-600">
-                  Live
-                </span>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                {[
-                  { label: "Scans", value: "1,248", delta: "+18%" },
-                  { label: "Leads", value: "86", delta: "+12%" },
-                  { label: "Saves", value: "214", delta: "+9%" },
-                  { label: "Links", value: "32", delta: "Active" },
-                ].map((stat) => (
-                  <div
-                    key={stat.label}
-                    className="rounded-2xl border border-slate-200 bg-white/85 p-4"
-                  >
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                      {stat.label}
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-900">
-                      {stat.value}
-                    </p>
-                    <p className="text-xs font-medium text-[#319fbe]">
-                      {stat.delta}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white/85 p-4">
-                <div className="flex items-center justify-between text-xs text-slate-600">
-                  <span className="font-semibold uppercase tracking-[0.24em]">
-                    Activity
-                  </span>
-                  <span>30 days</span>
-                </div>
-                <div className="mt-5 flex h-28 items-end gap-2">
-                  {[42, 64, 52, 88, 76, 96, 70, 104].map((height, index) => (
-                    <span
-                      key={`${height}-${index}`}
-                      className="flex-1 rounded-t-full bg-[linear-gradient(180deg,_#68d8e0_0%,_#58c0e0_100%)]"
-                      style={{ height: `${height}%` }}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {[
-                  ["Public profile", "Latest brand updates"],
-                  ["Lead forms", "Qualified contacts"],
-                  ["Analytics", "Scan and click trends"],
-                ].map(([title, description]) => (
-                  <div
-                    key={title}
-                    className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white/75 px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {title}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {description}
-                      </p>
-                    </div>
-                    <span className="h-2.5 w-2.5 rounded-full bg-[#58c0e0]" />
-                  </div>
-                ))}
-              </div>
-            </aside>
-            ) : null}
           </div>
         </section>
       </div>
