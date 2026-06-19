@@ -1208,6 +1208,23 @@
   opacity: 0.5;
 }
 
+.public-profile-shell .public-profile-cta-primary--split-left::after {
+  border-right: 0;
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.public-profile-shell .public-profile-cta-disclosure {
+  background: var(--profile-contact-button-bg);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent),
+    inset 1px 0 0 color-mix(in srgb, var(--profile-contact-button-border) 58%, transparent);
+}
+
+.public-profile-shell .public-profile-cta-disclosure:hover {
+  background: var(--profile-contact-button-bg-hover);
+}
+
 .public-profile-shell .public-profile-cta-primary:hover {
   background: var(--profile-contact-button-bg-hover) !important;
   transform: translateY(-1px);

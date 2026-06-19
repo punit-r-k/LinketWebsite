@@ -78,7 +78,7 @@ export default function VCardDownload({
 
   return (
     <div className="w-full sm:w-auto">
-      <div className="inline-flex w-full items-stretch sm:w-auto">
+      <div className="inline-flex w-full items-stretch rounded-full shadow-[0_16px_34px_-26px_rgba(15,23,42,0.62)] sm:w-auto">
         <Button
           onClick={download}
           disabled={downloading}
@@ -87,7 +87,8 @@ export default function VCardDownload({
           className={cn(
             "min-w-0 flex-1 sm:flex-none",
             className,
-            hasDetails && "rounded-r-none border-r-0 pr-5"
+            hasDetails &&
+              "public-profile-cta-primary--split-left h-11 rounded-r-none border-r-0 pr-5 shadow-none"
           )}
           variant={variant}
         >
@@ -108,7 +109,7 @@ export default function VCardDownload({
             aria-label={open ? "Hide contact details" : "Show contact details"}
             aria-expanded={open}
             onClick={() => setOpen((current) => !current)}
-            className="inline-flex min-h-11 w-14 shrink-0 items-center justify-center rounded-l-none rounded-r-full border border-l-0 border-[color:var(--profile-contact-button-border)] bg-card/85 text-foreground shadow-sm transition-[background-color,color,box-shadow,transform] duration-200 ease-out hover:bg-card active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="public-profile-cta-disclosure inline-flex h-11 w-14 shrink-0 items-center justify-center rounded-l-none rounded-r-full border border-l-0 border-[color:var(--profile-contact-button-border)] text-[color:var(--profile-contact-button-fg)] transition-[background-color,color,box-shadow,transform] duration-200 ease-out active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronDown
               className={cn(
