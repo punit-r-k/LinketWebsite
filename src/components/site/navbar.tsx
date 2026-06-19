@@ -46,6 +46,12 @@ import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { getSiteOrigin } from "@/lib/site-url";
 import { scrollWindowTo } from "@/lib/scroll";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
+import {
+  buildOnboardingMilestones,
+  ONBOARDING_LIVE_STATUS_EVENT,
+  ONBOARDING_MILESTONE_NAV_EVENT,
+  type OnboardingLiveStatusDetail,
+} from "@/lib/dashboard-onboarding-milestones";
 import { confirmRemove } from "@/lib/confirm-remove";
 import { isSavedAccount, saveAccount } from "@/lib/saved-accounts";
 
@@ -54,12 +60,6 @@ type UserLite = {
   email: string | null;
   fullName?: string | null;
 } | null;
-
-type DashboardSetupLiveStatus = {
-  visible: boolean;
-  contactReady: boolean;
-  linksReady: boolean;
-};
 
 const LANDING_LINKS = [
   {
@@ -165,7 +165,7 @@ function Navbar() {
   const copyLinkTimeout = useRef<number | null>(null);
   const [dashboardSidebarOpen, setDashboardSidebarOpen] = useState(false);
   const [dashboardSetupLiveStatus, setDashboardSetupLiveStatus] =
-    useState<DashboardSetupLiveStatus>({
+    useState<OnboardingLiveStatusDetail>({
       visible: false,
       contactReady: false,
       linksReady: false,
@@ -358,7 +358,7 @@ function Navbar() {
 
     const handleLiveStatus = (event: Event) => {
       const detail = (
-        event as CustomEvent<Partial<DashboardSetupLiveStatus>>
+        event as CustomEvent<Partial<OnboardingLiveStatusDetail>>
       ).detail;
       setDashboardSetupLiveStatus({
         visible: Boolean(detail?.visible),
@@ -366,10 +366,10 @@ function Navbar() {
         linksReady: Boolean(detail?.linksReady),
       });
     };
-    window.addEventListener("linket:onboarding-live-status", handleLiveStatus);
+    window.addEventListener(ONBOARDING_LIVE_STATUS_EVENT, handleLiveStatus);
     return () => {
       window.removeEventListener(
-        "linket:onboarding-live-status",
+        ONBOARDING_LIVE_STATUS_EVENT,
         handleLiveStatus
       );
     };
@@ -1187,30 +1187,13 @@ function Navbar() {
         aria-label="Live status"
       >
         <div className="flex items-center justify-center gap-2">
-          {[
-            {
-              label: "Live",
-              complete: true,
-              target: "live",
-            },
-            {
-              label: "Contact card added",
-              complete: dashboardSetupLiveStatus.contactReady,
-              target: "contact",
-            },
-            {
-              label: "First link active",
-              complete: dashboardSetupLiveStatus.linksReady,
-              target: "links",
-            },
-            { label: "QR ready", complete: true, target: "publish" },
-          ].map((item) => (
+          {buildOnboardingMilestones(dashboardSetupLiveStatus).map((item) => (
             <button
               key={item.label}
               type="button"
               onClick={() => {
                 window.dispatchEvent(
-                  new CustomEvent("linket:onboarding-milestone-nav", {
+                  new CustomEvent(ONBOARDING_MILESTONE_NAV_EVENT, {
                     detail: { target: item.target },
                   })
                 );

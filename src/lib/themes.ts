@@ -11,6 +11,8 @@ export type ThemeName =
   | "burnt-orange"
   | "maroon";
 
+export const DEFAULT_DASHBOARD_THEME: ThemeName = "autumn";
+
 const THEME_SET: Set<ThemeName> = new Set([
   "light",
   "dark",
@@ -67,7 +69,7 @@ function resolveThemeName(
 
 export function normalizeThemeName(
   value: string | ThemeName | null | undefined,
-  fallback: ThemeName = "autumn"
+  fallback: ThemeName = DEFAULT_DASHBOARD_THEME
 ): ThemeName {
   return resolveThemeName(value) ?? fallback;
 }

@@ -7,7 +7,7 @@ import { getActiveProfileForUser } from "@/lib/profile-service";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
 import { getConfiguredSiteHost } from "@/lib/site-url";
-import { normalizeThemeName } from "@/lib/themes";
+import { DEFAULT_DASHBOARD_THEME, normalizeThemeName } from "@/lib/themes";
 
 const AUTO_HANDLE_PATTERN = /^user-[0-9a-f]{8}$/i;
 const DEFAULT_LINK_HOST = getConfiguredSiteHost();
@@ -161,7 +161,7 @@ export async function getDashboardOnboardingState(
     handle: activeProfile?.handle ?? fallbackHandle,
     headline: activeProfile?.headline ?? "",
     theme: sanitizeThemeForPlan(
-      normalizeThemeName(activeProfile?.theme, "autumn"),
+      normalizeThemeName(activeProfile?.theme, DEFAULT_DASHBOARD_THEME),
       planAccess
     ),
     links: activeProfile?.links ?? [],

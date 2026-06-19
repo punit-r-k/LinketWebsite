@@ -95,7 +95,11 @@ import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
 import { sanitizePublicLinkUrl } from "@/lib/security";
 import { getDefaultProfileLinkUrl } from "@/lib/site-url";
-import { normalizeThemeName, type ThemeName } from "@/lib/themes";
+import {
+  DEFAULT_DASHBOARD_THEME,
+  normalizeThemeName,
+  type ThemeName,
+} from "@/lib/themes";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 const SUPABASE_ENABLED = isSupabaseAdminAvailable;
@@ -171,7 +175,7 @@ function normaliseHandle(handle: string) {
 function normaliseTheme(
   theme: string | ThemeName | null | undefined
 ): ThemeName {
-  return normalizeThemeName(theme, "autumn");
+  return normalizeThemeName(theme, DEFAULT_DASHBOARD_THEME);
 }
 
 const memoryProfiles = new Map<string, ProfileWithLinks[]>();

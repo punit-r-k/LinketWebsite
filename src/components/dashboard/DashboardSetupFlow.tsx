@@ -7,31 +7,20 @@ import {
   useMemo,
   useRef,
   useState,
-  type ComponentType,
 } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Check,
   CheckCircle2,
-  Cloud,
   Gift,
-  Hexagon,
   Languages,
-  Leaf,
   Link2,
   Loader2,
-  Moon,
-  MoonStar,
   Palette,
   Phone,
   Plus,
-  Rose,
   Rocket,
-  Star,
-  Sun,
   Trash2,
-  Trees,
   UserRound,
   type LucideIcon,
 } from "lucide-react";
@@ -41,6 +30,7 @@ import {
   useDashboardPlanAccess,
   useDashboardUser,
 } from "@/components/dashboard/DashboardSessionContext";
+import { DASHBOARD_THEME_OPTIONS } from "@/components/dashboard/theme-options";
 import PhonePreviewCard, {
   type PhonePreviewLinkItem,
 } from "@/components/dashboard/public-profile/PhonePreviewCard";
@@ -55,6 +45,12 @@ import {
 import { getSignedProfileHeaderUrl } from "@/lib/profile-header-client";
 import { getSignedProfileLogoUrl } from "@/lib/profile-logo-client";
 import type { DashboardOnboardingState } from "@/lib/dashboard-onboarding-types";
+import {
+  ONBOARDING_LIVE_STATUS_EVENT,
+  ONBOARDING_MILESTONE_LABELS,
+  ONBOARDING_MILESTONE_NAV_EVENT,
+  type OnboardingMilestoneTarget,
+} from "@/lib/dashboard-onboarding-milestones";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import {
   getConfiguredSiteHost,
@@ -67,7 +63,12 @@ import {
   sanitizeThemeForPlan,
 } from "@/lib/plan-access";
 import { scrollPageToTop } from "@/lib/scroll";
-import { isDarkTheme, normalizeThemeName, type ThemeName } from "@/lib/themes";
+import {
+  DEFAULT_DASHBOARD_THEME,
+  isDarkTheme,
+  normalizeThemeName,
+  type ThemeName,
+} from "@/lib/themes";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -319,131 +320,6 @@ const SETUP_STEPS: Array<{
   },
 ];
 
-const HookemLonghornIcon = ({ className }: { className?: string }) => (
-  <Image
-    src="/logos/hookem-theme-icon.svg"
-    alt=""
-    width={24}
-    height={24}
-    aria-hidden="true"
-    className={cn("object-contain", className)}
-  />
-);
-
-const AggieWolfIcon = ({ className }: { className?: string }) => (
-  <span
-    aria-hidden="true"
-    className={cn("block bg-[#500000]", className)}
-    style={{
-      WebkitMaskImage: "url('/logos/aggie-theme-icon.png')",
-      maskImage: "url('/logos/aggie-theme-icon.png')",
-      WebkitMaskRepeat: "no-repeat",
-      maskRepeat: "no-repeat",
-      WebkitMaskPosition: "center",
-      maskPosition: "center",
-      WebkitMaskSize: "contain",
-      maskSize: "contain",
-    }}
-  />
-);
-
-const FEATURED_THEMES: Array<{
-  value: ThemeName;
-  label: string;
-  description: string;
-  swatchClassName: string;
-  icon: ComponentType<{ className?: string }>;
-}> = [
-  {
-    value: "light",
-    label: "Light",
-    description: "Clean, bright, and minimal",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#f8fafc_0%,#ffffff_45%,#dbeafe_100%)]",
-    icon: Sun,
-  },
-  {
-    value: "dark",
-    label: "Dark",
-    description: "Simple, polished, and high contrast",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#475569_100%)]",
-    icon: Moon,
-  },
-  {
-    value: "midnight",
-    label: "Midnight",
-    description: "Bold, sleek, high contrast",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#0f172a_0%,#1e293b_45%,#4f46e5_100%)]",
-    icon: MoonStar,
-  },
-  {
-    value: "dream",
-    label: "Dream",
-    description: "Soft, modern, polished",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#f8f4ff_0%,#cdb7ff_45%,#7dd3fc_100%)]",
-    icon: Cloud,
-  },
-  {
-    value: "forest",
-    label: "Forest",
-    description: "Confident, grounded, rich",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#0f3d2f_0%,#1f7a53_52%,#9ad7b9_100%)]",
-    icon: Trees,
-  },
-  {
-    value: "gilded",
-    label: "Gilded",
-    description: "Luxurious, refined, dramatic",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#050505_0%,#4a3515_50%,#f5d76e_100%)]",
-    icon: Star,
-  },
-  {
-    value: "rose",
-    label: "Rose",
-    description: "Editorial, expressive, clean",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#fff1f2_0%,#fda4af_42%,#fb7185_100%)]",
-    icon: Rose,
-  },
-  {
-    value: "autumn",
-    label: "Autumn",
-    description: "Warm, premium, approachable",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#fff1e6_0%,#ffb37a_48%,#ff7b6b_100%)]",
-    icon: Leaf,
-  },
-  {
-    value: "honey",
-    label: "Honey",
-    description: "Bright, upbeat, friendly",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#fff7cc_0%,#ffd166_42%,#ff9f1c_100%)]",
-    icon: Hexagon,
-  },
-  {
-    value: "burnt-orange",
-    label: "Hook 'Em",
-    description: "Bold, spirited, burnt orange",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#fff2e6_0%,#bf5700_50%,#7c2d12_100%)]",
-    icon: HookemLonghornIcon,
-  },
-  {
-    value: "maroon",
-    label: "Aggie",
-    description: "Deep, classic, maroon",
-    swatchClassName:
-      "bg-[linear-gradient(135deg,#fff0f2_0%,#500000_48%,#2a0000_100%)]",
-    icon: AggieWolfIcon,
-  },
-];
-
 function readOnboardingStepIndex(userId: string) {
   if (typeof window === "undefined") return null;
   try {
@@ -626,7 +502,7 @@ function buildPreviewProfile(
     logo_original_file_name: draft.logoOriginalFileName,
     logo_shape: draft.logoShape,
     logo_bg_white: draft.logoBackgroundWhite,
-    theme: normalizeThemeName(draft.theme, "autumn"),
+    theme: normalizeThemeName(draft.theme, DEFAULT_DASHBOARD_THEME),
     is_active: true,
     created_at: draft.createdAt || now,
     updated_at: draft.updatedAt || now,
@@ -656,7 +532,7 @@ function mapProfileRecord(record: ProfileWithLinks): ProfileDraft {
         isActive: link.is_active ?? true,
         isOverride: link.is_override ?? false,
       })) ?? [],
-    theme: normalizeThemeName(record.theme, "autumn"),
+    theme: normalizeThemeName(record.theme, DEFAULT_DASHBOARD_THEME),
     active: record.is_active,
     createdAt: record.created_at,
     updatedAt: record.updated_at,
@@ -730,7 +606,10 @@ function mapOnboardingStateProfile(
           isActive: link.is_active ?? true,
           isOverride: link.is_override ?? false,
         })) ?? [],
-      theme: normalizeThemeName(state.activeProfile.theme, "autumn"),
+      theme: normalizeThemeName(
+        state.activeProfile.theme,
+        DEFAULT_DASHBOARD_THEME
+      ),
       active: state.activeProfile.isActive,
       createdAt: now,
       updatedAt: now,
@@ -772,7 +651,7 @@ function buildProfileSavePayload(draft: ProfileDraft, active: boolean) {
     logoOriginalFileName: draft.logoOriginalFileName,
     logoShape: draft.logoShape,
     logoBackgroundWhite: draft.logoBackgroundWhite,
-    theme: normalizeThemeName(draft.theme, "autumn"),
+    theme: normalizeThemeName(draft.theme, DEFAULT_DASHBOARD_THEME),
     links: draft.links
       .map((link) => {
         const normalizedUrl = normalizeLinkUrlInput(link.url);
@@ -1528,7 +1407,7 @@ export default function DashboardSetupFlow({
     if (typeof window === "undefined") return;
 
     window.dispatchEvent(
-      new CustomEvent("linket:onboarding-live-status", {
+      new CustomEvent(ONBOARDING_LIVE_STATUS_EVENT, {
         detail: {
           visible: showLaunchHub,
           contactReady: contactStepComplete,
@@ -1539,7 +1418,7 @@ export default function DashboardSetupFlow({
 
     return () => {
       window.dispatchEvent(
-        new CustomEvent("linket:onboarding-live-status", {
+        new CustomEvent(ONBOARDING_LIVE_STATUS_EVENT, {
           detail: { visible: false },
         })
       );
@@ -1551,7 +1430,7 @@ export default function DashboardSetupFlow({
 
     const handleMilestoneNavigation = (event: Event) => {
       const target = (
-        event as CustomEvent<{ target?: "live" | "contact" | "links" | "publish" }>
+        event as CustomEvent<{ target?: OnboardingMilestoneTarget }>
       ).detail?.target;
 
       if (target === "live") {
@@ -1578,12 +1457,12 @@ export default function DashboardSetupFlow({
     };
 
     window.addEventListener(
-      "linket:onboarding-milestone-nav",
+      ONBOARDING_MILESTONE_NAV_EVENT,
       handleMilestoneNavigation
     );
     return () => {
       window.removeEventListener(
-        "linket:onboarding-milestone-nav",
+        ONBOARDING_MILESTONE_NAV_EVENT,
         handleMilestoneNavigation
       );
     };
@@ -2850,10 +2729,10 @@ export default function DashboardSetupFlow({
     isOverride: link.is_override,
     clicks: link.click_count ?? 0,
   }));
-  const availableThemeOptions = FEATURED_THEMES.filter((themeOption) =>
+  const availableThemeOptions = DASHBOARD_THEME_OPTIONS.filter((themeOption) =>
     isThemeAvailableForPlan(themeOption.value, planAccess)
   );
-  const lockedThemeOptions = FEATURED_THEMES.filter(
+  const lockedThemeOptions = DASHBOARD_THEME_OPTIONS.filter(
     (themeOption) => !isThemeAvailableForPlan(themeOption.value, planAccess)
   );
   const selectedThemeValue = sanitizeThemeForPlan(profileDraft.theme, planAccess);
@@ -2866,21 +2745,21 @@ export default function DashboardSetupFlow({
     !canPersistOnboardingTheme(selectedThemeValue) ||
     !canPersistOnboardingTheme(activeThemeValue);
   const selectedThemeOption =
-    FEATURED_THEMES.find((themeOption) => themeOption.value === selectedThemeValue) ??
+    DASHBOARD_THEME_OPTIONS.find((themeOption) => themeOption.value === selectedThemeValue) ??
     availableThemeOptions[0] ??
-    FEATURED_THEMES[0];
+    DASHBOARD_THEME_OPTIONS[0];
   const activeThemeOption =
-    FEATURED_THEMES.find((themeOption) => themeOption.value === activeThemeValue) ??
+    DASHBOARD_THEME_OPTIONS.find((themeOption) => themeOption.value === activeThemeValue) ??
     selectedThemeOption;
   const canChooseTheme = linksReady;
   const publishReviewItems = [
     { label: "Profile basics added", done: liveProfileReady, missing: "Profile basics missing" },
     {
-      label: "Contact card added",
+      label: ONBOARDING_MILESTONE_LABELS.contact,
       done: contactStepComplete,
       missing: "Contact card missing",
     },
-    { label: "First link added", done: linksReady, missing: "Add a first link to continue" },
+    { label: ONBOARDING_MILESTONE_LABELS.links, done: linksReady, missing: "Add a first link to continue" },
     { label: `Theme selected: ${selectedThemeOption.label}`, done: true, missing: "Pick a theme" },
   ];
   const stepHeading =
@@ -2975,7 +2854,10 @@ export default function DashboardSetupFlow({
       (savedContactDraft?.contactButtonVisible ?? true)
   );
   const themeFieldState = getProfileFieldState(
-    normalizeThemeName(savedProfileDraft?.theme ?? "autumn", "autumn") !==
+    normalizeThemeName(
+      savedProfileDraft?.theme ?? DEFAULT_DASHBOARD_THEME,
+      DEFAULT_DASHBOARD_THEME
+    ) !==
       selectedThemeValue
   );
   const mobileStepLabels: Record<SetupStepId, string> = {

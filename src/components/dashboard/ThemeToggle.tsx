@@ -1,22 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Hexagon,
-  Rose,
-  Sun,
-  Moon,
-  MoonStar,
-  Cloud,
-  Trees,
-  Star,
-  Leaf,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useThemeOptional } from "@/components/theme/theme-provider";
+import {
+  DASHBOARD_THEME_ICONS,
+  DASHBOARD_THEME_LABELS,
+  DASHBOARD_THEME_ORDER,
+} from "@/components/dashboard/theme-options";
 import {
   clearPendingDashboardTheme,
   writePendingDashboardTheme,
@@ -29,76 +21,6 @@ import {
   useDashboardUser,
 } from "@/components/dashboard/DashboardSessionContext";
 
-const ORDER: ThemeName[] = [
-  "light",
-  "dark",
-  "midnight",
-  "dream",
-  "forest",
-  "gilded",
-  "rose",
-  "autumn",
-  "honey",
-  "burnt-orange",
-  "maroon",
-];
-
-const HookemLonghornIcon = ({ className }: { className?: string }) => (
-  <Image
-    src="/logos/hookem-theme-icon.svg"
-    alt=""
-    width={24}
-    height={24}
-    aria-hidden="true"
-    className={cn("object-contain", className)}
-  />
-);
-
-const AggieWolfIcon = ({ className }: { className?: string }) => (
-  <span
-    aria-hidden="true"
-    className={cn("block bg-[#500000]", className)}
-    style={{
-      WebkitMaskImage: "url('/logos/aggie-theme-icon.png')",
-      maskImage: "url('/logos/aggie-theme-icon.png')",
-      WebkitMaskRepeat: "no-repeat",
-      maskRepeat: "no-repeat",
-      WebkitMaskPosition: "center",
-      maskPosition: "center",
-      WebkitMaskSize: "contain",
-      maskSize: "contain",
-    }}
-  />
-);
-
-const ICONS: Record<ThemeName, React.ComponentType<{ className?: string }>> = {
-  light: Sun,
-  dark: Moon,
-  midnight: MoonStar,
-  dream: Cloud,
-  forest: Trees,
-  gilded: Star,
-  rose: Rose,
-  autumn: Leaf,
-  honey: Hexagon,
-  "burnt-orange": HookemLonghornIcon,
-  maroon: AggieWolfIcon,
-};
-
-const LABELS: Record<ThemeName, string> = {
-  light: "Light",
-  dark: "Dark",
-  midnight: "Midnight",
-  dream: "Dream",
-  forest: "Forest",
-  gilded: "Gilded",
-  rose: "Rose",
-  autumn: "Autumn",
-  honey: "Honey",
-  "burnt-orange": "Hook 'Em",
-  maroon: "Aggie",
-};
-
 export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean }) {
   const { theme, setTheme } = useThemeOptional();
   const user = useDashboardUser();
@@ -106,7 +28,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   const abortRef = useRef<AbortController | null>(null);
   const [mounted, setMounted] = useState(false);
   const availableThemes = useMemo(
-    () => (planAccess.hasPaidAccess ? ORDER : [...FREE_THEME_NAMES]),
+    () => (planAccess.hasPaidAccess ? DASHBOARD_THEME_ORDER : [...FREE_THEME_NAMES]),
     [planAccess.hasPaidAccess]
   );
   const activeTheme = sanitizeThemeForPlan(theme, planAccess);
@@ -210,8 +132,8 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
   }
 
   const current = availableThemes[index] || availableThemes[0];
-  const Icon = ICONS[current];
-  const label = LABELS[current];
+  const Icon = DASHBOARD_THEME_ICONS[current];
+  const label = DASHBOARD_THEME_LABELS[current];
   const compactIconClassName =
     current === "burnt-orange"
       ? "h-6 w-8"

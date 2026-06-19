@@ -17,9 +17,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
 import { supabase } from "@/lib/supabase";
 import AvatarUploader from "@/components/dashboard/AvatarUploader";
+import { DASHBOARD_THEME_OPTIONS } from "@/components/dashboard/theme-options";
 import { getSignedAvatarUrl } from "@/lib/avatar-client";
 import { confirmRemove } from "@/lib/confirm-remove";
-import { normalizeThemeName, type ThemeName } from "@/lib/themes";
+import {
+  DEFAULT_DASHBOARD_THEME,
+  normalizeThemeName,
+  type ThemeName,
+} from "@/lib/themes";
 import type { ProfileWithLinks } from "@/lib/profile-service";
 import { useDashboardUser } from "@/components/dashboard/DashboardSessionContext";
 import {
@@ -29,94 +34,15 @@ import {
 } from "@/lib/site-url";
 import { normalizePublicLinkUrlInput } from "@/lib/public-link-url";
 
-const THEME_OPTIONS: Array<{
-  id: ThemeName;
-  label: string;
-  description: string;
-  preview: string;
-  textTone: "light" | "dark";
-}> = [
-  {
-    id: "light",
-    label: "Light",
-    description: "Warm cream canvas with Linket cyan and gold accents",
-    preview: "linear-gradient(135deg, #fffdf9 0%, #f8d058 48%, #58c0e0 100%)",
-    textTone: "dark",
-  },
-  {
-    id: "dark",
-    label: "Dark",
-    description: "Deep charcoal canvas with Linket cyan and bronze accents",
-    preview: "linear-gradient(135deg, #0f172a 0%, #1f2937 46%, #58c0e0 72%, #9a6640 100%)",
-    textTone: "light",
-  },
-  {
-    id: "midnight",
-    label: "Midnight",
-    description: "Deep violet night with neon glow",
-    preview: "linear-gradient(135deg, #050414 0%, #1b1542 100%)",
-    textTone: "light",
-  },
-  {
-    id: "dream",
-    label: "Dream",
-    description: "Soft pastel haze with airy blue glow",
-    preview: "linear-gradient(135deg, #ffffff 0%, #f4e9ff 55%, #b8a6ff 100%)",
-    textTone: "dark",
-  },
-  {
-    id: "forest",
-    label: "Forest",
-    description: "Moody woodland neutrals with ember accents",
-    preview: "linear-gradient(135deg, #273529 0%, #4a5d4f 55%, #a45b3e 100%)",
-    textTone: "light",
-  },
-  {
-    id: "gilded",
-    label: "Gilded",
-    description: "Matte black with luminous gold accents",
-    preview:
-      "linear-gradient(135deg, #050505 0%, #111112 50%, #5d3d16 74%, #e5b23a 100%)",
-    textTone: "light",
-  },
-  {
-    id: "rose",
-    label: "Rose",
-    description: "Rosy glow with warm, soft contrast",
-    preview: "linear-gradient(135deg, #ffe1d1 0%, #ffb66f 55%, #e23b2e 100%)",
-    textTone: "dark",
-  },
-  {
-    id: "autumn",
-    label: "Autumn",
-    description: "Warm amber and spice for fall launches",
-    preview: "linear-gradient(135deg, #fff0e0 0%, #f6b97a 100%)",
-    textTone: "dark",
-  },
-  {
-    id: "honey",
-    label: "Honey",
-    description: "Burnt orange to honey glow with cozy warmth",
-    preview: "linear-gradient(135deg, #c32701 0%, #fddb9c 100%)",
-    textTone: "dark",
-  },
-  {
-    id: "burnt-orange",
-    label: "Hook 'Em",
-    description: "UT Austin-inspired burnt orange with warm neutrals",
-    preview: "linear-gradient(180deg, #4a2312 0%, #b55200 36%, #fff4ea 100%)",
-    textTone: "light",
-  },
-  {
-    id: "maroon",
-    label: "Aggie",
-    description: "Texas A&M maroon with rich, dramatic depth",
-    preview: "linear-gradient(180deg, #2f040a 0%, #500000 36%, #fff3f3 100%)",
-    textTone: "light",
-  },
-];
+const THEME_OPTIONS = DASHBOARD_THEME_OPTIONS.map((option) => ({
+  id: option.value,
+  label: option.label,
+  description: option.description,
+  preview: option.preview,
+  textTone: option.textTone,
+}));
 
-const DEFAULT_THEME: ThemeName = "autumn";
+const DEFAULT_THEME: ThemeName = DEFAULT_DASHBOARD_THEME;
 const DEFAULT_PROFILE_LINK_URL = getDefaultProfileLinkUrl();
 
 type LinkItem = {
