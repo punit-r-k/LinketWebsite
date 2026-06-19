@@ -66,7 +66,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLandingLocale();
   const title = translatePhrase(
     locale,
-    "Linket Connect | NFC keychains, digital profiles, and lead capture"
+    "Linket Connect | Digital Profiles"
   );
   const description = translatePhrase(
     locale,

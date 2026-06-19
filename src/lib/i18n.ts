@@ -117,7 +117,7 @@ const esPhrases: Record<string, string> = {
   "Don't just share it... LINKET!": "No solo lo compartas... LINKET!",
   "Linket keychains share your digital profile instantly with NFC and QR backed by live editing.":
     "Los llaveros Linket comparten tu perfil digital al instante con NFC y QR, respaldados por edición en vivo.",
-  "Linket Connect | NFC keychains, digital profiles, and lead capture":
+  "Linket Connect | Digital Profiles":
     "Linket Connect | Llaveros NFC, perfiles digitales y captura de prospectos",
   "Linket Connect combines NFC keychains, live digital profiles, and built-in lead capture so students, creators, and teams can share contact info, update links instantly, and track every scan.":
     "Linket Connect combina llaveros NFC, perfiles digitales en vivo y captura de prospectos integrada para que estudiantes, creadores y equipos compartan contactos, actualicen enlaces al instante y midan cada escaneo.",
@@ -393,7 +393,7 @@ const ptPhrases: Record<string, string> = {
   "Don't just share it... LINKET!": "Não apenas compartilhe... LINKET!",
   "Linket keychains share your digital profile instantly with NFC and QR backed by live editing.":
     "Os chaveiros Linket compartilham seu perfil digital instantaneamente com NFC e QR, com edição em tempo real.",
-  "Linket Connect | NFC keychains, digital profiles, and lead capture":
+  "Linket Connect | Digital Profiles":
     "Linket Connect | Chaveiros NFC, perfis digitais e captura de leads",
   "Linket Connect combines NFC keychains, live digital profiles, and built-in lead capture so students, creators, and teams can share contact info, update links instantly, and track every scan.":
     "O Linket Connect combina chaveiros NFC, perfis digitais ao vivo e captura de leads integrada para que estudantes, criadores e equipes compartilhem contatos, atualizem links instantaneamente e acompanhem cada escaneamento.",
