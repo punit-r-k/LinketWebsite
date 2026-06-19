@@ -363,6 +363,10 @@ const FEATURED_THEMES: Array<{
   },
 ];
 
+function canPersistOnboardingTheme(theme: ThemeName) {
+  return theme === "light" || theme === "dark";
+}
+
 function buildEmptyLink(partial?: Partial<ProfileLinkDraft>): ProfileLinkDraft {
   return {
     title: "",
@@ -2594,12 +2598,13 @@ export default function DashboardSetupFlow({
   );
   const selectedThemeValue = sanitizeThemeForPlan(profileDraft.theme, planAccess);
   const previewingTemporaryTheme =
-    themePreview !== null && themePreview !== "light";
+    themePreview !== null && !canPersistOnboardingTheme(themePreview);
   const activeThemeValue = previewingTemporaryTheme && themePreview
     ? themePreview
     : selectedThemeValue;
   const shouldResetThemeToLight =
-    selectedThemeValue !== "light" || activeThemeValue !== "light";
+    !canPersistOnboardingTheme(selectedThemeValue) ||
+    !canPersistOnboardingTheme(activeThemeValue);
   const selectedThemeOption =
     FEATURED_THEMES.find((themeOption) => themeOption.value === selectedThemeValue) ??
     availableThemeOptions[0] ??
@@ -3692,7 +3697,7 @@ export default function DashboardSetupFlow({
                                 </span>
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                Tap any theme to preview it. Continuing returns your page to Light.
+                                Light and Dark can stay selected. Other themes are previews during onboarding.
                               </p>
                               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                                 {availableThemeOptions.map((themeOption) => {
@@ -3702,20 +3707,20 @@ export default function DashboardSetupFlow({
                                       key={themeOption.value}
                                       type="button"
                                       onClick={() => {
-                                        if (themeOption.value === "light") {
+                                        if (canPersistOnboardingTheme(themeOption.value)) {
                                           themePreviewRef.current = null;
                                           setThemePreview(null);
-                                          if (selectedThemeValue !== "light") {
-                                            writePendingDashboardTheme("light");
+                                          if (selectedThemeValue !== themeOption.value) {
+                                            writePendingDashboardTheme(themeOption.value);
                                           }
-                                          setTheme("light");
+                                          setTheme(themeOption.value);
                                           updateProfileDraft((current) => ({
                                             ...current,
-                                            theme: "light",
+                                            theme: themeOption.value,
                                           }));
                                           void trackEvent(
                                             "theme_selected",
-                                            trackingMeta({ theme: "light" })
+                                            trackingMeta({ theme: themeOption.value })
                                           );
                                           return;
                                         }

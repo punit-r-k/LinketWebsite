@@ -15,6 +15,7 @@ import {
   Tags,
   UserRound,
   Users,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
@@ -55,12 +56,17 @@ type ViewState = {
 };
 
 type DashboardNextAction = {
+  id: string;
   title: string;
   detail: string;
   href: string;
   buttonLabel: string;
   icon: LucideIcon;
+  dismissKey: string;
 };
+
+const NEXT_ACTION_DISMISS_STORAGE_PREFIX =
+  "linket:dashboard:next-action-dismissed";
 
 export default function OverviewContent() {
   const dashboardUser = useDashboardUser();
@@ -69,6 +75,9 @@ export default function OverviewContent() {
   const [reloadToken, setReloadToken] = useState(0);
   const [isChecklistDismissed, setIsChecklistDismissed] = useState(false);
   const [isChecklistPoppingOut, setIsChecklistPoppingOut] = useState(false);
+  const [dismissedNextActionKey, setDismissedNextActionKey] = useState<
+    string | null
+  >(null);
   const [hasSeenWalkthrough, setHasSeenWalkthrough] = useState(false);
   const checklistCompletionRef = useRef<boolean | null>(null);
   const checklistDismissTimerRef = useRef<number | null>(null);
@@ -205,7 +214,6 @@ export default function OverviewContent() {
   );
   const isFreeAnalytics =
     analytics?.meta.analyticsScope === "public_profile_visits";
-  const leads = analytics?.recentLeads ?? [];
   const nextAction = useMemo(
     () =>
       buildDashboardNextAction({
@@ -214,6 +222,13 @@ export default function OverviewContent() {
       }),
     [analytics, planAccess.hasPaidAccess]
   );
+  const nextActionDismissStorageKey = userId
+    ? `${NEXT_ACTION_DISMISS_STORAGE_PREFIX}:${userId}`
+    : null;
+  const visibleNextAction =
+    nextAction && dismissedNextActionKey !== nextAction.dismissKey
+      ? nextAction
+      : null;
 
   const overviewItems = [
     {
@@ -235,7 +250,7 @@ export default function OverviewContent() {
     },
     {
       label: "Leads you should reach out to",
-      value: totals ? numberFormatter.format(leads.length) : "--",
+      value: totals ? numberFormatter.format(totals.readyLeads) : "--",
       icon: Star,
     },
   ];
@@ -245,6 +260,36 @@ export default function OverviewContent() {
   useEffect(() => {
     setDateLabel(dateTimeFormatter.format(new Date()));
   }, []);
+
+  useEffect(() => {
+    if (!nextActionDismissStorageKey || typeof window === "undefined") {
+      setDismissedNextActionKey(null);
+      return;
+    }
+
+    try {
+      setDismissedNextActionKey(
+        window.localStorage.getItem(nextActionDismissStorageKey)
+      );
+    } catch {
+      setDismissedNextActionKey(null);
+    }
+  }, [nextActionDismissStorageKey]);
+
+  const dismissNextAction = useCallback(() => {
+    if (!nextAction) return;
+    setDismissedNextActionKey(nextAction.dismissKey);
+    if (!nextActionDismissStorageKey || typeof window === "undefined") return;
+
+    try {
+      window.localStorage.setItem(
+        nextActionDismissStorageKey,
+        nextAction.dismissKey
+      );
+    } catch {
+      // Local state still dismisses the action for this page view.
+    }
+  }, [nextAction, nextActionDismissStorageKey]);
 
   useEffect(() => {
     return () => {
@@ -324,7 +369,12 @@ export default function OverviewContent() {
         </Card>
       ) : null}
 
-      {nextAction ? <DashboardNextActionCard action={nextAction} /> : null}
+      {visibleNextAction ? (
+        <DashboardNextActionCard
+          action={visibleNextAction}
+          onDismiss={dismissNextAction}
+        />
+      ) : null}
 
       <div className="dashboard-overview-grid grid min-w-0 gap-6 lg:grid-cols-12">
         <div className="dashboard-overview-column min-w-0 space-y-6 lg:col-span-7">
@@ -452,25 +502,31 @@ function buildDashboardNextAction({
       .map((item) => item.id)
   );
 
-  if (analytics.recentLeads.length > 0 && hasPaidAccess) {
+  const readyLeads = analytics.totals.readyLeads;
+
+  if (readyLeads > 0 && hasPaidAccess) {
     return {
+      id: "review_leads",
       title: "Review new leads",
-      detail: `${analytics.recentLeads.length} recent lead${
-        analytics.recentLeads.length === 1 ? "" : "s"
-      } ready for follow-up.`,
+      detail: `${numberFormatter.format(readyLeads)} open lead${
+        readyLeads === 1 ? "" : "s"
+      } ${readyLeads === 1 ? "is" : "are"} ready for follow-up.`,
       href: "/dashboard/leads",
       buttonLabel: "Open leads",
       icon: MessageSquare,
+      dismissKey: `review_leads:${readyLeads}`,
     };
   }
 
   if (analytics.totals.activeTags === 0) {
     return {
+      id: "claim_linket",
       title: "Claim your first Linket",
       detail: "Connect a physical Linket so scans route to this dashboard.",
       href: "/dashboard/linkets",
       buttonLabel: "Claim Linket",
       icon: Tags,
+      dismissKey: "claim_linket",
     };
   }
 
@@ -480,38 +536,50 @@ function buildDashboardNextAction({
     pending.has("publish_profile")
   ) {
     return {
+      id: "finish_profile",
       title: "Finish your public profile",
       detail: "Complete the basics, links, and publish state visitors see first.",
       href: "/dashboard/profiles",
       buttonLabel: "Finish profile",
       icon: UserRound,
+      dismissKey: Array.from(pending).sort().join("|") || "finish_profile",
     };
   }
 
   if (pending.has("publish_lead_form")) {
     return {
+      id: "add_lead_form",
       title: "Add a lead form",
       detail: "Turn visits into follow-up opportunities from your public page.",
       href: "/dashboard/profiles",
       buttonLabel: "Open profile builder",
       icon: Users,
+      dismissKey: "add_lead_form",
     };
   }
 
   if (!hasPaidAccess) {
     return {
+      id: "upgrade",
       title: "Upgrade for full dashboard signal",
       detail: "Unlock lead workflow labels, deeper analytics, and customization.",
       href: "/dashboard/billing",
       buttonLabel: "View upgrade",
       icon: Crown,
+      dismissKey: "upgrade",
     };
   }
 
   return null;
 }
 
-function DashboardNextActionCard({ action }: { action: DashboardNextAction }) {
+function DashboardNextActionCard({
+  action,
+  onDismiss,
+}: {
+  action: DashboardNextAction;
+  onDismiss: () => void;
+}) {
   const Icon = action.icon;
   return (
     <Card className="dashboard-overview-section-card rounded-3xl border border-primary/25 bg-primary/5 shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
@@ -532,12 +600,24 @@ function DashboardNextActionCard({ action }: { action: DashboardNextAction }) {
             </p>
           </div>
         </div>
-        <Button asChild className="w-full rounded-full sm:w-auto">
-          <Link href={action.href}>
-            {action.buttonLabel}
-            <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
-          </Link>
-        </Button>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <Button asChild className="w-full rounded-full sm:w-auto">
+            <Link href={action.href}>
+              {action.buttonLabel}
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden />
+            </Link>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="mx-auto h-9 w-9 rounded-full text-muted-foreground hover:text-foreground sm:mx-0"
+            aria-label={`Dismiss ${action.title}`}
+            onClick={onDismiss}
+          >
+            <X className="h-4 w-4" aria-hidden />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

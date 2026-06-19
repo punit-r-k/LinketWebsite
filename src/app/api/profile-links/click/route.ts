@@ -1,8 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import {
+  rejectLargeRequestBody,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
+
+const MAX_LINK_CLICK_BODY_BYTES = 8 * 1024;
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
+    const tooLarge = rejectLargeRequestBody(
+      request,
+      MAX_LINK_CLICK_BODY_BYTES,
+      "Link click payload"
+    );
+    if (tooLarge) return tooLarge;
+
     const body = (await request.json().catch(() => ({}))) as {
       linkId?: string;
     };

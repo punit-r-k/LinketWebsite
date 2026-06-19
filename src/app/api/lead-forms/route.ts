@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { revalidatePublicProfileHandle } from "@/lib/public-profile-revalidation";
@@ -274,6 +275,9 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     const parsedBody = await validateJsonBody(request, leadFormsPutSchema);
     if (!parsedBody.ok) {
       return parsedBody.response;

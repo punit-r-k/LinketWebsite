@@ -1,7 +1,6 @@
 import "server-only";
 
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 
 type ConversionEventInput = {
   eventId: string;
@@ -55,15 +54,10 @@ export async function recordConversionEvent(
   };
 
   try {
-    if (isSupabaseAdminAvailable) {
-      const { error } = await supabaseAdmin.from("conversion_events").insert(payload);
-      if (error && !isIgnorableInsertError(error.message)) {
-        console.warn("conversion_events insert failed:", error.message);
-      }
+    if (!isSupabaseAdminAvailable) {
       return;
     }
-    const supabase = await createServerSupabaseReadonly();
-    const { error } = await supabase.from("conversion_events").insert(payload);
+    const { error } = await supabaseAdmin.from("conversion_events").insert(payload);
     if (error && !isIgnorableInsertError(error.message)) {
       console.warn("conversion_events insert failed:", error.message);
     }

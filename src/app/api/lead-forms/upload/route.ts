@@ -3,6 +3,10 @@ import { getPlanScopedLeadFormConfig } from "@/lib/lead-form.server";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { limitRequest } from "@/lib/rate-limit";
+import {
+  rejectLargeRequestBody,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
 import type {
   LeadFormConfig,
   LeadFormFileUploadField,
@@ -10,6 +14,7 @@ import type {
 } from "@/types/lead-form";
 
 const UPLOAD_BUCKET = "lead-form-uploads";
+const MAX_UPLOAD_BODY_BYTES = 26 * 1024 * 1024;
 
 type LeadFormRow = {
   id: string;
@@ -18,8 +23,82 @@ type LeadFormRow = {
   config: LeadFormConfig;
 };
 
+function isSafeStoragePath(value: string) {
+  const trimmed = value.trim();
+  return (
+    trimmed.length > 0 &&
+    !trimmed.startsWith("/") &&
+    !trimmed.includes("..") &&
+    trimmed.split("/").filter(Boolean).length >= 2
+  );
+}
+
+function ownerUserIdFromPath(value: string) {
+  return value.split("/")[0]?.trim() || null;
+}
+
+async function requireStorageOwner(request: NextRequest, path: string) {
+  const ownerUserId = ownerUserIdFromPath(path);
+  if (!ownerUserId) {
+    return NextResponse.json({ error: "Invalid file path." }, { status: 400 });
+  }
+
+  const supabase = await createServerSupabaseReadonly();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (user.id !== ownerUserId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  return null;
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    if (!isSupabaseAdminAvailable) {
+      return NextResponse.json(
+        { error: "File downloads are not configured." },
+        { status: 503 }
+      );
+    }
+
+    const path = request.nextUrl.searchParams.get("path")?.trim() ?? "";
+    if (!isSafeStoragePath(path)) {
+      return NextResponse.json({ error: "Invalid file path." }, { status: 400 });
+    }
+
+    const accessError = await requireStorageOwner(request, path);
+    if (accessError) return accessError;
+
+    const { data, error } = await supabaseAdmin.storage
+      .from(UPLOAD_BUCKET)
+      .createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) {
+      return NextResponse.json({ error: "File unavailable." }, { status: 404 });
+    }
+
+    return NextResponse.redirect(data.signedUrl);
+  } catch (error) {
+    console.error("Lead form file download error:", error);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Unable to download file.",
+      },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     if (await limitRequest(request, "lead-form-upload", 30, 60_000)) {
       return NextResponse.json(
         { error: "Too many upload attempts. Please try again later." },
@@ -33,6 +112,13 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       );
     }
+
+    const tooLarge = rejectLargeRequestBody(
+      request,
+      MAX_UPLOAD_BODY_BYTES,
+      "Lead form upload payload"
+    );
+    if (tooLarge) return tooLarge;
 
     const data = await request.formData();
     const formId = String(data.get("formId") ?? "").trim();
@@ -53,8 +139,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createServerSupabaseReadonly();
-    const { data: formRow, error: formError } = await supabase
+    const { data: formRow, error: formError } = await supabaseAdmin
       .from("lead_forms")
       .select("id,user_id,status,config")
       .eq("id", formId)
@@ -119,14 +204,12 @@ export async function POST(request: NextRequest) {
       throw new Error(uploadError.message || "Upload failed.");
     }
 
-    const { data: publicData } = supabaseAdmin.storage
-      .from(UPLOAD_BUCKET)
-      .getPublicUrl(path);
+    const downloadUrl = `/api/lead-forms/upload?path=${encodeURIComponent(path)}`;
 
     const payload: LeadFormUploadedFile = {
       name: fileEntry.name,
       path,
-      url: publicData?.publicUrl ?? null,
+      url: downloadUrl,
       sizeBytes: fileEntry.size,
       mimeType: fileEntry.type || null,
     };

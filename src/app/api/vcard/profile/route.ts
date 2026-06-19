@@ -6,6 +6,7 @@ import { getSignedAvatarUrl } from "@/lib/avatar-server";
 import { getActiveProfileForUser } from "@/lib/profile-service";
 import { revalidatePublicProfileHandle } from "@/lib/public-profile-revalidation";
 import { validateJsonBody, validateSearchParams } from "@/lib/request-validation";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
 
@@ -247,6 +248,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     const parsedBody = await validateJsonBody(request, vcardBodySchema);
     if (!parsedBody.ok) {
       return parsedBody.response;

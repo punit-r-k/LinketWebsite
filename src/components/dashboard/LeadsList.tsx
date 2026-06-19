@@ -52,6 +52,7 @@ import {
   normalizeLeadRating,
   type LeadFlag,
 } from "@/lib/lead-workflow";
+import { downloadLeadVCard } from "@/lib/lead-contact-card";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -1624,7 +1625,7 @@ export default function LeadsList({ userId }: { userId: string }) {
                     variant="outline"
                     size="sm"
                     className="w-full justify-center gap-1.5 sm:w-auto"
-                    onClick={() => downloadVCard(activeLeadView.lead)}
+                    onClick={() => downloadLeadVCard(activeLeadView.lead)}
                   >
                     <FileText className="h-4 w-4" aria-hidden />
                     Download vCard
@@ -1894,46 +1895,6 @@ function safeCsv(value: string) {
   const needsQuotes = /[",\n]/.test(value);
   const next = String(value).replace(/"/g, '""');
   return needsQuotes ? `"${next}"` : next;
-}
-
-function escapeVCardValue(value: string) {
-  return value
-    .replace(/\\/g, "\\\\")
-    .replace(/\n/g, "\\n")
-    .replace(/;/g, "\\;")
-    .replace(/,/g, "\\,");
-}
-
-function buildVCard(lead: Lead) {
-  const name = (lead.name || "").trim();
-  const parts = name.split(/\s+/).filter(Boolean);
-  const firstName = parts[0] || "";
-  const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
-  const middleName = parts.length > 2 ? parts.slice(1, -1).join(" ") : "";
-  const lines = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    `FN:${escapeVCardValue(name || "Linket Contact")}`,
-    `N:${escapeVCardValue(lastName)};${escapeVCardValue(firstName)};${escapeVCardValue(middleName)};;`,
-  ];
-  if (lead.email) lines.push(`EMAIL;TYPE=INTERNET:${escapeVCardValue(lead.email)}`);
-  if (lead.phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(lead.phone)}`);
-  if (lead.company) lines.push(`ORG:${escapeVCardValue(lead.company)}`);
-  if (lead.message) lines.push(`NOTE:${escapeVCardValue(lead.message)}`);
-  lines.push("END:VCARD");
-  return lines.join("\n");
-}
-
-function downloadVCard(lead: Lead) {
-  const blob = new Blob([buildVCard(lead)], { type: "text/vcard;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${(lead.name || "linket-contact").trim().replace(/\s+/g, "-") || "linket-contact"}.vcf`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
 }
 
 function copyToClipboard(value: string, successTitle: string) {

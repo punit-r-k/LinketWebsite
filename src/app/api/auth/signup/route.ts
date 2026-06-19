@@ -1,13 +1,14 @@
-import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import {
-  DUPLICATE_ACCOUNT_ERROR,
   friendlyAuthError,
 } from "@/lib/auth-errors";
 import { limitRequest } from "@/lib/rate-limit";
 import { validateJsonBody } from "@/lib/request-validation";
-import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
+import { rejectUntrustedWrite } from "@/lib/request-security";
+import { getConfiguredSiteOrigin } from "@/lib/site-url";
 
 const DEFAULT_NEXT = "/dashboard";
 const PASSWORD_LENGTH_ERROR = "Password must be at least 6 characters.";
@@ -60,36 +61,30 @@ function getAuthErrorCode(error: unknown): string | undefined {
   return undefined;
 }
 
-async function doesAuthUserExist(email: string) {
-  const targetEmail = email.trim().toLowerCase();
-  let page = 1;
-
-  while (true) {
-    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-      page,
-      perPage: 1000,
-    });
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    const users = data?.users ?? [];
-    if (
-      users.some((user) => user.email?.trim().toLowerCase() === targetEmail)
-    ) {
-      return true;
-    }
-
-    if (!data?.nextPage || users.length === 0) {
-      return false;
-    }
-
-    page = data.nextPage;
+function createSignupClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error("Account creation is not configured.");
   }
+  return createClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 }
 
-export async function POST(request: Request) {
+function buildEmailRedirectTo(next: string) {
+  const callbackUrl = new URL("/auth/callback", getConfiguredSiteOrigin());
+  callbackUrl.searchParams.set("next", next);
+  return callbackUrl.toString();
+}
+
+export async function POST(request: NextRequest) {
+  const untrusted = rejectUntrustedWrite(request);
+  if (untrusted) return untrusted;
+
   if (await limitRequest(request, "auth-signup", 10, 60_000)) {
     return NextResponse.json(
       { error: "Too many signup attempts. Please wait a minute and try again." },
@@ -110,39 +105,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: PASSWORD_STRENGTH_ERROR }, { status: 400 });
   }
 
-  if (!isSupabaseAdminAvailable) {
-    return NextResponse.json(
-      { error: "Account creation is not configured." },
-      { status: 500 }
-    );
-  }
-
   try {
-    const existingUser = await doesAuthUserExist(email);
-    if (existingUser) {
-      return NextResponse.json(
-        { error: DUPLICATE_ACCOUNT_ERROR },
-        { status: 409 }
-      );
-    }
-
-    const { error } = await supabaseAdmin.auth.admin.createUser({
+    const supabase = createSignupClient();
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      email_confirm: true,
+      options: {
+        emailRedirectTo: buildEmailRedirectTo(next),
+      },
     });
 
     if (error) {
       const message = friendlyAuthError(error.message, getAuthErrorCode(error));
-      return NextResponse.json(
-        { error: message },
-        { status: message === DUPLICATE_ACCOUNT_ERROR ? 409 : 400 }
-      );
+      return NextResponse.json({ error: message }, { status: 400 });
     }
 
     return NextResponse.json({
       ok: true,
       next,
+      requiresEmailConfirmation: !data.session,
     });
   } catch (error) {
     const message =

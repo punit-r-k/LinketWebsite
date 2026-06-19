@@ -8,6 +8,7 @@ import { grantLinketEntitlementToUser } from "@/lib/linket-entitlements";
 import { findLinketByLookup } from "@/lib/linket-tag-lookup";
 import { cancelPendingTransfersForTag } from "@/lib/linket-transfers";
 import { getActiveProfileForUser } from "@/lib/profile-service";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { validateJsonBody } from "@/lib/request-validation";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
@@ -23,6 +24,9 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+
+  const untrusted = rejectUntrustedWrite(req);
+  if (untrusted) return untrusted;
 
   const access = await requireRouteAccess(
     "POST /api/admin/linkets/complimentary-grant"

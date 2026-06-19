@@ -202,13 +202,24 @@ function AuthPageContent() {
           }),
         });
         const payload = (await response.json().catch(() => null)) as
-          | { error?: string }
+          | { error?: string; requiresEmailConfirmation?: boolean }
           | null;
 
         if (!response.ok) {
           throw new Error(
             payload?.error || "Unable to create account. Please try again."
           );
+        }
+
+        if (payload?.requiresEmailConfirmation) {
+          toast({
+            title: "Check your email",
+            description:
+              "Confirm your email address, then sign in to open your dashboard.",
+            variant: "success",
+          });
+          setPassword("");
+          return;
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({

@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { rejectLargeRequestBody } from "@/lib/request-security";
+
+const DEFAULT_JSON_BODY_LIMIT_BYTES = 256 * 1024;
+
 function toIssueMessage(error: z.ZodError) {
   return error.issues
     .map((issue) => {
@@ -34,8 +38,21 @@ export function validateSearchParams<T extends z.ZodTypeAny>(
 
 export async function validateJsonBody<T extends z.ZodTypeAny>(
   request: Request,
-  schema: T
+  schema: T,
+  options: { maxBytes?: number } = {}
 ) {
+  const tooLarge = rejectLargeRequestBody(
+    request,
+    options.maxBytes ?? DEFAULT_JSON_BODY_LIMIT_BYTES,
+    "JSON request body"
+  );
+  if (tooLarge) {
+    return {
+      ok: false as const,
+      response: tooLarge,
+    };
+  }
+
   const body = await request.json().catch(() => undefined);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {

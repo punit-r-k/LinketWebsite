@@ -7,6 +7,7 @@ import { normalizeClaimCodeInput } from "@/lib/linket-claim-code";
 import { grantLinketEntitlementToUser } from "@/lib/linket-entitlements";
 import { assertOwnedProfileId } from "@/lib/linket-tags";
 import { validateJsonBody } from "@/lib/request-validation";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { getActiveProfileForUser } from "@/lib/profile-service";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
@@ -84,6 +85,9 @@ async function findTokenTag(candidates: { lower: string; upper: string }) {
 }
 
 export async function POST(req: NextRequest) {
+  const untrusted = rejectUntrustedWrite(req);
+  if (untrusted) return untrusted;
+
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
       { error: "Linkets service is not configured." },

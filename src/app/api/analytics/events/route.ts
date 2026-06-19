@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveCorsHeaders } from "@/lib/cors";
-import { createServerSupabase, createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { limitRequest } from "@/lib/rate-limit";
+import {
+  getRequestBodySizeIssue,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
 
 type AnalyticsEventBody = {
   id?: string;
@@ -13,6 +17,15 @@ type AnalyticsEventBody = {
   timestamp?: string | null;
 };
 
+const ANONYMOUS_HANDLE_ATTRIBUTED_EVENTS = new Set([
+  "public_profile_view",
+  "vcard_download_click",
+  "vcard_download_success",
+  "share_contact_click",
+  "share_contact_success",
+]);
+const MAX_ANALYTICS_BODY_BYTES = 16 * 1024;
+
 function sanitizeString(value: unknown, max = 1024) {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, max);
@@ -20,7 +33,17 @@ function sanitizeString(value: unknown, max = 1024) {
 
 function normalizeMeta(value: unknown) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return value as Record<string, unknown>;
+  try {
+    const encoded = JSON.stringify(value);
+    if (encoded.length > 4096) return {};
+    const parsed = JSON.parse(encoded) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    return {};
+  }
 }
 
 function normalizeTimestamp(value: unknown) {
@@ -57,9 +80,11 @@ function readHandleFromMeta(value: unknown) {
 
 async function resolveAttributedUserId(
   currentUserId: string | null,
+  eventId: string,
   meta: unknown
 ) {
   if (currentUserId) return currentUserId;
+  if (!ANONYMOUS_HANDLE_ATTRIBUTED_EVENTS.has(eventId)) return null;
   if (!isSupabaseAdminAvailable) return null;
   const handle = readHandleFromMeta(meta);
   if (!handle) return null;
@@ -98,11 +123,27 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     if (await limitRequest(request, "analytics-events", 120, 60_000)) {
       return jsonWithCors(
         request,
         { error: "Too many requests. Please try again later." },
         { status: 429 }
+      );
+    }
+
+    const sizeIssue = getRequestBodySizeIssue(
+      request,
+      MAX_ANALYTICS_BODY_BYTES,
+      "Analytics event payload"
+    );
+    if (sizeIssue) {
+      return jsonWithCors(
+        request,
+        { error: sizeIssue.error },
+        { status: sizeIssue.status }
       );
     }
 
@@ -114,6 +155,7 @@ export async function POST(request: NextRequest) {
 
     const resolvedUserId = await resolveAttributedUserId(
       await resolveUserId(),
+      eventId,
       body.meta
     );
 
@@ -128,28 +170,20 @@ export async function POST(request: NextRequest) {
       meta: normalizeMeta(body.meta),
     };
 
-    if (isSupabaseAdminAvailable) {
-      const { error } = await supabaseAdmin
-        .from("conversion_events")
-        .insert(payload);
-      if (error) {
-        if (!isIgnorableInsertError(error.message)) {
-          throw new Error(error.message);
-        }
-      }
-    } else {
-      const supabase = await createServerSupabaseReadonly();
-      const { error } = await supabase
-        .from("conversion_events")
-        .insert(payload);
-      if (error) {
-        if (!isIgnorableInsertError(error.message)) {
-          throw new Error(error.message);
-        }
+    if (!isSupabaseAdminAvailable) {
+      return jsonWithCors(request, { ok: true, stored: false });
+    }
+
+    const { error } = await supabaseAdmin
+      .from("conversion_events")
+      .insert(payload);
+    if (error) {
+      if (!isIgnorableInsertError(error.message)) {
+        throw new Error(error.message);
       }
     }
 
-    return jsonWithCors(request, { ok: true });
+    return jsonWithCors(request, { ok: true, stored: true });
   } catch (error) {
     return jsonWithCors(
       request,

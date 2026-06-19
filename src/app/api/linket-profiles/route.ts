@@ -22,6 +22,7 @@ import {
   getConfiguredSiteHost,
   getDefaultProfileLinkUrl,
 } from "@/lib/site-url";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import type { ProfileLinkRecord, UserProfileRecord } from "@/types/db";
 
 type ProfileWithLinks = UserProfileRecord & { links: ProfileLinkRecord[] };
@@ -576,6 +577,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     const parsedBody = await validateJsonBody(request, linketProfilesPostSchema);
     if (!parsedBody.ok) {
       return parsedBody.response;

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveCorsHeaders } from "@/lib/cors";
-import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { limitRequest } from "@/lib/rate-limit";
+import {
+  getRequestBodySizeIssue,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
 
 type ConsultPayload = {
   workEmail: string;
@@ -13,6 +16,7 @@ type ConsultPayload = {
 };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_CONSULT_BODY_BYTES = 64 * 1024;
 
 function normalizeString(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -137,11 +141,27 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return jsonWithCors(request, { error: "Request origin is not trusted." }, { status: 403 });
+
     if (await limitRequest(request, "consult-submit", 8, 60_000)) {
       return jsonWithCors(
         request,
         { error: "Too many requests. Please try again later." },
         { status: 429 }
+      );
+    }
+
+    const sizeIssue = getRequestBodySizeIssue(
+      request,
+      MAX_CONSULT_BODY_BYTES,
+      "Consult request payload"
+    );
+    if (sizeIssue) {
+      return jsonWithCors(
+        request,
+        { error: sizeIssue.error },
+        { status: sizeIssue.status }
       );
     }
 
@@ -178,18 +198,18 @@ export async function POST(request: NextRequest) {
       source: "landing-consult",
     };
 
-    if (isSupabaseAdminAvailable) {
-      const { error } = await supabaseAdmin
-        .from("consult_requests")
-        .insert(insertPayload);
-      if (error) throw new Error(error.message);
-    } else {
-      const supabase = await createServerSupabaseReadonly();
-      const { error } = await supabase
-        .from("consult_requests")
-        .insert(insertPayload);
-      if (error) throw new Error(error.message);
+    if (!isSupabaseAdminAvailable) {
+      return jsonWithCors(
+        request,
+        { error: "Consult requests are not configured." },
+        { status: 503 }
+      );
     }
+
+    const { error } = await supabaseAdmin
+      .from("consult_requests")
+      .insert(insertPayload);
+    if (error) throw new Error(error.message);
 
     await sendConsultEmail(payload);
 

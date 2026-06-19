@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveCorsHeaders } from "@/lib/cors";
+import {
+  getRequestBodySizeIssue,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
 import { forwardClientErrorToSentry } from "@/lib/sentry-forwarder";
 
 type ClientErrorBody = {
@@ -13,6 +17,8 @@ type ClientErrorBody = {
   userAgent?: string | null;
   timestamp?: string | null;
 };
+
+const MAX_CLIENT_ERROR_BODY_BYTES = 64 * 1024;
 
 function sanitize(value: unknown, max = 2000): string {
   if (typeof value !== "string") return "";
@@ -44,6 +50,22 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return jsonWithCors(request, { ok: false, error: "Request origin is not trusted." }, { status: 403 });
+
+    const sizeIssue = getRequestBodySizeIssue(
+      request,
+      MAX_CLIENT_ERROR_BODY_BYTES,
+      "Client error payload"
+    );
+    if (sizeIssue) {
+      return jsonWithCors(
+        request,
+        { ok: false, error: sizeIssue.error },
+        { status: sizeIssue.status }
+      );
+    }
+
     const body = (await request.json().catch(() => ({}))) as ClientErrorBody;
     const message = sanitize(body.message, 2000);
     if (!message) {

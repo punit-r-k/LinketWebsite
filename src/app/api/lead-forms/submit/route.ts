@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { sanitizeSubmissionAnswers, validateSubmission } from "@/lib/lead-form";
 import { getPlanScopedLeadFormConfig } from "@/lib/lead-form.server";
 import { limitRequest } from "@/lib/rate-limit";
+import {
+  rejectLargeRequestBody,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
 import { recordConversionEvent } from "@/lib/server-conversion-events";
 import type {
   LeadFormConfig,
@@ -12,6 +15,7 @@ import type {
 } from "@/types/lead-form";
 
 const DEFAULT_FOLLOW_UP_DELAY_MS = 86_400_000;
+const MAX_SUBMISSION_BODY_BYTES = 512 * 1024;
 
 type LeadFormRow = {
   id: string;
@@ -174,12 +178,29 @@ function createResponseToken() {
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     if (await limitRequest(request, "lead-form-submit", 20, 60_000)) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
         { status: 429 }
       );
     }
+
+    if (!isSupabaseAdminAvailable) {
+      return NextResponse.json(
+        { error: "Lead form submissions are not configured." },
+        { status: 503 }
+      );
+    }
+
+    const tooLarge = rejectLargeRequestBody(
+      request,
+      MAX_SUBMISSION_BODY_BYTES,
+      "Lead form submission payload"
+    );
+    if (tooLarge) return tooLarge;
 
     const body = await request.json();
     const {
@@ -203,8 +224,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = await createServerSupabase();
-    const { data: formRow, error: formError } = await supabase
+    const { data: formRow, error: formError } = await supabaseAdmin
       .from("lead_forms")
       .select("id,user_id,handle,status,config")
       .eq("id", formId)
@@ -255,15 +275,8 @@ export async function POST(request: NextRequest) {
       responder_email: responderEmail ?? null,
     };
 
-    const writeClient = isSupabaseAdminAvailable
-      ? supabaseAdmin
-      : (supabase as typeof supabaseAdmin);
-
-    if (isSupabaseAdminAvailable) {
-      await insertLeadFormResponse(supabaseAdmin, payload);
-    } else {
-      await insertLeadFormResponse(writeClient, payload);
-    }
+    const writeClient = supabaseAdmin;
+    await insertLeadFormResponse(writeClient, payload);
 
     const leadValues = inferLeadFields(sanitizedAnswers, config);
     const emailValue = leadValues.email || responderEmail || null;

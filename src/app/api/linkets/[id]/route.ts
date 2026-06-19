@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { updateAssignmentForUser } from "@/lib/linket-tags";
 import { validateJsonBody, uuidParamSchema } from "@/lib/request-validation";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
 type PatchPayload = {
@@ -22,6 +23,9 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const untrusted = rejectUntrustedWrite(req);
+  if (untrusted) return untrusted;
+
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
       { error: "Linkets service is not configured." },

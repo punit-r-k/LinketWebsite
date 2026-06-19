@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { claimLinketComplimentaryTrial } from "@/lib/linket-complimentary-trials";
 import { validateJsonBody } from "@/lib/request-validation";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
 const complimentaryTrialSchema = z.object({
@@ -12,6 +13,9 @@ const complimentaryTrialSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const untrusted = rejectUntrustedWrite(req);
+  if (untrusted) return untrusted;
+
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
       { error: "Linkets service is not configured." },

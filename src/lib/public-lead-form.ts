@@ -3,9 +3,11 @@ import "server-only";
 import { ensurePublishedLeadFormRow } from "@/lib/lead-form.server";
 import { normalizeLeadFormConfig } from "@/lib/lead-form";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import type { LeadFormConfig } from "@/types/lead-form";
 
 type ReadonlySupabase = Awaited<ReturnType<typeof createServerSupabaseReadonly>>;
+type PublicLeadFormClient = ReadonlySupabase | typeof supabaseAdmin;
 
 type LeadFormRow = {
   id: string;
@@ -36,7 +38,7 @@ export type PublicLeadFormResult = {
 };
 
 async function fetchPublishedLeadFormByProfileId(
-  supabase: ReadonlySupabase,
+  supabase: PublicLeadFormClient,
   profileId: string
 ) {
   const { data, error } = await supabase
@@ -56,7 +58,7 @@ async function fetchPublishedLeadFormByProfileId(
 }
 
 async function fetchPublishedLeadFormByHandle(
-  supabase: ReadonlySupabase,
+  supabase: PublicLeadFormClient,
   handle: string
 ) {
   const { data, error } = await supabase
@@ -76,7 +78,7 @@ async function fetchPublishedLeadFormByHandle(
 }
 
 async function fetchPublicProfileOwnerByProfileId(
-  supabase: ReadonlySupabase,
+  supabase: PublicLeadFormClient,
   profileId: string
 ) {
   const { data, error } = await supabase
@@ -95,7 +97,7 @@ async function fetchPublicProfileOwnerByProfileId(
 }
 
 async function fetchPublicProfileOwnerByHandle(
-  supabase: ReadonlySupabase,
+  supabase: PublicLeadFormClient,
   handle: string
 ) {
   const { data, error } = await supabase
@@ -118,7 +120,9 @@ export async function getPublishedLeadForm({
   profileId,
   supabase,
 }: PublicLeadFormLookup): Promise<PublicLeadFormResult> {
-  const client = supabase ?? (await createServerSupabaseReadonly());
+  const client = isSupabaseAdminAvailable
+    ? supabaseAdmin
+    : supabase ?? (await createServerSupabaseReadonly());
   const normalizedHandle = handle?.trim().toLowerCase() || null;
   const normalizedProfileId = profileId?.trim() || null;
 

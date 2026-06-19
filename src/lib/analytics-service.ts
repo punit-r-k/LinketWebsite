@@ -51,6 +51,7 @@ export type AnalyticsTotals = {
   leadsToday: number;
   scans7d: number;
   leads7d: number;
+  readyLeads: number;
   conversionRate7d: number;
   activeTags: number;
   lastScanAt: string | null;
@@ -172,6 +173,7 @@ export async function getUserAnalytics(
         leadsToday: 0,
         scans7d: 0,
         leads7d: 0,
+        readyLeads: 0,
         conversionRate7d: 0,
         activeTags: 0,
         lastScanAt: null,
@@ -326,9 +328,20 @@ export async function getUserAnalytics(
     throw new Error("Failed to load leads: " + leadsError.message);
   }
 
-  const recentLeads = (leadRows ?? []).slice(0, resolved.recentLeadCount);
+  const normalizedLeadRows = (leadRows ?? []).map((lead) => ({
+    ...lead,
+    lead_flag: normalizeLeadFlag(lead.lead_flag),
+    lead_rating: normalizeLeadRating(
+      lead.lead_rating,
+      getDefaultLeadRating(lead.lead_flag)
+    ),
+  }));
+  const recentLeads = normalizedLeadRows.slice(0, resolved.recentLeadCount);
+  const readyLeads = normalizedLeadRows.filter(
+    (lead) => lead.lead_flag === "follow_up"
+  ).length;
 
-  for (const lead of leadRows ?? []) {
+  for (const lead of normalizedLeadRows) {
     if (!lead.created_at) continue;
     const key = dayKey(lead.created_at, timezoneOffsetMinutes);
     const entry = timelineMap.get(key);
@@ -409,6 +422,7 @@ export async function getUserAnalytics(
       leadsToday,
       scans7d,
       leads7d,
+      readyLeads,
       conversionRate7d,
       activeTags: activeTagIds.size,
       lastScanAt,
@@ -425,11 +439,8 @@ export async function getUserAnalytics(
       message: lead.message ?? null,
       note: lead.note ?? null,
       next_follow_up_at: lead.next_follow_up_at ?? null,
-      lead_flag: normalizeLeadFlag(lead.lead_flag),
-      lead_rating: normalizeLeadRating(
-        lead.lead_rating,
-        getDefaultLeadRating(lead.lead_flag)
-      ),
+      lead_flag: lead.lead_flag,
+      lead_rating: lead.lead_rating,
       source_url: lead.source_url ?? null,
       handle: lead.handle ?? null,
       created_at: lead.created_at,

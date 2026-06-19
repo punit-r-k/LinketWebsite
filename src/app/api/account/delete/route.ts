@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { requireRouteAccess } from "@/lib/api-authorization";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { supabaseAdmin, isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
 async function removeStorageFolder(bucket: string, prefix: string) {
@@ -12,7 +14,10 @@ async function removeStorageFolder(bucket: string, prefix: string) {
   await supabaseAdmin.storage.from(bucket).remove(paths);
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const untrusted = rejectUntrustedWrite(request);
+  if (untrusted) return untrusted;
+
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
       { error: "Account deletion is not configured." },

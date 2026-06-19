@@ -1,8 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { CalendarDays, Star, Users } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  Copy,
+  ExternalLink,
+  FileText,
+  Mail,
+  Phone,
+  Star,
+  UserRound,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import type {
   RealtimeChannel,
   RealtimePostgresChangesPayload,
@@ -11,10 +23,21 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/system/toaster";
+import {
+  downloadLeadVCard,
+  saveLeadContactToPhone,
+} from "@/lib/lead-contact-card";
 import {
   getLeadFlagBadgeClassName,
   getLeadFlagLabel,
@@ -41,6 +64,7 @@ const AUTO_SAVE_DELAY_MS = 700;
 const AUTO_SAVE_RETRY_DELAY_MS = 2000;
 const LEAD_STATUS_OPTIONS: LeadFlag[] = ["follow_up", "done"];
 const LEAD_RATING_OPTIONS = [1, 2, 3, 4, 5] as const;
+const CORE_FIELD_KEYS = new Set(["name", "email", "phone", "company", "message"]);
 
 export default function NetworkingModePanel({
   userId,
@@ -52,6 +76,8 @@ export default function NetworkingModePanel({
   const [savingLeadIds, setSavingLeadIds] = useState<Record<string, boolean>>({});
   const [saveErrorLeadIds, setSaveErrorLeadIds] = useState<Record<string, boolean>>({});
   const [activeLeadId, setActiveLeadId] = useState<string | null>(null);
+  const [leadDetailOpen, setLeadDetailOpen] = useState(false);
+  const [isPhoneLikeDevice, setIsPhoneLikeDevice] = useState(false);
   const [leadStream, setLeadStream] = useState<Lead[]>([]);
   const [drafts, setDrafts] = useState<Record<string, NetworkingDraft>>({});
   const autoSaveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
@@ -71,6 +97,31 @@ export default function NetworkingModePanel({
     return () => {
       Object.values(autoSaveTimersRef.current).forEach((timer) => clearTimeout(timer));
       autoSaveTimersRef.current = {};
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const coarsePointer = window.matchMedia("(pointer: coarse)");
+    const narrowViewport = window.matchMedia("(max-width: 767px)");
+    const mobileUserAgent =
+      typeof navigator !== "undefined" &&
+      /Android.+Mobile|iPhone|iPod|Windows Phone/i.test(navigator.userAgent);
+
+    const updateDeviceState = () => {
+      setIsPhoneLikeDevice(
+        mobileUserAgent || (coarsePointer.matches && narrowViewport.matches)
+      );
+    };
+
+    updateDeviceState();
+    coarsePointer.addEventListener("change", updateDeviceState);
+    narrowViewport.addEventListener("change", updateDeviceState);
+
+    return () => {
+      coarsePointer.removeEventListener("change", updateDeviceState);
+      narrowViewport.removeEventListener("change", updateDeviceState);
     };
   }, []);
 
@@ -98,7 +149,7 @@ export default function NetworkingModePanel({
       const { data, error } = await supabase
         .from("leads")
         .select(
-          "id,user_id,handle,name,email,phone,company,message,note,next_follow_up_at,lead_flag,lead_rating,source_url,created_at"
+          "id,user_id,handle,name,email,phone,company,message,note,next_follow_up_at,lead_flag,lead_rating,custom_fields,source_url,created_at"
         )
         .eq("user_id", userIdValue)
         .order("created_at", { ascending: false })
@@ -250,6 +301,17 @@ export default function NetworkingModePanel({
   const activeLeadRating = normalizeLeadRating(
     activeDraft?.lead_rating ?? activeLead?.lead_rating ?? getDefaultLeadRating(activeLeadStatus)
   );
+  const activeLeadSubmittedLabel = activeLead
+    ? formatSubmittedLabel(activeLead.created_at)
+    : "";
+  const activeLeadCustomFields = activeLead
+    ? collectDisplayCustomFields(activeLead.custom_fields)
+    : [];
+
+  useEffect(() => {
+    if (activeLead) return;
+    setLeadDetailOpen(false);
+  }, [activeLead]);
 
   function openReminderPicker() {
     const input = reminderInputRef.current;
@@ -260,6 +322,51 @@ export default function NetworkingModePanel({
     }
     input.focus();
     input.click();
+  }
+
+  function copyEmailToClipboard(lead: Lead) {
+    if (!lead.email) return;
+    if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(lead.email)
+        .then(() => toast({ title: "Email copied" }))
+        .catch(() =>
+          toast({
+            title: "Copy failed",
+            description: "Your browser blocked clipboard access.",
+            variant: "destructive",
+          })
+        );
+      return;
+    }
+    toast({
+      title: "Copy unavailable",
+      description: "Clipboard access is not available in this browser.",
+      variant: "destructive",
+    });
+  }
+
+  async function saveContactToPhone(lead: Lead) {
+    try {
+      const result = await saveLeadContactToPhone(lead);
+      toast({
+        title: result === "shared" ? "Contact ready to save" : "Contact card opened",
+        description:
+          result === "shared"
+            ? "Choose Contacts or your preferred app from the share sheet."
+            : "Your phone should offer to add or download the contact card.",
+      });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      toast({
+        title: "Unable to save contact",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Your browser could not prepare the contact card.",
+        variant: "destructive",
+      });
+    }
   }
 
   function queueLeadAutosave(
@@ -421,6 +528,7 @@ export default function NetworkingModePanel({
   }
 
   return (
+    <>
     <Card className="min-w-0 w-full overflow-hidden rounded-[2rem] border border-border/70 bg-gradient-to-br from-primary/5 via-card to-background text-foreground shadow-[0_18px_45px_rgba(15,23,42,0.08)]">
       <CardContent className="grid min-w-0 gap-4 px-5 sm:px-7">
           <section className="order-2 min-w-0 space-y-3 rounded-[1.25rem] border border-border/70 bg-background p-4 text-center sm:text-left">
@@ -511,9 +619,13 @@ export default function NetworkingModePanel({
             {activeLead ? (
                 <div className="space-y-3">
                   <div className="space-y-0.5 text-center sm:text-left">
-                    <div className="text-base font-semibold leading-tight text-foreground">
+                    <button
+                      type="button"
+                      className="text-base font-semibold leading-tight text-foreground underline-offset-4 transition hover:text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                      onClick={() => setLeadDetailOpen(true)}
+                    >
                       {activeLead.name || "Unnamed lead"}
-                    </div>
+                    </button>
                     <div className="break-all text-sm leading-tight text-muted-foreground sm:break-normal">
                       {activeLead.email || "No email"}
                       {activeLead.company ? ` - ${activeLead.company}` : ""}
@@ -630,6 +742,16 @@ export default function NetworkingModePanel({
                   ) : null}
 
                   <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                    {isPhoneLikeDevice ? (
+                      <Button
+                        type="button"
+                        className="w-full justify-center gap-1.5 sm:w-auto"
+                        onClick={() => void saveContactToPhone(activeLead)}
+                      >
+                        <FileText className="h-4 w-4" aria-hidden />
+                        Save to phone
+                      </Button>
+                    ) : null}
                     <Button
                       type="button"
                       variant="outline"
@@ -654,6 +776,296 @@ export default function NetworkingModePanel({
           </section>
       </CardContent>
     </Card>
+    <Dialog
+      open={Boolean(activeLead && leadDetailOpen)}
+      onOpenChange={(open) => setLeadDetailOpen(open)}
+    >
+      <DialogContent
+        className="left-auto right-0 top-0 h-dvh max-h-dvh w-full max-w-full translate-x-0 translate-y-0 overflow-hidden gap-0 rounded-none border-l border-border/60 bg-background/95 p-0 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)] sm:max-w-2xl lg:max-w-[44rem]"
+        showCloseButton
+      >
+        {activeLead ? (
+          <div className="flex h-full min-h-0 flex-col">
+            <DialogHeader className="shrink-0 border-b border-border/50 px-5 py-4 text-left lg:px-6">
+              <div className="space-y-2">
+                <DialogTitle className="pr-10 text-2xl font-semibold leading-tight sm:text-[1.9rem]">
+                  {activeLead.name || "Unnamed lead"}
+                </DialogTitle>
+                <div className="flex flex-wrap items-center gap-2">
+                  <FlagBadge flag={activeLeadStatus} />
+                  <RatingBadge rating={activeLeadRating} />
+                  <Badge variant="outline" className="rounded-full px-3 py-1 text-xs">
+                    Submitted {activeLeadSubmittedLabel}
+                  </Badge>
+                </div>
+              </div>
+              <DialogDescription className="max-w-2xl text-sm text-muted-foreground">
+                Review the full lead, update follow-up details, and save their contact card from here.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 lg:px-6">
+              <div className="space-y-5">
+                <section className="space-y-3">
+                  <SectionLabel>Contact details</SectionLabel>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <LeadDetailItem
+                      icon={Mail}
+                      label="Email"
+                      value={activeLead.email || "Not provided"}
+                    />
+                    <LeadDetailItem
+                      icon={Phone}
+                      label="Phone"
+                      value={activeLead.phone || "Not provided"}
+                    />
+                    <LeadDetailItem
+                      icon={Building2}
+                      label="Company"
+                      value={activeLead.company || "Not provided"}
+                    />
+                    <LeadDetailItem
+                      icon={UserRound}
+                      label="Form used"
+                      value={activeLead.handle || "Unknown"}
+                    />
+                  </div>
+                </section>
+
+                <section className="grid gap-5 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
+                  <div className="space-y-5">
+                    <section className="space-y-3">
+                      <SectionLabel>Status</SectionLabel>
+                      <div className="rounded-2xl border border-border/50 bg-card/70 p-4">
+                        <div className="space-y-4">
+                          <div
+                            className="flex flex-wrap gap-2"
+                            role="group"
+                            aria-label="Lead status"
+                          >
+                            {LEAD_STATUS_OPTIONS.map((status) => (
+                              <button
+                                key={status}
+                                type="button"
+                                onClick={() => updateActiveLeadDraft({ lead_flag: status })}
+                                className={cn(
+                                  "rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                                  activeLeadStatus === status
+                                    ? getLeadFlagBadgeClassName(status)
+                                    : "border-border/60 bg-background/70 text-foreground hover:bg-muted/50"
+                                )}
+                              >
+                                {getLeadFlagLabel(status)}
+                              </button>
+                            ))}
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between gap-3">
+                              <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                                Rating
+                              </Label>
+                              <span className="text-xs text-muted-foreground">
+                                {getLeadRatingLabel(activeLeadRating)}
+                              </span>
+                            </div>
+                            <div
+                              className="flex flex-wrap gap-2"
+                              role="group"
+                              aria-label="Lead rating"
+                            >
+                              {LEAD_RATING_OPTIONS.map((rating) => (
+                                <button
+                                  key={rating}
+                                  type="button"
+                                  onClick={() => updateActiveLeadDraft({ lead_rating: rating })}
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition",
+                                    rating <= activeLeadRating
+                                      ? "border-amber-300/70 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-100"
+                                      : "border-border/60 bg-background/70 text-foreground hover:bg-muted/50"
+                                  )}
+                                >
+                                  <Star
+                                    className={cn(
+                                      "h-4 w-4",
+                                      rating <= activeLeadRating ? "fill-current" : ""
+                                    )}
+                                    aria-hidden
+                                  />
+                                  {rating}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-3">
+                      <SectionLabel>Submission context</SectionLabel>
+                      <div className="space-y-3 rounded-2xl border border-border/50 bg-card/70 p-4 text-sm">
+                        {activeLead.source_url ? (
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                              Source URL
+                            </div>
+                            <a
+                              href={activeLead.source_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 inline-flex max-w-full items-center gap-2 break-all font-medium text-foreground underline underline-offset-4"
+                            >
+                              <span>{activeLead.source_url}</span>
+                              <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+                            </a>
+                          </div>
+                        ) : null}
+                        {activeLead.message ? (
+                          <div>
+                            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                              Message
+                            </div>
+                            <p className="mt-1 whitespace-pre-wrap text-foreground">
+                              {activeLead.message}
+                            </p>
+                          </div>
+                        ) : null}
+                        {!activeLead.source_url && !activeLead.message ? (
+                          <p className="text-muted-foreground">
+                            No source URL or message was captured.
+                          </p>
+                        ) : null}
+                      </div>
+                    </section>
+                  </div>
+
+                  <section className="space-y-3">
+                    <SectionLabel>Follow-up</SectionLabel>
+                    <div className="space-y-4 rounded-2xl border border-border/50 bg-card/70 p-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={`networking-detail-note-${activeLead.id}`}
+                          className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        >
+                          Note
+                        </Label>
+                        <Textarea
+                          id={`networking-detail-note-${activeLead.id}`}
+                          value={activeDraft?.note ?? ""}
+                          onChange={(event) =>
+                            updateActiveLeadDraft({ note: event.target.value })
+                          }
+                          placeholder="Capture the context you want before you follow up."
+                          className="min-h-28 rounded-2xl"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor={`networking-detail-follow-up-${activeLead.id}`}
+                          className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        >
+                          Reminder
+                        </Label>
+                        <Input
+                          id={`networking-detail-follow-up-${activeLead.id}`}
+                          type="datetime-local"
+                          value={
+                            activeLeadStatus === "done"
+                              ? ""
+                              : activeDraft?.next_follow_up_at ?? ""
+                          }
+                          onChange={(event) =>
+                            updateActiveLeadDraft({
+                              next_follow_up_at: event.target.value,
+                            })
+                          }
+                          disabled={activeLeadStatus === "done"}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Mark done to clear the reminder.
+                        </p>
+                      </div>
+                    </div>
+                  </section>
+                </section>
+
+                {activeLeadCustomFields.length > 0 ? (
+                  <section className="space-y-3">
+                    <SectionLabel>Submission details</SectionLabel>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {activeLeadCustomFields.map((field) => (
+                        <div
+                          key={field.key}
+                          className="rounded-2xl border border-border/50 bg-card/70 p-4"
+                        >
+                          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                            {field.label}
+                          </div>
+                          <p className="mt-2 whitespace-pre-wrap text-sm text-foreground">
+                            {field.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+              </div>
+            </div>
+
+            <div className="shrink-0 border-t border-border/50 px-5 py-3 lg:px-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                {isPhoneLikeDevice ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="w-full justify-center gap-1.5 sm:w-auto"
+                    onClick={() => void saveContactToPhone(activeLead)}
+                  >
+                    <FileText className="h-4 w-4" aria-hidden />
+                    Save to phone
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-center gap-1.5 sm:w-auto"
+                  disabled={!activeLead.email}
+                  onClick={() => copyEmailToClipboard(activeLead)}
+                >
+                  <Copy className="h-4 w-4" aria-hidden />
+                  Copy email
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-center gap-1.5 sm:w-auto"
+                  onClick={() => downloadLeadVCard(activeLead)}
+                >
+                  <FileText className="h-4 w-4" aria-hidden />
+                  Download vCard
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-full justify-center sm:w-auto"
+                  onClick={() => updateActiveLeadDraft({ lead_flag: "done" })}
+                >
+                  Mark done
+                </Button>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/dashboard/leads">Open leads inbox</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
@@ -691,6 +1103,34 @@ function RatingBadge({ rating }: { rating: number }) {
   );
 }
 
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+      {children}
+    </div>
+  );
+}
+
+function LeadDetailItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border/50 bg-card/70 p-3.5">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <Icon className="h-4 w-4" aria-hidden />
+        {label}
+      </div>
+      <div className="mt-1.5 break-words text-sm text-foreground">{value}</div>
+    </div>
+  );
+}
+
 function normalizeLeadRow(row: unknown, fallbackUserId: string): Lead {
   const source = isRecord(row) ? row : {};
   return {
@@ -706,7 +1146,7 @@ function normalizeLeadRow(row: unknown, fallbackUserId: string): Lead {
     next_follow_up_at: toNullableTextValue(source.next_follow_up_at),
     lead_flag: normalizeLeadFlag(source.lead_flag),
     lead_rating: normalizeLeadRating(source.lead_rating, getDefaultLeadRating(source.lead_flag)),
-    custom_fields: null,
+    custom_fields: sanitizeCustomFields(source.custom_fields),
     source_url: toNullableTextValue(source.source_url),
     created_at: toNonEmptyText(source.created_at, new Date().toISOString()),
   };
@@ -754,6 +1194,67 @@ function parseDatetimeLocalValue(value: string) {
   const date = new Date(trimmed);
   if (Number.isNaN(date.getTime())) return null;
   return date.toISOString();
+}
+
+function formatSubmittedLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "recently";
+  return date.toLocaleString();
+}
+
+function collectDisplayCustomFields(
+  fields: Lead["custom_fields"]
+): Array<{ key: string; label: string; value: string }> {
+  return Object.entries(fields ?? {}).flatMap(([key, rawValue]) => {
+    if (!key || rawValue == null) return [];
+    const parsed = parseCustomFieldKey(key);
+    const label = parsed.label || toReadableLabel(parsed.id);
+    if (CORE_FIELD_KEYS.has(label.toLowerCase()) || CORE_FIELD_KEYS.has(parsed.id.toLowerCase())) {
+      return [];
+    }
+    const value = formatLeadValue(rawValue);
+    if (!value.trim()) return [];
+    return [{ key, label, value }];
+  });
+}
+
+function parseCustomFieldKey(key: string) {
+  const parts = key.split("::");
+  if (parts.length < 2) return { id: key, label: null as string | null };
+  const id = parts[parts.length - 1]?.trim() || key;
+  const label = parts.slice(0, -1).join("::").trim() || null;
+  return { id, label };
+}
+
+function formatLeadValue(value: string | boolean | null) {
+  if (value === true) return "Yes";
+  if (value === false) return "No";
+  if (value == null) return "";
+  return String(value);
+}
+
+function toReadableLabel(value: string) {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function sanitizeCustomFields(value: unknown): Record<string, string | boolean | null> | null {
+  if (!isRecord(value)) return null;
+  const next: Record<string, string | boolean | null> = {};
+  Object.entries(value).forEach(([rawKey, rawValue]) => {
+    const key = toNonEmptyText(rawKey, "");
+    if (!key) return;
+    if (rawValue == null) next[key] = null;
+    else if (typeof rawValue === "boolean") next[key] = rawValue;
+    else if (typeof rawValue === "string") next[key] = rawValue;
+    else if (typeof rawValue === "number" && Number.isFinite(rawValue)) {
+      next[key] = String(rawValue);
+    }
+  });
+  return Object.keys(next).length > 0 ? next : null;
 }
 
 function canUseRealtime() {

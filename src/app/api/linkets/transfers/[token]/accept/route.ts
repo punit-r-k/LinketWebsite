@@ -3,14 +3,18 @@ import { z } from "zod";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { acceptLinketTransferRequest } from "@/lib/linket-transfers";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 
 const tokenParamSchema = z.string().trim().min(24).max(128);
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  const untrusted = rejectUntrustedWrite(req);
+  if (untrusted) return untrusted;
+
   if (!isSupabaseAdminAvailable) {
     return NextResponse.json(
       { error: "Linkets service is not configured." },

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { deleteProfileForUser } from "@/lib/profile-service";
 import { validateSearchParams } from "@/lib/request-validation";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { revalidatePublicProfileHandles } from "@/lib/public-profile-revalidation";
@@ -57,6 +58,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     const { id } = await params;
     const parsedQuery = validateSearchParams(
       request.nextUrl.searchParams,

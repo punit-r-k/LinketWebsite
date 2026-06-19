@@ -6,6 +6,7 @@ import type {
   DashboardAnnouncementRecord,
   DashboardNotificationItem,
 } from "@/lib/dashboard-notifications";
+import { rejectUntrustedWrite } from "@/lib/request-security";
 import { validateJsonBody } from "@/lib/request-validation";
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
@@ -151,6 +152,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: NextRequest) {
+  const untrusted = rejectUntrustedWrite(request);
+  if (untrusted) return untrusted;
+
   const access = await requireRouteAccess("POST /api/dashboard/notifications");
   if (access instanceof NextResponse) {
     return access;

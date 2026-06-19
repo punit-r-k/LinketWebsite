@@ -192,6 +192,7 @@ function buildAnalyticsPayload(options: {
   analyticsScope: UserAnalytics["meta"]["analyticsScope"];
   publicProfileHandle?: string | null;
   recentLeads?: UserAnalytics["recentLeads"];
+  readyLeads?: number;
 }): UserAnalytics {
   return {
     meta: {
@@ -207,6 +208,7 @@ function buildAnalyticsPayload(options: {
       leadsToday: 0,
       scans7d: 0,
       leads7d: 0,
+      readyLeads: options.readyLeads ?? 0,
       conversionRate7d: 0,
       activeTags: 0,
       lastScanAt: null,
@@ -260,6 +262,21 @@ async function fetchRecentLeads(userId: string) {
     handle: null,
     created_at: lead.created_at,
   }));
+}
+
+async function fetchReadyLeadCount(userId: string) {
+  const supabase = await createServerSupabase();
+  const { count, error } = await supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("lead_flag", "follow_up");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return count ?? 0;
 }
 
 async function fetchActiveProfileHandle(userId: string) {
@@ -447,7 +464,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const recentLeads = await fetchRecentLeads(userId);
+    const [recentLeads, readyLeads] = await Promise.all([
+      fetchRecentLeads(userId),
+      fetchReadyLeadCount(userId),
+    ]);
     const analytics = buildAnalyticsPayload({
       days,
       timezoneOffsetMinutes,
@@ -455,6 +475,7 @@ export async function GET(request: NextRequest) {
       accessLevel: "paid",
       analyticsScope: "full",
       recentLeads,
+      readyLeads,
     });
 
     return NextResponse.json(analytics, {

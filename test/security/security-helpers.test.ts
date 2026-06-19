@@ -7,6 +7,7 @@ import {
   sanitizeAttachmentFilename,
   sanitizePublicLinkUrl,
 } from "../../src/lib/security";
+import { getRequestBodySizeIssue } from "../../src/lib/request-security";
 import {
   assertSafeCorsConfig,
   getCorsConfig,
@@ -36,6 +37,33 @@ test("ambiguous content-length and transfer-encoding headers are rejected", () =
   assert.equal(
     hasAmbiguousRequestBodyHeaders(new Headers({ "content-length": "10" })),
     false
+  );
+});
+
+test("oversized request bodies are rejected before parsing", () => {
+  assert.deepEqual(
+    getRequestBodySizeIssue(
+      new Request("https://app.example/api/test", {
+        method: "POST",
+        headers: { "content-length": "1025" },
+      }),
+      1024,
+      "Test payload"
+    ),
+    {
+      error: "Test payload is too large.",
+      status: 413,
+    }
+  );
+  assert.equal(
+    getRequestBodySizeIssue(
+      new Request("https://app.example/api/test", {
+        method: "POST",
+        headers: { "content-length": "1024" },
+      }),
+      1024
+    ),
+    null
   );
 });
 

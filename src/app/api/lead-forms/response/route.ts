@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createServerSupabase } from "@/lib/supabase/server";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import { sanitizeSubmissionAnswers, validateSubmission } from "@/lib/lead-form";
 import { getPlanScopedLeadFormConfig } from "@/lib/lead-form.server";
 import { limitRequest } from "@/lib/rate-limit";
+import {
+  rejectLargeRequestBody,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
 import type { LeadFormConfig, LeadFormSubmission } from "@/types/lead-form";
 
 const DEFAULT_FOLLOW_UP_DELAY_MS = 86_400_000;
+const MAX_RESPONSE_BODY_BYTES = 512 * 1024;
 
 type LeadFormRow = {
   id: string;
@@ -159,12 +163,22 @@ async function insertLeadRecord(
 
 export async function PUT(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     if (await limitRequest(request, "lead-form-response-update", 20, 60_000)) {
       return NextResponse.json(
         { error: "Too many requests. Please try again later." },
         { status: 429 }
       );
     }
+
+    const tooLarge = rejectLargeRequestBody(
+      request,
+      MAX_RESPONSE_BODY_BYTES,
+      "Lead form response payload"
+    );
+    if (tooLarge) return tooLarge;
 
     const body = await request.json();
     const {
@@ -198,8 +212,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const supabase = await createServerSupabase();
-    const { data: formRow, error: formError } = await supabase
+    const { data: formRow, error: formError } = await supabaseAdmin
       .from("lead_forms")
       .select("id,user_id,handle,status,config")
       .eq("id", formId)

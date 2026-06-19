@@ -2,14 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireRouteAccess } from "@/lib/api-authorization";
 import { limitRequest } from "@/lib/rate-limit";
+import {
+  rejectLargeRequestBody,
+  rejectUntrustedWrite,
+} from "@/lib/request-security";
 import { sanitizeAttachmentFilename } from "@/lib/security";
+import { getConfiguredSiteOrigin } from "@/lib/site-url";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 
 const RESUME_BUCKET = "profile-resumes";
 const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+const MAX_RESUME_BODY_BYTES = 6 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
   try {
+    const untrusted = rejectUntrustedWrite(request);
+    if (untrusted) return untrusted;
+
     if (await limitRequest(request, "resume-upload", 20, 60_000)) {
       return NextResponse.json(
         { error: "Too many upload attempts. Please try again later." },
@@ -23,6 +32,13 @@ export async function POST(request: NextRequest) {
         { status: 503 }
       );
     }
+
+    const tooLarge = rejectLargeRequestBody(
+      request,
+      MAX_RESUME_BODY_BYTES,
+      "Resume upload payload"
+    );
+    if (tooLarge) return tooLarge;
 
     const data = await request.formData();
     const userId = String(data.get("userId") ?? "").trim();
@@ -54,7 +70,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isPdf(fileEntry)) {
+    if (!(await isPdf(fileEntry))) {
       return NextResponse.json(
         { error: "Upload a PDF resume." },
         { status: 400 }
@@ -76,15 +92,16 @@ export async function POST(request: NextRequest) {
       throw new Error(uploadError.message || "Upload failed.");
     }
 
-    const { data: publicData } = supabaseAdmin.storage
-      .from(RESUME_BUCKET)
-      .getPublicUrl(path);
+    const downloadUrl = new URL(
+      `/api/profile-links/download?path=${encodeURIComponent(path)}`,
+      getConfiguredSiteOrigin()
+    ).toString();
 
     return NextResponse.json({
       file: {
         name: safeName,
         sizeBytes: fileEntry.size,
-        url: publicData.publicUrl,
+        url: downloadUrl,
       },
     });
   } catch (error) {
@@ -99,8 +116,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function isPdf(file: File) {
+async function isPdf(file: File) {
   const type = (file.type || "").toLowerCase();
   const name = file.name.toLowerCase();
-  return type === "application/pdf" || name.endsWith(".pdf");
+  if (type !== "application/pdf" && !name.endsWith(".pdf")) {
+    return false;
+  }
+  const signature = await file.slice(0, 5).text().catch(() => "");
+  return signature === "%PDF-";
 }

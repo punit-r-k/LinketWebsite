@@ -12,7 +12,6 @@ import { isDarkTheme, normalizeThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
 import PublicProfileLinksList from "@/components/public/PublicProfileLinksList";
 import PublicProfileLiteMode from "@/components/public/PublicProfileLiteMode";
-import PublicProfileRealtimeRefresh from "@/components/public/PublicProfileRealtimeRefresh";
 import PublicLeadForm from "@/components/public/PublicLeadForm";
 import PublicProfileImage from "@/components/public/PublicProfileImage";
 import PublicProfileViewTracker from "@/components/public/PublicProfileViewTracker";
@@ -107,29 +106,44 @@ export default async function PublicProfilePage({ params }: Props) {
   if (!payload) notFound();
 
   const { account, profile } = payload;
-  const planAccess = await getDashboardPlanAccessForUser(profile.user_id);
-  const avatar = await getSignedAvatarUrl(
-    account.avatar_url,
-    account.avatar_updated_at
-  );
-  const headerImage = await getSignedProfileHeaderUrl(
-    profile.header_image_url,
-    profile.header_image_updated_at
-  );
-  const logoUrl = await getSignedProfileLogoUrl(
-    profile.logo_url,
-    profile.logo_updated_at
-  );
-  const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
-  const logoBadgeClass = profile.logo_bg_white ? "bg-white" : "bg-background";
   const publicHandle = profile.handle || handle;
   const supabase = await createServerSupabaseReadonly();
-  const { row: leadFormRow, form: normalizedLeadForm } =
-    await getPublishedLeadForm({
+  const vcardLookup = isSupabaseAdminAvailable
+    ? supabaseAdmin
+        .from("vcard_profiles")
+        .select("email, phone, contact_button_visible")
+        .eq("user_id", account.user_id)
+        .maybeSingle()
+    : supabase
+        .from("vcard_profiles")
+        .select("email, phone, contact_button_visible")
+        .eq("user_id", account.user_id)
+        .maybeSingle();
+  const [
+    planAccess,
+    avatar,
+    headerImage,
+    logoUrl,
+    leadFormResult,
+    vcardResult,
+  ] = await Promise.all([
+    getDashboardPlanAccessForUser(profile.user_id),
+    getSignedAvatarUrl(account.avatar_url, account.avatar_updated_at),
+    getSignedProfileHeaderUrl(
+      profile.header_image_url,
+      profile.header_image_updated_at
+    ),
+    getSignedProfileLogoUrl(profile.logo_url, profile.logo_updated_at),
+    getPublishedLeadForm({
       handle: publicHandle,
       profileId: profile.id,
       supabase,
-    });
+    }),
+    vcardLookup,
+  ]);
+  const { row: leadFormRow, form: normalizedLeadForm } = leadFormResult;
+  const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
+  const logoBadgeClass = profile.logo_bg_white ? "bg-white" : "bg-background";
   const resolvedLeadForm =
     normalizedLeadForm && !planAccess.canCustomizeLeadForm
       ? applyFreeLeadFormLimits(
@@ -137,17 +151,7 @@ export default async function PublicProfilePage({ params }: Props) {
           leadFormRow?.id ?? `form-${profile.user_id}`
         )
       : normalizedLeadForm;
-  const { data: vcardData } = isSupabaseAdminAvailable
-    ? await supabaseAdmin
-        .from("vcard_profiles")
-        .select("email, phone, contact_button_visible")
-        .eq("user_id", account.user_id)
-        .maybeSingle()
-    : await supabase
-        .from("vcard_profiles")
-        .select("email, phone, contact_button_visible")
-        .eq("user_id", account.user_id)
-        .maybeSingle();
+  const { data: vcardData } = vcardResult;
   const vcardSettings = vcardData as {
     email?: string | null;
     phone?: string | null;
@@ -176,11 +180,6 @@ export default async function PublicProfilePage({ params }: Props) {
   return (
     <div className={`public-profile-shell min-h-screen text-foreground ${themeClass}`}>
       <PublicProfileViewTracker handle={publicHandle} />
-      <PublicProfileRealtimeRefresh
-        profileId={profile.id}
-        userId={profile.user_id}
-        leadFormId={leadFormRow?.id ?? null}
-      />
       <PublicProfileLiteMode />
       <div className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 public-profile-backdrop-entrance public-profile-heavy">
