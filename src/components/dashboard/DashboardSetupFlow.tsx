@@ -1525,6 +1525,28 @@ export default function DashboardSetupFlow({
   );
   const publishReady = initialOnboardingState.hasPublished || publishedThisSession;
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    window.dispatchEvent(
+      new CustomEvent("linket:onboarding-live-status", {
+        detail: {
+          visible: showLaunchHub,
+          contactReady: contactStepComplete,
+          linksReady,
+        },
+      })
+    );
+
+    return () => {
+      window.dispatchEvent(
+        new CustomEvent("linket:onboarding-live-status", {
+          detail: { visible: false },
+        })
+      );
+    };
+  }, [contactStepComplete, linksReady, showLaunchHub]);
+
   const previewProfile = useMemo(() => {
     if (!profileDraft || !userId) return null;
     return buildPreviewProfile(profileDraft, userId);
@@ -2830,18 +2852,6 @@ export default function DashboardSetupFlow({
     { label: "Public URL ready", tone: "text-foreground" },
     { label: "QR available after publish", tone: "text-muted-foreground" },
   ];
-  const postPublishStatusItems = [
-    { label: "Live", tone: "text-emerald-700" },
-    {
-      label: "Contact card added",
-      tone: contactStepComplete ? "text-foreground" : "text-muted-foreground",
-    },
-    {
-      label: "First link active",
-      tone: linksReady ? "text-foreground" : "text-muted-foreground",
-    },
-    { label: "QR ready", tone: "text-foreground" },
-  ];
   const pageHeading =
     showLaunchHub
       ? {
@@ -3200,35 +3210,6 @@ export default function DashboardSetupFlow({
       )}
     >
       <div className="mx-auto max-w-6xl space-y-4 sm:space-y-5">
-        {showLaunchHub ? (
-          <nav
-            className="dashboard-navbar relative z-20 rounded-[24px] border border-border/70 px-4 py-3 shadow-[var(--shadow-grounded)]"
-            aria-label="Live status"
-          >
-            <div className="dashboard-navbar-inner flex flex-col gap-3 p-0 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-                  Live status
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Next step: continue to the dashboard.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                {postPublishStatusItems.map((item) => (
-                  <span
-                    key={item.label}
-                    className="inline-flex min-h-9 items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1.5 text-sm font-medium shadow-sm"
-                  >
-                    <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden="true" />
-                    <span className={item.tone}>{item.label}</span>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </nav>
-        ) : null}
-
         {!showLaunchHub ? (
           <header className="dashboard-overview-header dashboard-setup-header flex flex-col gap-3">
             <div className="dashboard-overview-intro dashboard-setup-intro max-w-3xl space-y-2">

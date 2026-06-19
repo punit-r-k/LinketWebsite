@@ -15,6 +15,7 @@ import Image from "next/image";
 import {
   ArrowUpRight,
   Bell,
+  CheckCircle2,
   IdCard,
   Link2,
   LogOut,
@@ -53,6 +54,12 @@ type UserLite = {
   email: string | null;
   fullName?: string | null;
 } | null;
+
+type DashboardSetupLiveStatus = {
+  visible: boolean;
+  contactReady: boolean;
+  linksReady: boolean;
+};
 
 const LANDING_LINKS = [
   {
@@ -157,6 +164,12 @@ function Navbar() {
   const [copyLinkLabel, setCopyLinkLabel] = useState("copy link");
   const copyLinkTimeout = useRef<number | null>(null);
   const [dashboardSidebarOpen, setDashboardSidebarOpen] = useState(false);
+  const [dashboardSetupLiveStatus, setDashboardSetupLiveStatus] =
+    useState<DashboardSetupLiveStatus>({
+      visible: false,
+      contactReady: false,
+      linksReady: false,
+    });
   const [activeProfileSection, setActiveProfileSection] = useState<
     (typeof PROFILE_SECTIONS)[number]["id"] | null
   >(null);
@@ -316,6 +329,11 @@ function Navbar() {
   useEffect(() => {
     if (!isDashboard) {
       setDashboardSidebarOpen(false);
+      setDashboardSetupLiveStatus({
+        visible: false,
+        contactReady: false,
+        linksReady: false,
+      });
       return;
     }
     const handleSidebarState = (event: Event) => {
@@ -327,6 +345,35 @@ function Navbar() {
       window.removeEventListener("linket:dashboard-sidebar-state", handleSidebarState);
     };
   }, [isDashboard]);
+
+  useEffect(() => {
+    if (!isDashboardSetupRoute) {
+      setDashboardSetupLiveStatus({
+        visible: false,
+        contactReady: false,
+        linksReady: false,
+      });
+      return;
+    }
+
+    const handleLiveStatus = (event: Event) => {
+      const detail = (
+        event as CustomEvent<Partial<DashboardSetupLiveStatus>>
+      ).detail;
+      setDashboardSetupLiveStatus({
+        visible: Boolean(detail?.visible),
+        contactReady: Boolean(detail?.contactReady),
+        linksReady: Boolean(detail?.linksReady),
+      });
+    };
+    window.addEventListener("linket:onboarding-live-status", handleLiveStatus);
+    return () => {
+      window.removeEventListener(
+        "linket:onboarding-live-status",
+        handleLiveStatus
+      );
+    };
+  }, [isDashboardSetupRoute]);
 
   useEffect(() => {
     setNotificationsOpen(false);
@@ -1126,6 +1173,50 @@ function Navbar() {
         ) : null}
       </button>
     ) : null;
+  const dashboardSetupLiveStatusNav =
+    showDashboardSignedInChrome &&
+    isDashboardSetupRoute &&
+    dashboardSetupLiveStatus.visible ? (
+      <div
+        className="dashboard-onboarding-live-status hidden min-w-0 flex-[2] items-center justify-end gap-3 lg:flex"
+        aria-label="Live status"
+      >
+        <div className="min-w-0 text-right">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            Live status
+          </p>
+          <p className="truncate text-sm text-muted-foreground">
+            Next step: continue to the dashboard.
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          {[
+            { label: "Live", tone: "text-emerald-700" },
+            {
+              label: "Contact card added",
+              tone: dashboardSetupLiveStatus.contactReady
+                ? "text-foreground"
+                : "text-muted-foreground",
+            },
+            {
+              label: "First link active",
+              tone: dashboardSetupLiveStatus.linksReady
+                ? "text-foreground"
+                : "text-muted-foreground",
+            },
+            { label: "QR ready", tone: "text-foreground" },
+          ].map((item) => (
+            <span
+              key={item.label}
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 text-sm font-semibold shadow-sm"
+            >
+              <CheckCircle2 className={cn("h-4 w-4", item.tone)} aria-hidden />
+              <span className={item.tone}>{item.label}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+    ) : null;
 
   if (isDashboard) {
     return (
@@ -1204,6 +1295,8 @@ function Navbar() {
               </>
             ) : null}
           </div>
+
+          {dashboardSetupLiveStatusNav}
 
           <div className="dashboard-navbar-right flex shrink-0 items-center gap-3">
             {!isDashboardSetupRoute ? dashboardProfileActions : null}
