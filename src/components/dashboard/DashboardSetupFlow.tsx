@@ -3198,6 +3198,27 @@ export default function DashboardSetupFlow({
       )}
     </div>
   );
+  const sidebarPreview = (
+    <div className={cn("mx-auto w-full overflow-hidden rounded-[36px]", sidebarPreviewWrapperClassName)}>
+      <PhonePreviewCard
+        profile={{
+          name: previewDisplayName,
+          tagline: previewTagline,
+        }}
+        avatarUrl={avatarPreviewUrl}
+        headerImageUrl={headerPreviewUrl}
+        logoUrl={logoPreviewUrl}
+        logoShape={profileDraft.logoShape}
+        logoBackgroundWhite={profileDraft.logoBackgroundWhite}
+        themeName={activeThemeValue}
+        contactEnabled={previewContactEnabled}
+        contactDisabledText={previewContactDisabledText}
+        links={previewLinks}
+        showLeadFormSection={false}
+        showClicks={false}
+      />
+    </div>
+  );
   const onboardingThemeClassName = `theme-${activeThemeValue}`;
   const onboardingUsesDarkTheme = isDarkTheme(activeThemeValue);
 
@@ -4235,8 +4256,11 @@ export default function DashboardSetupFlow({
           </div>
 
           <aside className="hidden space-y-3 lg:sticky lg:top-5 lg:block" aria-label="Setup preview and checklist">
-            <Card className={setupCardClassName}>
-              <CardHeader className="gap-2 border-b border-border/60 pb-4">
+            {showLaunchHub ? (
+              sidebarPreview
+            ) : (
+              <Card className={setupCardClassName}>
+                <CardHeader className="gap-2 border-b border-border/60 pb-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <CardTitle className="text-lg font-semibold text-foreground">Live preview</CardTitle>
@@ -4246,29 +4270,10 @@ export default function DashboardSetupFlow({
                         </CardDescription>
                       ) : null}
                     </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 px-4 py-4">
-                <div className={cn("mx-auto w-full overflow-hidden rounded-[36px]", sidebarPreviewWrapperClassName)}>
-                  <PhonePreviewCard
-                    profile={{
-                      name: previewDisplayName,
-                      tagline: previewTagline,
-                    }}
-                    avatarUrl={avatarPreviewUrl}
-                    headerImageUrl={headerPreviewUrl}
-                    logoUrl={logoPreviewUrl}
-                    logoShape={profileDraft.logoShape}
-                    logoBackgroundWhite={profileDraft.logoBackgroundWhite}
-                    themeName={activeThemeValue}
-                    contactEnabled={previewContactEnabled}
-                    contactDisabledText={previewContactDisabledText}
-                    links={previewLinks}
-                    showLeadFormSection={false}
-                    showClicks={false}
-                  />
-                </div>
-                {!showLaunchHub ? (
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4 px-4 py-4">
+                  {sidebarPreview}
                   <div className="space-y-2 border-t border-border/60 pt-4">
                     {currentStep.id === "publish" ? (
                       <>
@@ -4313,9 +4318,9 @@ export default function DashboardSetupFlow({
                       </>
                     )}
                   </div>
-                ) : null}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </aside>
         </div>
       </div>
