@@ -316,7 +316,7 @@ export default function ThemeToggle({ showLabel = false }: { showLabel?: boolean
           </div>
           {!planAccess.hasPaidAccess ? (
             <div className="truncate text-[9px] text-muted-foreground/80 sm:text-[10px]">
-              Unlock pro
+              Unlock Pro
             </div>
           ) : null}
         </div>

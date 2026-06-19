@@ -44,7 +44,7 @@ export default function DashboardAppShell({
     ...onboardingState,
     requiresOnboarding: effectiveRequiresOnboarding,
   };
-  const shouldHideChrome = effectiveRequiresOnboarding && isSetupRoute;
+  const shouldHideChrome = isSetupRoute;
   const shouldRedirectToSetup =
     effectiveRequiresOnboarding && !isSetupRoute;
 

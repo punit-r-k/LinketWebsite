@@ -15,9 +15,6 @@ export default async function DashboardGetStartedPage() {
   }
 
   const onboardingState = await getDashboardOnboardingState(user.id);
-  if (!onboardingState.requiresOnboarding) {
-    redirect("/dashboard/overview");
-  }
 
   return <DashboardSetupFlow initialOnboardingState={onboardingState} />;
 }

@@ -213,7 +213,7 @@ export default function PhonePreviewCard({
       )}
     >
       <div
-        className="relative h-28 rounded-t-[36px]"
+        className="relative h-28 overflow-hidden rounded-t-[inherit]"
         style={{
           backgroundImage:
             "linear-gradient(90deg, var(--primary), var(--accent), var(--ring))",

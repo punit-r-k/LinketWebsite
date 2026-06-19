@@ -183,6 +183,8 @@ const ONBOARDING_CONTACT_DRAFT_STORAGE_PREFIX =
   "linket:onboarding:contact-draft";
 const ONBOARDING_LANGUAGE_STORAGE_PREFIX =
   "linket:onboarding:language-selected";
+const ONBOARDING_STEP_STORAGE_PREFIX =
+  "linket:onboarding:current-step";
 const SAVE_RETRY_DELAYS_MS = [1500, 4000, 8000, 15000] as const;
 const onboardingTrialDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -231,6 +233,10 @@ function getOnboardingDraftStorageKey(
 
 function getOnboardingLanguageStorageKey(userId: string) {
   return `${ONBOARDING_LANGUAGE_STORAGE_PREFIX}:${userId}`;
+}
+
+function getOnboardingStepStorageKey(userId: string) {
+  return `${ONBOARDING_STEP_STORAGE_PREFIX}:${userId}`;
 }
 
 function readOnboardingDraftCache<T>(
@@ -304,7 +310,7 @@ const SETUP_STEPS: Array<{
   {
     id: "links",
     label: "First link",
-    description: "Add your first link, then choose a theme",
+    description: "Add the main link people should open first",
     icon: Link2,
   },
   {
@@ -439,6 +445,40 @@ const FEATURED_THEMES: Array<{
     icon: AggieWolfIcon,
   },
 ];
+
+function readOnboardingStepIndex(userId: string) {
+  if (typeof window === "undefined") return null;
+  try {
+    const stepId = window.sessionStorage.getItem(
+      getOnboardingStepStorageKey(userId)
+    );
+    if (!stepId) return null;
+    const index = SETUP_STEPS.findIndex((step) => step.id === stepId);
+    return index >= 0 ? index : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeOnboardingStepIndex(userId: string, stepIndex: number) {
+  if (typeof window === "undefined") return;
+  const stepId = SETUP_STEPS[stepIndex]?.id;
+  if (!stepId) return;
+  try {
+    window.sessionStorage.setItem(getOnboardingStepStorageKey(userId), stepId);
+  } catch {
+    // Ignore storage failures; inferred setup progress still works.
+  }
+}
+
+function clearOnboardingStepIndex(userId: string) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(getOnboardingStepStorageKey(userId));
+  } catch {
+    // Ignore storage failures.
+  }
+}
 
 function canPersistOnboardingTheme(theme: ThemeName) {
   return theme === "light" || theme === "dark";
@@ -961,8 +1001,12 @@ export default function DashboardSetupFlow({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [handleError, setHandleError] = useState<string | null>(null);
   const [stepError, setStepError] = useState<string | null>(null);
-  const [showLaunchHub, setShowLaunchHub] = useState(false);
-  const [publishedThisSession, setPublishedThisSession] = useState(false);
+  const [showLaunchHub, setShowLaunchHub] = useState(
+    !initialOnboardingState.requiresOnboarding && initialOnboardingState.isLaunchReady
+  );
+  const [publishedThisSession, setPublishedThisSession] = useState(
+    !initialOnboardingState.requiresOnboarding && initialOnboardingState.isLaunchReady
+  );
   const [shareTestComplete, setShareTestComplete] = useState(
     initialOnboardingState.hasTestedShare
   );
@@ -1323,18 +1367,19 @@ export default function DashboardSetupFlow({
           nextProfile.name
         );
         setTheme(nextProfile.theme);
+        const inferredStepIndex = getInitialStepIndex({
+          languageComplete: previewMode || languagePreferenceLoaded,
+          profileComplete:
+            Boolean(nextProfile.name.trim()) &&
+            !isAutoHandle(nextProfile.handle),
+          contactComplete:
+            hasContactMethod(nextContact) && !nextContactRequiresReview,
+          linksComplete: nextProfile.links.some((link) =>
+            isMeaningfulLink(link.url)
+          ),
+        });
         setCurrentStepIndex(
-          getInitialStepIndex({
-            languageComplete: previewMode || languagePreferenceLoaded,
-            profileComplete:
-              Boolean(nextProfile.name.trim()) &&
-              !isAutoHandle(nextProfile.handle),
-            contactComplete:
-              hasContactMethod(nextContact) && !nextContactRequiresReview,
-            linksComplete: nextProfile.links.some((link) =>
-              isMeaningfulLink(link.url)
-            ),
-          })
+          readOnboardingStepIndex(userId) ?? inferredStepIndex
         );
       } catch (error) {
         const message =
@@ -1394,19 +1439,20 @@ export default function DashboardSetupFlow({
             localContactDraft?.savedSignature ??
             buildContactDraftSignature(fallbackContact, fallbackProfile.name);
           setTheme(fallbackProfile.theme);
+          const inferredStepIndex = getInitialStepIndex({
+            languageComplete: previewMode || languagePreferenceLoaded,
+            profileComplete:
+              Boolean(fallbackProfile.name.trim()) &&
+              !isAutoHandle(fallbackProfile.handle),
+            contactComplete:
+              hasContactMethod(fallbackContact) &&
+              !fallbackContactRequiresReview,
+            linksComplete: fallbackProfile.links.some((link) =>
+              isMeaningfulLink(link.url)
+            ),
+          });
           setCurrentStepIndex(
-            getInitialStepIndex({
-              languageComplete: previewMode || languagePreferenceLoaded,
-              profileComplete:
-                Boolean(fallbackProfile.name.trim()) &&
-                !isAutoHandle(fallbackProfile.handle),
-              contactComplete:
-                hasContactMethod(fallbackContact) &&
-                !fallbackContactRequiresReview,
-              linksComplete: fallbackProfile.links.some((link) =>
-                isMeaningfulLink(link.url)
-              ),
-            })
+            readOnboardingStepIndex(userId) ?? inferredStepIndex
           );
           setSaveError(message);
         } else {
@@ -1588,6 +1634,11 @@ export default function DashboardSetupFlow({
       })
     );
   }, [currentStepIndex, loading]);
+
+  useEffect(() => {
+    if (previewMode || loading || !userId || showLaunchHub) return;
+    writeOnboardingStepIndex(userId, currentStepIndex);
+  }, [currentStepIndex, loading, previewMode, showLaunchHub, userId]);
 
   useEffect(() => {
     if (previewMode || loading || !userId) return;
@@ -2212,24 +2263,6 @@ export default function DashboardSetupFlow({
       setLanguagePreferenceLoaded(true);
     }
 
-    if (stepId === "links" && shouldResetThemeToLight) {
-      const previewedTheme = activeThemeValue;
-      themePreviewRef.current = null;
-      setThemePreview(null);
-      writePendingDashboardTheme("light");
-      setTheme("light");
-      updateProfileDraft((current) =>
-        current.theme === "light" ? current : { ...current, theme: "light" }
-      );
-      void trackEvent(
-        "theme_preview_reverted",
-        trackingMeta({
-          theme: previewedTheme ?? "unknown",
-          fallback_theme: "light",
-        })
-      );
-    }
-
     if (stepId === "profile" || stepId === "links") {
       const saved = await saveProfileDraft({ quiet: true });
       if (!saved) return;
@@ -2287,6 +2320,28 @@ export default function DashboardSetupFlow({
 
     setStepError(null);
     void trackEvent("onboarding_publish_clicked", trackingMeta());
+
+    if (shouldResetThemeToLight) {
+      const previewedTheme = activeThemeValue;
+      themePreviewRef.current = null;
+      setThemePreview(null);
+      writePendingDashboardTheme("light");
+      setTheme("light");
+      const currentProfileDraft = profileDraftRef.current;
+      if (currentProfileDraft && currentProfileDraft.theme !== "light") {
+        const nextProfileDraft = { ...currentProfileDraft, theme: "light" as ThemeName };
+        profileDraftRef.current = nextProfileDraft;
+        setProfileDraft(nextProfileDraft);
+        setProfileSaveStatus((current) => (current === "error" ? "idle" : current));
+      }
+      void trackEvent(
+        "theme_preview_reverted",
+        trackingMeta({
+          theme: previewedTheme ?? "unknown",
+          fallback_theme: "light",
+        })
+      );
+    }
 
     const [savedContact, savedProfile] = await Promise.all([
       saveContactDraft({ quiet: true, force: contactRequiresReview }),
@@ -2573,6 +2628,9 @@ export default function DashboardSetupFlow({
   }
 
   function handleContinueToDashboard(path: string) {
+    if (userId) {
+      clearOnboardingStepIndex(userId);
+    }
     window.location.assign(path);
   }
 
@@ -2770,7 +2828,7 @@ export default function DashboardSetupFlow({
       : currentStep.id === "links"
           ? {
               title: "Add your first link",
-              description: "Add your first link, then choose a theme.",
+              description: "Add the main link people should open first.",
             }
           : {
               title: "Review + publish",
@@ -2803,7 +2861,7 @@ export default function DashboardSetupFlow({
       : currentStep.id === "contact"
       ? "This is what someone saves to contacts."
       : currentStep.id === "links"
-        ? "This updates your first link and theme."
+        ? "This updates your first link."
       : showLaunchHub
         ? "Your live page is ready to share."
       : currentStep.id === "publish"
@@ -2877,6 +2935,192 @@ export default function DashboardSetupFlow({
     Boolean(account.avatarPath || avatarPreviewUrl) || avatarFieldState !== "saved";
   const showHandleSavePill = handleTouched || Boolean(handleError);
   const normalizedLinketClaimCode = normalizeClaimCodeInput(linketClaimCode);
+  const themeSelectionPanel = (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Palette className="h-4 w-4 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">Theme</p>
+            <p className="text-sm text-muted-foreground">
+              Pick a theme. You can change it later.
+            </p>
+          </div>
+        </div>
+        <FieldSavePill state={themeFieldState} />
+      </div>
+      {canChooseTheme ? (
+        <div className={cn("space-y-3 p-4", softPanelClassName)}>
+          <p className="text-sm text-muted-foreground">
+            {previewingTemporaryTheme ? "Previewing theme" : "Selected theme"}:{" "}
+            <span className="font-semibold text-foreground">
+              {activeThemeOption.label}
+            </span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Light and Dark can stay selected. Other themes are previews during onboarding.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {availableThemeOptions.map((themeOption) => {
+              const selected = activeThemeValue === themeOption.value;
+              const ThemeIcon = themeOption.icon;
+              return (
+                <button
+                  key={themeOption.value}
+                  type="button"
+                  onClick={() => {
+                    if (canPersistOnboardingTheme(themeOption.value)) {
+                      themePreviewRef.current = null;
+                      setThemePreview(null);
+                      if (selectedThemeValue !== themeOption.value) {
+                        writePendingDashboardTheme(themeOption.value);
+                      }
+                      setTheme(themeOption.value);
+                      updateProfileDraft((current) => ({
+                        ...current,
+                        theme: themeOption.value,
+                      }));
+                      void trackEvent(
+                        "theme_selected",
+                        trackingMeta({ theme: themeOption.value })
+                      );
+                      return;
+                    }
+
+                    themePreviewRef.current = themeOption.value;
+                    setThemePreview(themeOption.value);
+                    setTheme(themeOption.value);
+                    void trackEvent(
+                      "theme_previewed",
+                      trackingMeta({
+                        theme: themeOption.value,
+                        locked: !isThemeAvailableForPlan(
+                          themeOption.value,
+                          planAccess
+                        ),
+                      })
+                    );
+                  }}
+                  className={cn(
+                    "overflow-hidden rounded-2xl border text-left transition",
+                    selected
+                      ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
+                      : "border-border/60 bg-card hover:border-border"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "relative h-16 w-full",
+                      themeOption.swatchClassName
+                    )}
+                  >
+                    <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-900 shadow-sm backdrop-blur">
+                      <ThemeIcon className="h-5 w-5" />
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 px-3 py-3">
+                    <div>
+                      <p className="text-sm font-semibold">{themeOption.label}</p>
+                      <p className="mt-1 text-xs opacity-80">
+                        {themeOption.description}
+                      </p>
+                    </div>
+                    {selected ? <Check className="h-4 w-4 shrink-0" /> : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {!planAccess.hasPaidAccess && lockedThemeOptions.length > 0 ? (
+            <div className="space-y-3 rounded-2xl border border-dashed border-border/60 bg-background/55 p-3">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                  Paid themes
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Preview the full library now. Paid themes still need an upgrade before they can stay on your live page.
+                </p>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {lockedThemeOptions.map((themeOption) => {
+                  const previewing =
+                    previewingTemporaryTheme &&
+                    themePreview === themeOption.value;
+                  const ThemeIcon = themeOption.icon;
+
+                  return (
+                    <button
+                      key={themeOption.value}
+                      type="button"
+                      aria-pressed={previewing}
+                      onClick={() => {
+                        themePreviewRef.current = themeOption.value;
+                        setThemePreview(themeOption.value);
+                        setTheme(themeOption.value);
+                        void trackEvent(
+                          "theme_previewed",
+                          trackingMeta({
+                            theme: themeOption.value,
+                            locked: true,
+                          })
+                        );
+                      }}
+                      className={cn(
+                        "overflow-hidden rounded-2xl border text-left transition",
+                        previewing
+                          ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
+                          : "border-border/60 bg-card/70 hover:border-border hover:bg-card"
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "relative h-16 w-full",
+                          themeOption.swatchClassName
+                        )}
+                      >
+                        <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-900 shadow-sm backdrop-blur">
+                          <ThemeIcon className="h-5 w-5" />
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold">
+                            {themeOption.label}
+                          </p>
+                          <p className="mt-1 text-xs opacity-80">
+                            {themeOption.description}
+                          </p>
+                        </div>
+                        <span
+                          className={cn(
+                            "rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
+                            previewing
+                              ? "border-background/30 bg-background/10 text-background"
+                              : "border-primary/30 bg-primary/10 text-primary"
+                          )}
+                        >
+                          {previewing ? "Preview" : "Paid"}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <Button asChild size="sm" className="w-full sm:w-auto">
+                <Link href={planAccess.upgradeHref}>Unlock paid themes</Link>
+              </Button>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className={cn("p-4", softPanelClassName)}>
+          <p className="text-sm font-medium text-foreground">
+            Add your first link first.
+          </p>
+        </div>
+      )}
+    </div>
+  );
   const onboardingThemeClassName = `theme-${activeThemeValue}`;
   const onboardingUsesDarkTheme = isDarkTheme(activeThemeValue);
 
@@ -3756,194 +4000,6 @@ export default function DashboardSetupFlow({
                             </Button>
                           ) : null}
                         </div>
-                        <div className="space-y-3">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="flex items-center gap-2">
-                              <Palette className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <p className="text-sm font-semibold text-foreground">
-                                  Theme
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  Pick a theme. You can change it later.
-                                </p>
-                              </div>
-                            </div>
-                            <FieldSavePill state={themeFieldState} />
-                          </div>
-                          {canChooseTheme ? (
-                            <div className={cn("space-y-3 p-4", softPanelClassName)}>
-                              <p className="text-sm text-muted-foreground">
-                                {previewingTemporaryTheme ? "Previewing theme" : "Selected theme"}:{" "}
-                                <span className="font-semibold text-foreground">
-                                  {activeThemeOption.label}
-                                </span>
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Light and Dark can stay selected. Other themes are previews during onboarding.
-                              </p>
-                              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                                {availableThemeOptions.map((themeOption) => {
-                                  const selected = activeThemeValue === themeOption.value;
-                                  const ThemeIcon = themeOption.icon;
-                                  return (
-                                    <button
-                                      key={themeOption.value}
-                                      type="button"
-                                      onClick={() => {
-                                        if (canPersistOnboardingTheme(themeOption.value)) {
-                                          themePreviewRef.current = null;
-                                          setThemePreview(null);
-                                          if (selectedThemeValue !== themeOption.value) {
-                                            writePendingDashboardTheme(themeOption.value);
-                                          }
-                                          setTheme(themeOption.value);
-                                          updateProfileDraft((current) => ({
-                                            ...current,
-                                            theme: themeOption.value,
-                                          }));
-                                          void trackEvent(
-                                            "theme_selected",
-                                            trackingMeta({ theme: themeOption.value })
-                                          );
-                                          return;
-                                        }
-
-                                        themePreviewRef.current = themeOption.value;
-                                        setThemePreview(themeOption.value);
-                                        setTheme(themeOption.value);
-                                        void trackEvent(
-                                          "theme_previewed",
-                                          trackingMeta({
-                                            theme: themeOption.value,
-                                            locked: !isThemeAvailableForPlan(
-                                              themeOption.value,
-                                              planAccess
-                                            ),
-                                          })
-                                        );
-                                      }}
-                                      className={cn(
-                                        "overflow-hidden rounded-2xl border text-left transition",
-                                        selected
-                                          ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
-                                          : "border-border/60 bg-card hover:border-border"
-                                      )}
-                                    >
-                                      <div
-                                        className={cn(
-                                          "relative h-16 w-full",
-                                          themeOption.swatchClassName
-                                        )}
-                                      >
-                                        <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-900 shadow-sm backdrop-blur">
-                                          <ThemeIcon className="h-5 w-5" />
-                                        </span>
-                                      </div>
-                                      <div className="flex items-center justify-between gap-2 px-3 py-3">
-                                        <div>
-                                          <p className="text-sm font-semibold">
-                                            {themeOption.label}
-                                          </p>
-                                          <p className="mt-1 text-xs opacity-80">
-                                            {themeOption.description}
-                                          </p>
-                                        </div>
-                                        {selected ? <Check className="h-4 w-4 shrink-0" /> : null}
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              {!planAccess.hasPaidAccess && lockedThemeOptions.length > 0 ? (
-                                <div className="space-y-3 rounded-2xl border border-dashed border-border/60 bg-background/55 p-3">
-                                  <div className="space-y-1">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                      Paid themes
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      Preview the full library now. Paid themes still need an upgrade before they can stay on your live page.
-                                    </p>
-                                  </div>
-                                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                                    {lockedThemeOptions.map((themeOption) => {
-                                      const previewing =
-                                        previewingTemporaryTheme &&
-                                        themePreview === themeOption.value;
-                                      const ThemeIcon = themeOption.icon;
-
-                                      return (
-                                        <button
-                                          key={themeOption.value}
-                                          type="button"
-                                          aria-pressed={previewing}
-                                          onClick={() => {
-                                            themePreviewRef.current = themeOption.value;
-                                            setThemePreview(themeOption.value);
-                                            setTheme(themeOption.value);
-                                            void trackEvent(
-                                              "theme_previewed",
-                                              trackingMeta({
-                                                theme: themeOption.value,
-                                                locked: true,
-                                              })
-                                            );
-                                          }}
-                                          className={cn(
-                                            "overflow-hidden rounded-2xl border text-left transition",
-                                            previewing
-                                              ? "border-foreground bg-foreground text-background shadow-[0_18px_42px_-30px_rgba(15,23,42,0.45)]"
-                                              : "border-border/60 bg-card/70 hover:border-border hover:bg-card"
-                                          )}
-                                        >
-                                          <div
-                                            className={cn(
-                                              "relative h-16 w-full",
-                                              themeOption.swatchClassName
-                                            )}
-                                          >
-                                            <span className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/60 bg-white/85 text-slate-900 shadow-sm backdrop-blur">
-                                              <ThemeIcon className="h-5 w-5" />
-                                            </span>
-                                          </div>
-                                          <div className="flex items-center justify-between gap-2 px-3 py-3">
-                                            <div>
-                                              <p className="text-sm font-semibold">
-                                                {themeOption.label}
-                                              </p>
-                                              <p className="mt-1 text-xs opacity-80">
-                                                {themeOption.description}
-                                              </p>
-                                            </div>
-                                            <span
-                                              className={cn(
-                                                "rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]",
-                                                previewing
-                                                  ? "border-background/30 bg-background/10 text-background"
-                                                  : "border-primary/30 bg-primary/10 text-primary"
-                                              )}
-                                            >
-                                              {previewing ? "Preview" : "Paid"}
-                                            </span>
-                                          </div>
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                  <Button asChild size="sm" className="w-full sm:w-auto">
-                                    <Link href={planAccess.upgradeHref}>Unlock paid themes</Link>
-                                  </Button>
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : (
-                            <div className={cn("p-4", softPanelClassName)}>
-                              <p className="text-sm font-medium text-foreground">
-                                Add your first link first.
-                              </p>
-                            </div>
-                          )}
-                        </div>
                       </div>
                     ) : null}
 
@@ -4083,6 +4139,7 @@ export default function DashboardSetupFlow({
                             ))}
                           </div>
                         </div>
+                        {themeSelectionPanel}
                       </div>
                     ) : null}
 
@@ -4158,7 +4215,7 @@ export default function DashboardSetupFlow({
                 </div>
               </CardHeader>
               <CardContent className="space-y-4 px-4 py-4">
-                <div className={cn("mx-auto w-full overflow-hidden rounded-[32px]", sidebarPreviewWrapperClassName)}>
+                <div className={cn("mx-auto w-full overflow-hidden rounded-[36px]", sidebarPreviewWrapperClassName)}>
                   <PhonePreviewCard
                     profile={{
                       name: previewDisplayName,
