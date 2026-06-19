@@ -78,13 +78,17 @@ export default function VCardDownload({
 
   return (
     <div className="w-full sm:w-auto">
-      <div className="flex w-full items-center gap-2 sm:w-auto">
+      <div className="inline-flex w-full items-stretch sm:w-auto">
         <Button
           onClick={download}
           disabled={downloading}
           aria-label={label}
           title={label}
-          className={cn("min-w-0 flex-1 sm:flex-none", className)}
+          className={cn(
+            "min-w-0 flex-1 sm:flex-none",
+            className,
+            hasDetails && "rounded-r-none border-r-0 pr-5"
+          )}
           variant={variant}
         >
           {iconSrc ? (
@@ -104,7 +108,7 @@ export default function VCardDownload({
             aria-label={open ? "Hide contact details" : "Show contact details"}
             aria-expanded={open}
             onClick={() => setOpen((current) => !current)}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card/80 text-foreground shadow-sm transition hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex min-h-11 w-14 shrink-0 items-center justify-center rounded-l-none rounded-r-full border border-l-0 border-[color:var(--profile-contact-button-border)] bg-card/85 text-foreground shadow-sm transition-[background-color,color,box-shadow,transform] duration-200 ease-out hover:bg-card active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <ChevronDown
               className={cn(
@@ -162,9 +166,9 @@ function ContactDetailGroup({
 }) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-        <Icon className="h-3.5 w-3.5" aria-hidden />
-        {label}
+      <div className="flex min-h-5 items-center gap-2 text-[11px] font-semibold uppercase leading-none tracking-[0.18em] text-muted-foreground">
+        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        <span className="inline-flex h-4 items-center">{label}</span>
       </div>
       <div className="space-y-1">
         {values.map((value) => (
