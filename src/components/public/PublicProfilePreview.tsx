@@ -28,6 +28,8 @@ type Props = {
   forceMobile?: boolean;
   themeOverride?: ThemeName;
   contactEnabled?: boolean;
+  contactEmails?: string[];
+  contactPhones?: string[];
 };
 
 function sortLinks(links: ProfileWithLinks["links"]) {
@@ -49,6 +51,8 @@ export default function PublicProfilePreview({
   forceMobile = false,
   themeOverride,
   contactEnabled = true,
+  contactEmails = [],
+  contactPhones = [],
 }: Props) {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
@@ -311,6 +315,8 @@ export default function PublicProfilePreview({
                       handle={publicHandle}
                       label="Save Contact Information"
                       className="public-profile-cta-primary w-full rounded-full sm:w-auto"
+                      emails={contactEmails}
+                      phones={contactPhones}
                     />
                   ) : null}
                   <ShareContactButton
@@ -493,6 +499,8 @@ export default function PublicProfilePreview({
                       handle={publicHandle}
                       label="Save Contact Information"
                       className="public-profile-cta-primary w-full rounded-full sm:w-auto"
+                      emails={contactEmails}
+                      phones={contactPhones}
                     />
                   ) : null}
                   <ShareContactButton

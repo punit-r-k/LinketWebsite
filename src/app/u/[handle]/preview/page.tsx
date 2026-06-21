@@ -20,7 +20,27 @@ type PreviewState = {
     avatarUpdatedAt: string | null;
   } | null;
   contactEnabled: boolean;
+  contactEmails: string[];
+  contactPhones: string[];
 };
+
+function normalizeContactValues(
+  primary: string | null | undefined,
+  additional: string[] | null | undefined
+) {
+  const seen = new Set<string>();
+  return [primary ?? "", ...(additional ?? [])].reduce<string[]>(
+    (values, value) => {
+      const trimmed = value.trim();
+      const key = trimmed.toLowerCase();
+      if (!trimmed || seen.has(key)) return values;
+      seen.add(key);
+      values.push(trimmed);
+      return values;
+    },
+    []
+  );
+}
 
 function PublicProfilePreviewPageContent() {
   const params = useParams();
@@ -35,6 +55,8 @@ function PublicProfilePreviewPageContent() {
     profile: null,
     account: null,
     contactEnabled: false,
+    contactEmails: [],
+    contactPhones: [],
   });
 
   useEffect(() => {
@@ -82,15 +104,25 @@ function PublicProfilePreviewPageContent() {
           ? ((await contactRes.json().catch(() => null)) as {
               fields?: {
                 email?: string | null;
+                additionalEmails?: string[] | null;
                 phone?: string | null;
+                additionalPhones?: string[] | null;
                 contactButtonVisible?: boolean;
               };
             } | null)
           : null;
         const contactFields = contactPayload?.fields;
+        const contactEmails = normalizeContactValues(
+          contactFields?.email,
+          contactFields?.additionalEmails
+        );
+        const contactPhones = normalizeContactValues(
+          contactFields?.phone,
+          contactFields?.additionalPhones
+        );
         const contactEnabled = Boolean(
           contactFields?.contactButtonVisible !== false &&
-            (contactFields?.email?.trim() || contactFields?.phone?.trim())
+            (contactEmails.length || contactPhones.length)
         );
 
         if (!active) return;
@@ -105,6 +137,8 @@ function PublicProfilePreviewPageContent() {
             avatarUpdatedAt: accountPayload?.avatarUpdatedAt ?? null,
           },
           contactEnabled,
+          contactEmails,
+          contactPhones,
         });
       } catch (err) {
         if (!active) return;
@@ -114,6 +148,8 @@ function PublicProfilePreviewPageContent() {
           profile: null,
           account: null,
           contactEnabled: false,
+          contactEmails: [],
+          contactPhones: [],
         });
       }
     })();
@@ -150,7 +186,7 @@ function PublicProfilePreviewPageContent() {
     );
   }
 
-  const { profile, account, contactEnabled } = state;
+  const { profile, account, contactEnabled, contactEmails, contactPhones } = state;
 
   return (
     <PublicProfilePreview
@@ -159,6 +195,8 @@ function PublicProfilePreviewPageContent() {
       handle={handle}
       themeOverride={requestedTheme}
       contactEnabled={contactEnabled}
+      contactEmails={contactEmails}
+      contactPhones={contactPhones}
     />
   );
 }
