@@ -56,10 +56,10 @@ function Footer() {
                 )}
               </div>
               <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-white/70 sm:text-sm sm:tracking-[0.4em]">
+                <p className="text-fluid-xs-sm uppercase tracking-[0.24em] text-white/70 sm:tracking-[0.4em]">
                   {brand.name}
                 </p>
-                <p className="text-xl font-bold text-white sm:text-2xl">
+                <p className="text-fluid-xl-2xl font-bold text-white">
                   Stay Connected.
                 </p>
               </div>

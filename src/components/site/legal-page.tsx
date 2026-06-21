@@ -103,9 +103,9 @@ export function LegalPage({
       </div>
 
       <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-16">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_290px]">
-          <div className="space-y-8">
-            <header className="landing-fade-up space-y-6">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,1fr)_290px]">
+          <div className="min-w-0 space-y-8">
+            <header className="landing-fade-up min-w-0 space-y-6">
               <div className="landing-chip inline-flex items-center gap-3 px-3 py-2">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1d2334] shadow-[0_10px_26px_-18px_rgba(15,23,42,0.7)]">
                   <Image
@@ -125,15 +125,15 @@ export function LegalPage({
               </div>
 
               <div className="space-y-4">
-                <h1 className="max-w-4xl text-[2.2rem] font-semibold leading-tight tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.08]">
+                <h1 className="text-fluid-legal-title max-w-4xl font-semibold leading-tight tracking-tight text-slate-900 sm:leading-[1.08]">
                   {title}
                 </h1>
-                <p className="max-w-3xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+                <p className="text-fluid-base-lg max-w-3xl leading-7 text-slate-600 sm:leading-8">
                   {subtitle}
                 </p>
               </div>
 
-              <div className="landing-surface p-6 sm:p-7">
+              <div className="landing-surface min-w-0 p-6 sm:p-7">
                 <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#e3a553]">
                   What This Page Covers
                 </p>

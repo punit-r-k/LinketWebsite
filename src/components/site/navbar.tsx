@@ -1032,7 +1032,7 @@ function Navbar() {
     <Link
       href="/dashboard/linkets"
       className={cn(
-        "inline-flex h-10 items-center justify-center rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] transition md:h-12 md:px-5 md:text-sm",
+        "text-fluid-xs-sm inline-flex h-10 items-center justify-center rounded-full px-4 font-semibold uppercase tracking-[0.08em] transition md:h-12 md:px-5",
         isDashboard
           ? "bg-foreground text-background hover:bg-foreground/90"
           : overlayMode
@@ -1048,7 +1048,7 @@ function Navbar() {
       asChild
       variant={isLandingPage ? "landingSecondary" : undefined}
       className={cn(
-        "h-10 rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6 md:text-sm",
+        "text-fluid-xs-sm h-10 rounded-full px-4 font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6",
         isLandingPage
           ? ""
           : isDashboard
@@ -1068,7 +1068,7 @@ function Navbar() {
       asChild
       variant={isLandingPage ? "landingPrimary" : undefined}
       className={cn(
-        "h-10 rounded-full px-4 text-xs font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6 md:text-sm",
+        "text-fluid-xs-sm h-10 rounded-full px-4 font-semibold uppercase tracking-[0.08em] md:h-12 md:px-6",
         isLandingPage
           ? "shadow-[0_22px_48px_-28px_rgba(236,132,78,0.45)]"
           : isDashboard

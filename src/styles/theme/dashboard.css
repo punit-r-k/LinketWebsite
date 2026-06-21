@@ -1928,11 +1928,11 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .linkets-refresh [data-slot=button] {
     height: auto;
     padding: 0.35rem 0.7rem;
-    font-size: 0.75rem;
+    font-size: clamp(0.75rem, 0.3726rem + 1.8868vw, 0.875rem);
   }
 
   #dashboard-theme-scope .dashboard-content [data-slot=card-title] {
-    font-size: 0.95rem;
+    font-size: clamp(0.85rem, 0.5481rem + 1.5094vw, 0.95rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-card {
@@ -1960,11 +1960,11 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-overview-header h1 {
-    font-size: 1.35rem;
+    font-size: clamp(1rem, 0.6235rem + 1.8824vw, 1.2rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-header p {
-    font-size: 0.85rem;
+    font-size: clamp(0.7rem, 0.5118rem + 0.9412vw, 0.8rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-intro {
@@ -2025,7 +2025,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.75rem;
+    font-size: clamp(0.75rem, 0.5147rem + 1.1765vw, 0.875rem);
     text-align: center;
   }
 
@@ -2041,7 +2041,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-date-pill {
     padding: 0.35rem 0.75rem;
-    font-size: 0.7rem;
+    font-size: clamp(0.6rem, 0.4494rem + 0.7529vw, 0.68rem);
     max-width: 100%;
     justify-content: center;
     margin-left: auto;
@@ -2058,7 +2058,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-view-profile-button,
   .dashboard-view-profile-button {
-    font-size: 0.75rem;
+    font-size: clamp(0.7rem, 0.5491rem + 0.7547vw, 0.75rem);
     width: 2.1rem;
     min-width: 2.1rem;
     height: 2.1rem;
@@ -2070,7 +2070,7 @@ body.theme-forest .dashboard-forest-pin {
     height: 2.1rem;
     padding-left: 0.6rem;
     padding-right: 0.6rem;
-    font-size: 0.72rem;
+    font-size: clamp(0.65rem, 0.4387rem + 1.0566vw, 0.72rem);
     letter-spacing: 0.01em;
   }
 
@@ -2132,11 +2132,11 @@ body.theme-forest .dashboard-forest-pin {
   #dashboard-theme-scope .dashboard-menu-button {
     padding: 0.35rem 0.6rem;
     gap: 0.4rem;
-    font-size: 0.75rem;
+    font-size: clamp(0.75rem, 0.3726rem + 1.8868vw, 0.875rem);
   }
 
   #dashboard-theme-scope .dashboard-topbar-title {
-    font-size: 0.85rem;
+    font-size: clamp(0.8rem, 0.6491rem + 0.7547vw, 0.85rem);
   }
 }
 
@@ -2186,7 +2186,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-content [data-slot=card-title] {
-    font-size: 0.9rem;
+    font-size: clamp(0.85rem, 0.5481rem + 1.5094vw, 0.95rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-page {
@@ -2198,11 +2198,11 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-overview-header h1 {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 0.6235rem + 1.8824vw, 1.2rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-header p {
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 0.5118rem + 0.9412vw, 0.8rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-grid,
@@ -2236,12 +2236,12 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.7rem;
+    font-size: clamp(0.75rem, 0.5147rem + 1.1765vw, 0.875rem);
   }
 
   #dashboard-theme-scope .dashboard-date-pill {
     padding: 0.3rem 0.65rem;
-    font-size: 0.68rem;
+    font-size: clamp(0.6rem, 0.4494rem + 0.7529vw, 0.68rem);
   }
 
   #dashboard-theme-scope .dashboard-view-profile-button,
@@ -2256,7 +2256,7 @@ body.theme-forest .dashboard-forest-pin {
     height: 2.05rem;
     padding-left: 0.6rem;
     padding-right: 0.6rem;
-    font-size: 0.68rem;
+    font-size: clamp(0.65rem, 0.4387rem + 1.0566vw, 0.72rem);
   }
 
   #dashboard-theme-scope .dashboard-new-linket-button--mobile,
@@ -2372,7 +2372,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-content [data-slot=card-title] {
-    font-size: 0.85rem;
+    font-size: clamp(0.85rem, 0.5481rem + 1.5094vw, 0.95rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-page [data-slot=card] {
@@ -2386,16 +2386,16 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-overview-header h1 {
-    font-size: 1.1rem;
+    font-size: clamp(1rem, 0.6235rem + 1.8824vw, 1.2rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-header p {
-    font-size: 0.75rem;
+    font-size: clamp(0.7rem, 0.5118rem + 0.9412vw, 0.8rem);
   }
 
   #dashboard-theme-scope .dashboard-date-pill {
     padding: 0.25rem 0.55rem;
-    font-size: 0.65rem;
+    font-size: clamp(0.6rem, 0.4494rem + 0.7529vw, 0.68rem);
   }
 
   #dashboard-theme-scope .dashboard-metric-row {
@@ -2410,7 +2410,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.65rem;
+    font-size: clamp(0.75rem, 0.5147rem + 1.1765vw, 0.875rem);
   }
 
   #dashboard-theme-scope .dashboard-view-profile-button,
@@ -2418,7 +2418,7 @@ body.theme-forest .dashboard-forest-pin {
     width: 2rem;
     min-width: 2rem;
     padding: 0;
-    font-size: 0.7rem;
+    font-size: clamp(0.7rem, 0.5491rem + 0.7547vw, 0.75rem);
   }
 
   .dashboard-view-profile-icon svg {
@@ -2431,7 +2431,7 @@ body.theme-forest .dashboard-forest-pin {
     height: 2rem;
     padding-left: 0.5rem;
     padding-right: 0.5rem;
-    font-size: 0.65rem;
+    font-size: clamp(0.65rem, 0.4387rem + 1.0566vw, 0.72rem);
   }
 
   #dashboard-theme-scope .dashboard-new-linket-button--mobile,
@@ -2493,7 +2493,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-topbar-title {
-    font-size: 0.8rem;
+    font-size: clamp(0.8rem, 0.6491rem + 0.7547vw, 0.85rem);
   }
 }
 
@@ -2542,18 +2542,18 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-overview-header h1 {
-    font-size: 1.2rem;
+    font-size: clamp(1rem, 0.6235rem + 1.8824vw, 1.2rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-header p {
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 0.5118rem + 0.9412vw, 0.8rem);
   }
 
   #dashboard-theme-scope .dashboard-date-pill {
     margin-left: auto;
     margin-right: auto;
     padding: 0.3rem 0.6rem;
-    font-size: 0.68rem;
+    font-size: clamp(0.6rem, 0.4494rem + 0.7529vw, 0.68rem);
     max-width: 100%;
   }
 
@@ -2592,7 +2592,7 @@ body.theme-forest .dashboard-forest-pin {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    font-size: 0.8rem;
+    font-size: clamp(0.8rem, 0.5741rem + 1.1294vw, 0.92rem);
   }
 
   #dashboard-theme-scope .dashboard-datetime-input::-webkit-datetime-edit {
@@ -2638,7 +2638,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.875rem;
+    font-size: clamp(0.75rem, 0.5147rem + 1.1765vw, 0.875rem);
     line-height: 1.25;
   }
 
@@ -2673,7 +2673,7 @@ body.theme-forest .dashboard-forest-pin {
     min-height: 2.1rem;
     padding: 0.35rem 0.85rem;
     border-radius: 9999px;
-    font-size: 0.78rem;
+    font-size: clamp(0.68rem, 0.4918rem + 0.9412vw, 0.78rem);
     line-height: 1;
     box-shadow: none;
   }
@@ -2701,11 +2701,11 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-overview-header h1 {
-    font-size: 1.1rem;
+    font-size: clamp(1rem, 0.6235rem + 1.8824vw, 1.2rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-header p {
-    font-size: 0.75rem;
+    font-size: clamp(0.7rem, 0.5118rem + 0.9412vw, 0.8rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-page [data-slot=card],
@@ -2723,7 +2723,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-date-pill {
     padding: 0.25rem 0.55rem;
-    font-size: 0.65rem;
+    font-size: clamp(0.6rem, 0.4494rem + 0.7529vw, 0.68rem);
   }
 
   #dashboard-theme-scope .dashboard-metric-row {
@@ -2737,14 +2737,14 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.8125rem;
+    font-size: clamp(0.75rem, 0.5147rem + 1.1765vw, 0.875rem);
     line-height: 1.25;
   }
 
   #dashboard-theme-scope .dashboard-analytics-range-button {
     padding-left: 0.6rem;
     padding-right: 0.7rem;
-    font-size: 0.72rem;
+    font-size: clamp(0.68rem, 0.4918rem + 0.9412vw, 0.78rem);
   }
 }
 
@@ -2755,11 +2755,11 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-overview-header h1 {
-    font-size: 1rem;
+    font-size: clamp(1rem, 0.6235rem + 1.8824vw, 1.2rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-header p {
-    font-size: 0.7rem;
+    font-size: clamp(0.7rem, 0.5118rem + 0.9412vw, 0.8rem);
   }
 
   #dashboard-theme-scope .dashboard-overview-page [data-slot=card],
@@ -2777,7 +2777,7 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-date-pill {
     padding: 0.2rem 0.5rem;
-    font-size: 0.6rem;
+    font-size: clamp(0.6rem, 0.4494rem + 0.7529vw, 0.68rem);
   }
 
   #dashboard-theme-scope .dashboard-metric-row {
@@ -2791,14 +2791,14 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-metric-label,
   #dashboard-theme-scope .dashboard-metric-value {
-    font-size: 0.75rem;
+    font-size: clamp(0.75rem, 0.5147rem + 1.1765vw, 0.875rem);
     line-height: 1.25;
   }
 
   #dashboard-theme-scope .dashboard-analytics-range-button {
     padding-left: 0.55rem;
     padding-right: 0.62rem;
-    font-size: 0.68rem;
+    font-size: clamp(0.68rem, 0.4918rem + 0.9412vw, 0.78rem);
   }
 }
 
@@ -3127,7 +3127,7 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-onboarding-tour-kicker {
-    font-size: 0.62rem;
+    font-size: clamp(0.62rem, 0.58rem + 0.2vw, 0.66rem);
   }
 
   #dashboard-theme-scope .dashboard-onboarding-tour-path {
@@ -3135,11 +3135,11 @@ body.theme-forest .dashboard-forest-pin {
   }
 
   #dashboard-theme-scope .dashboard-onboarding-tour-title {
-    font-size: 1rem;
+    font-size: clamp(1rem, 0.9rem + 0.5vw, 1.1rem);
   }
 
   #dashboard-theme-scope .dashboard-onboarding-tour-description {
-    font-size: 0.8rem;
+    font-size: clamp(0.8rem, 0.76rem + 0.2vw, 0.84rem);
   }
 
   #dashboard-theme-scope .dashboard-onboarding-tour-actions {
@@ -3148,12 +3148,12 @@ body.theme-forest .dashboard-forest-pin {
 
   #dashboard-theme-scope .dashboard-onboarding-tour-actions [data-slot=button] {
     height: 2rem;
-    font-size: 0.75rem;
+    font-size: clamp(0.75rem, 0.625rem + 0.625vw, 0.875rem);
   }
 
   #dashboard-theme-scope .dashboard-onboarding-tour-helper {
     text-align: left;
-    font-size: 0.68rem;
+    font-size: clamp(0.68rem, 0.64rem + 0.2vw, 0.72rem);
   }
 }
 

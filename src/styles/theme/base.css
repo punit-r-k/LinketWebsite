@@ -49,6 +49,32 @@
   --step-3: clamp(1.95rem, 1.80rem + 0.60vw, 2.34rem);
   --step-4: clamp(2.44rem, 2.22rem + 0.82vw, 2.93rem);
 
+  /*
+   * Bounded fluid type pairs. These interpolate from a 320px phone to a
+   * 1024px viewport, then stop growing so text never becomes unbounded.
+   */
+  --text-fluid-9-10: clamp(0.5625rem, 0.5341rem + 0.142vw, 0.625rem);
+  --text-fluid-2xs-xs: clamp(0.625rem, 0.5682rem + 0.2841vw, 0.75rem);
+  --text-fluid-11-xs: clamp(0.6875rem, 0.6591rem + 0.142vw, 0.75rem);
+  --text-fluid-11-sm: clamp(0.6875rem, 0.6023rem + 0.4261vw, 0.875rem);
+  --text-fluid-xs-sm: clamp(0.75rem, 0.6932rem + 0.2841vw, 0.875rem);
+  --text-fluid-sm-base: clamp(0.875rem, 0.8182rem + 0.2841vw, 1rem);
+  --text-fluid-sm-lg: clamp(0.875rem, 0.7614rem + 0.5682vw, 1.125rem);
+  --text-fluid-base-lg: clamp(1rem, 0.9432rem + 0.2841vw, 1.125rem);
+  --text-fluid-base-xl: clamp(1rem, 0.8864rem + 0.5682vw, 1.25rem);
+  --text-fluid-lg-2xl: clamp(1.125rem, 0.9545rem + 0.8523vw, 1.5rem);
+  --text-fluid-xl-2xl: clamp(1.25rem, 1.1364rem + 0.5682vw, 1.5rem);
+  --text-fluid-2xl-3xl: clamp(1.5rem, 1.3295rem + 0.8523vw, 1.875rem);
+  --text-fluid-3xl-4xl: clamp(1.875rem, 1.7045rem + 0.8523vw, 2.25rem);
+  --text-fluid-2xl-4xl: clamp(1.5rem, 1.1591rem + 1.7045vw, 2.25rem);
+  --text-fluid-2rem-4xl: clamp(2rem, 1.8864rem + 0.5682vw, 2.25rem);
+  --text-fluid-section: clamp(1.9rem, 1.7409rem + 0.7955vw, 2.25rem);
+  --text-fluid-legal-title: clamp(2.2rem, 1.8364rem + 1.8182vw, 3rem);
+  --text-fluid-stat: clamp(1.5rem, 1.3864rem + 0.5682vw, 1.75rem);
+  --text-fluid-hero: clamp(1.95rem, 0.7909rem + 5.7955vw, 4.5rem);
+  --text-fluid-hero-accent: clamp(3.35rem, 2.4864rem + 4.3182vw, 5.25rem);
+  --text-fluid-hero-copy: clamp(0.9375rem, 0.8523rem + 0.4261vw, 1.125rem);
+
   /* Default theme mirrors .theme-light */
   --background: var(--neutral-50);
   --foreground: var(--brand-slate);
@@ -227,6 +253,29 @@ body {
 .font-mono {
   font-family: var(--font-family-mono);
 }
+
+/* Fluid text utilities replace breakpoint-only font-size jumps. */
+.text-fluid-9-10 { font-size: var(--text-fluid-9-10); }
+.text-fluid-2xs-xs { font-size: var(--text-fluid-2xs-xs); }
+.text-fluid-11-xs { font-size: var(--text-fluid-11-xs); }
+.text-fluid-11-sm { font-size: var(--text-fluid-11-sm); }
+.text-fluid-xs-sm { font-size: var(--text-fluid-xs-sm); }
+.text-fluid-sm-base { font-size: var(--text-fluid-sm-base); }
+.text-fluid-sm-lg { font-size: var(--text-fluid-sm-lg); }
+.text-fluid-base-lg { font-size: var(--text-fluid-base-lg); }
+.text-fluid-base-xl { font-size: var(--text-fluid-base-xl); }
+.text-fluid-lg-2xl { font-size: var(--text-fluid-lg-2xl); }
+.text-fluid-xl-2xl { font-size: var(--text-fluid-xl-2xl); }
+.text-fluid-2xl-3xl { font-size: var(--text-fluid-2xl-3xl); }
+.text-fluid-3xl-4xl { font-size: var(--text-fluid-3xl-4xl); }
+.text-fluid-2xl-4xl { font-size: var(--text-fluid-2xl-4xl); }
+.text-fluid-2rem-4xl { font-size: var(--text-fluid-2rem-4xl); }
+.text-fluid-section { font-size: var(--text-fluid-section); }
+.text-fluid-legal-title { font-size: var(--text-fluid-legal-title); }
+.text-fluid-stat { font-size: var(--text-fluid-stat); }
+.text-fluid-hero { font-size: var(--text-fluid-hero); }
+.text-fluid-hero-accent { font-size: var(--text-fluid-hero-accent); }
+.text-fluid-hero-copy { font-size: var(--text-fluid-hero-copy); }
 
 @keyframes landing-fade-up {
   0% {

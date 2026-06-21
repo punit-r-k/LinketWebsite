@@ -1282,7 +1282,7 @@ export default function LeadsList({ userId }: { userId: string }) {
             <div className="flex h-full min-h-0 flex-col">
               <DialogHeader className="shrink-0 border-b border-border/50 px-5 py-4 text-left lg:px-6">
                 <div className="space-y-2">
-                  <DialogTitle className="pr-10 text-2xl font-semibold leading-tight sm:text-[1.9rem]">
+                  <DialogTitle className="text-fluid-2xl-3xl pr-10 font-semibold leading-tight">
                     {activeLeadView.lead.name || "Unnamed lead"}
                   </DialogTitle>
                   <div className="flex flex-wrap items-center gap-2">

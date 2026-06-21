@@ -30,7 +30,7 @@ export default async function ProfilePage() {
   return (
     <section className="mx-auto flex min-h-[70vh] max-w-6xl flex-col gap-6 px-4 py-12 md:px-6 lg:px-8">
       <header>
-        <h1 className="font-display text-3xl tracking-tight text-foreground sm:text-4xl">Profile settings</h1>
+        <h1 className="text-fluid-3xl-4xl font-display tracking-tight text-foreground">Profile settings</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Update your Linket profile details, design, and contact links. Changes go live instantly on every scan.
         </p>

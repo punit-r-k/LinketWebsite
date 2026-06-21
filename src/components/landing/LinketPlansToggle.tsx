@@ -180,7 +180,7 @@ export default function LinketPlansToggle({ pricing }: LinketPlansToggleProps) {
             type="button"
             onClick={() => setAudience("individual")}
             className={cn(
-              "relative z-10 rounded-full px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-300 sm:px-4 sm:py-2 sm:text-sm",
+              "text-fluid-11-sm relative z-10 rounded-full px-3 py-2.5 font-semibold uppercase tracking-[0.14em] transition-colors duration-300 sm:px-4 sm:py-2",
               audience === "individual"
                 ? "text-[#b45309]"
                 : "text-slate-600 hover:text-slate-900"
@@ -193,7 +193,7 @@ export default function LinketPlansToggle({ pricing }: LinketPlansToggleProps) {
             type="button"
             onClick={() => setAudience("business")}
             className={cn(
-              "relative z-10 rounded-full px-3 py-2.5 text-[11px] font-semibold uppercase tracking-[0.14em] transition-colors duration-300 sm:px-4 sm:py-2 sm:text-sm",
+              "text-fluid-11-sm relative z-10 rounded-full px-3 py-2.5 font-semibold uppercase tracking-[0.14em] transition-colors duration-300 sm:px-4 sm:py-2",
               audience === "business"
                 ? "text-[#1d4ed8]"
                 : "text-slate-600 hover:text-slate-900"

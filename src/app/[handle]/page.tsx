@@ -380,7 +380,7 @@ export default async function PublicProfilePage({ params }: Props) {
                   </div>
                 ) : null}
                 <div className="min-w-0 space-y-1">
-                  <h1 className="break-words font-display text-3xl tracking-tight sm:text-4xl">
+                  <h1 className="text-fluid-3xl-4xl break-words font-display tracking-tight">
                     {displayName}
                   </h1>
                   {hasHeadline ? (

@@ -365,18 +365,18 @@ function HeroSection() {
       className="relative isolate text-slate-900"
     >
       <div className="relative z-10 flex min-h-[calc(100svh-3.5rem)] flex-col items-center px-4 pb-6 pt-6 text-center sm:min-h-screen sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl py-8 sm:py-12">
+        <div className="mx-auto w-full min-w-0 max-w-4xl py-8 sm:py-12">
           {/* Primary headline + brand callout. */}
-          <h1 className="landing-fade-up landing-delay-1 mt-6 text-[1.95rem] font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 sm:text-5xl lg:text-[4.5rem] lg:leading-[1.1]">
+          <h1 className="landing-fade-up landing-delay-1 text-fluid-hero mt-6 font-semibold leading-tight tracking-tight text-slate-900 sm:mt-10 lg:leading-[1.1]">
             <span className="landing-serif font-normal tracking-[-0.04em]">
               Don&apos;t just share it...
             </span>{" "}
-            <span className="block bg-[linear-gradient(100deg,_#f8d058_0%,_#f8b878_34%,_#68d8e0_70%,_#58c0e0_100%)] bg-clip-text text-[3.35rem] font-black italic leading-[0.94] tracking-tight text-transparent sm:text-8xl lg:text-[5.25rem]">
+            <span className="text-fluid-hero-accent block bg-[linear-gradient(100deg,_#f8d058_0%,_#f8b878_34%,_#68d8e0_70%,_#58c0e0_100%)] bg-clip-text font-black italic leading-[0.94] tracking-tight text-transparent">
               LINKET!
             </span>
           </h1>
           {/* Supporting value proposition. */}
-          <p className="landing-fade-up landing-delay-2 mx-auto mt-5 max-w-[21rem] text-[15px] leading-7 text-slate-600 sm:max-w-2xl sm:text-lg sm:leading-8">
+          <p className="landing-fade-up landing-delay-2 text-fluid-hero-copy mx-auto mt-5 max-w-[21rem] leading-7 text-slate-600 sm:max-w-2xl sm:leading-8">
             One NFC tap opens your live public profile, lets people save your contact,
             and drives qualified leads into your dashboard. Update once, and every
             future scan shares your latest info.
@@ -387,7 +387,7 @@ function HeroSection() {
               asChild
               variant="landingPrimary"
               size="lg"
-              className="w-full max-w-[15rem] rounded-full px-7 py-5 text-sm font-semibold transition-transform duration-300 hover:-translate-y-1 sm:w-auto sm:max-w-none sm:px-10 sm:py-6 sm:text-base"
+              className="text-fluid-sm-base w-full max-w-[15rem] rounded-full px-7 py-5 font-semibold transition-transform duration-300 hover:-translate-y-1 sm:w-auto sm:max-w-none sm:px-10 sm:py-6"
             >
               <Link
                 href="/auth"
@@ -435,7 +435,7 @@ function HeroDashboardPreview() {
   } 110 L ${trendPoints[0].x} 110 Z`;
 
   return (
-    <div className="landing-fade-up landing-delay-4 relative w-full max-w-6xl rounded-[24px] border border-[#f8ddba]/80 bg-white/90 p-3 text-left text-slate-900 shadow-[0_24px_70px_rgba(248,184,120,0.2)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6 sm:shadow-[0_45px_120px_rgba(248,184,120,0.34)]">
+    <div className="landing-fade-up landing-delay-4 relative min-w-0 w-full max-w-6xl rounded-[24px] border border-[#f8ddba]/80 bg-white/90 p-3 text-left text-slate-900 shadow-[0_24px_70px_rgba(248,184,120,0.2)] backdrop-blur transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transform-none motion-reduce:transition-none hover:-translate-y-1 sm:rounded-[32px] sm:p-6 sm:shadow-[0_45px_120px_rgba(248,184,120,0.34)]">
       {/* Top bar: user badge, tabs, search, date range, and download CTA. */}
       <div className="flex flex-col gap-3 border-b border-[#f8edd7] pb-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex max-w-full items-center gap-3 rounded-[20px] border border-[#f8ddba] bg-[#fff9f0] px-3 py-2 sm:rounded-full sm:px-4">
@@ -443,7 +443,7 @@ function HeroDashboardPreview() {
             PK
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-slate-900 sm:text-base">Punit Kothakonda</p>
+            <p className="text-fluid-sm-base truncate font-semibold text-slate-900">Punit Kothakonda</p>
           </div>
         </div>
         <div className="flex w-full min-w-0 flex-col gap-3 lg:flex-1 lg:flex-row lg:items-center lg:justify-between">
@@ -452,7 +452,7 @@ function HeroDashboardPreview() {
               <span
                 key={tab}
                 className={cn(
-                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-transform duration-300 hover:-translate-y-0.5 sm:px-4 sm:text-sm",
+                  "text-fluid-xs-sm rounded-full border px-3 py-1.5 font-medium transition-transform duration-300 hover:-translate-y-0.5 sm:px-4",
                   index > 0 && "hidden sm:inline-flex",
                   index === 0
                     ? "border-[#f8b878] bg-[#f8b878] text-[#0f172a]"
@@ -487,16 +487,16 @@ function HeroDashboardPreview() {
       </div>
       <div className="mt-3 space-y-5 sm:space-y-6">
         {/* KPI tiles. */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 sm:gap-4 lg:grid-cols-[repeat(4,minmax(0,1fr))]">
           {DASHBOARD_STATS.map((stat) => (
             <div
               key={stat.label}
-              className="rounded-2xl border border-slate-200 bg-[#fff9f3] p-3.5 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] sm:p-4"
+              className="min-w-0 rounded-2xl border border-slate-200 bg-[#fff9f3] p-3.5 transition-transform duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.12)] sm:p-4"
             >
               <p className="text-xs uppercase tracking-[0.2em] text-slate-600 sm:tracking-[0.35em]">
                 {stat.label}
               </p>
-              <p className="mt-2 text-[1.75rem] font-semibold text-slate-900 sm:mt-3 sm:text-2xl">
+              <p className="text-fluid-stat mt-2 font-semibold text-slate-900 sm:mt-3">
                 {stat.value}
               </p>
               <p className="text-xs text-[#34afcf]">{stat.delta}</p>
@@ -612,7 +612,7 @@ function HeroDashboardPreview() {
                         <p className="truncate text-xs text-slate-600">{sale.email}</p>
                       </div>
                     </div>
-                    <p className="shrink-0 text-xs font-semibold text-[#e6aa5c] sm:text-sm">
+                    <p className="text-fluid-xs-sm shrink-0 font-semibold text-[#e6aa5c]">
                       {sale.amount}
                     </p>
                   </div>
@@ -713,10 +713,10 @@ function WhatIsLinketSection() {
               <span className="inline-flex items-center rounded-full border border-[#f8ddba] bg-[#fff8ee] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#e3a553]">
                 What Is Linket?
               </span>
-              <h2 className="landing-serif mt-4 text-[1.9rem] font-normal tracking-[-0.03em] text-slate-900 sm:mt-5 sm:text-4xl">
+              <h2 className="landing-serif text-fluid-section mt-4 font-normal tracking-[-0.03em] text-slate-900 sm:mt-5">
                 Interactive networking made seamless
               </h2>
-              <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+              <p className="text-fluid-sm-base mx-auto mt-4 max-w-3xl leading-7 text-slate-600 sm:leading-8">
                 Linket combines your physical tap-to-share hardware to your live page, keeping your leads organized.
 
                 Instead of handing over a static card, Linket gives you a physical
@@ -743,7 +743,7 @@ function WhatIsLinketSection() {
                   >
                     {pillar.step}
                   </span>
-                  <h3 className="mt-3 text-base font-semibold text-slate-900 sm:mt-4 sm:text-lg">
+                  <h3 className="text-fluid-base-lg mt-3 font-semibold text-slate-900 sm:mt-4">
                     {pillar.title}
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600 sm:mt-3 sm:leading-7">
@@ -782,7 +782,7 @@ function ExperienceSection() {
           </p>
           {/* Section headline + explanation. */}
           <div>
-            <p className="landing-serif text-[1.9rem] font-normal tracking-[-0.03em] sm:text-4xl">
+            <p className="landing-serif text-fluid-section font-normal tracking-[-0.03em]">
               <span className="text-white/80">
                 Work with us to design custom made Linkets for your{" "}
               </span>
@@ -790,7 +790,7 @@ function ExperienceSection() {
                 team
               </span>
             </p>
-            <p className="mt-4 text-sm leading-7 text-white/70 sm:text-base sm:leading-8">
+            <p className="text-fluid-sm-base mt-4 leading-7 text-white/70 sm:leading-8">
               Work directly with our hardware team to design custom models that
               match your brand. We handle prototyping, sourcing, and rollout so
               you can stay focused on demos.
@@ -873,11 +873,11 @@ function PublicProfilePreviewSection({
                 </span>
                 <div className="space-y-5 sm:space-y-6">
                   <div className="space-y-4">
-                    <h2 className="landing-serif text-[1.9rem] font-normal tracking-[-0.03em] text-slate-900 sm:text-4xl">
+                    <h2 className="landing-serif text-fluid-section font-normal tracking-[-0.03em] text-slate-900">
                       This is the founder&apos;s{" "}
                       <span className="text-[#e6aa5c]">live page</span>
                     </h2>
-                    <p className="max-w-xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+                    <p className="text-fluid-sm-base max-w-xl leading-7 text-slate-600 sm:leading-8">
                       A public page is the live profile people see after they tap
                       your Linket or scan your QR code. It gives them one clean
                       place to save your contact, open your key links, and
@@ -992,10 +992,10 @@ function FAQSection({ items }: { items: FaqItem[] }) {
         <span className="inline-flex items-center gap-2 rounded-full border border-foreground/10 bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground sm:tracking-[0.35em]">
           FAQ
         </span>
-        <h2 className="landing-serif mt-4 text-2xl font-normal tracking-[-0.03em] sm:text-4xl">
+        <h2 className="landing-serif text-fluid-2xl-4xl mt-4 font-normal tracking-[-0.03em]">
           Answers before you tap
         </h2>
-        <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+        <p className="text-fluid-sm-base mt-4 text-muted-foreground">
           Everything you need to know about Linket hardware, profiles, and data.
         </p>
       </div>
@@ -1007,7 +1007,7 @@ function FAQSection({ items }: { items: FaqItem[] }) {
             value={`faq-${index}`}
             className="overflow-hidden rounded-3xl border border-foreground/10 bg-white/80 px-4 transition-transform duration-300 hover:-translate-y-0.5 sm:px-5"
           >
-            <AccordionTrigger className="text-left text-sm font-semibold text-foreground hover:no-underline sm:text-base">
+            <AccordionTrigger className="text-fluid-sm-base text-left font-semibold text-foreground hover:no-underline">
               {item.question}
             </AccordionTrigger>
             <AccordionContent className="pb-5 text-sm text-muted-foreground">

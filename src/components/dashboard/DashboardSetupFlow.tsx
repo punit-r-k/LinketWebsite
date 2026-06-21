@@ -2698,7 +2698,7 @@ export default function DashboardSetupFlow({
 
   const currentStep = SETUP_STEPS[currentStepIndex];
   const fieldLabelClassName = "text-sm font-medium text-foreground";
-  const fieldHelperClassName = "text-xs leading-5 text-muted-foreground sm:text-sm";
+  const fieldHelperClassName = "text-fluid-xs-sm leading-5 text-muted-foreground";
   const fieldInputClassName =
     "h-12 rounded-2xl border-border/60 bg-background text-foreground";
   const compactFieldInputClassName =
@@ -3108,7 +3108,7 @@ export default function DashboardSetupFlow({
         {!showLaunchHub ? (
           <Card className={cn(setupCardClassName, "dashboard-setup-mobile-summary lg:hidden")}>
             <CardContent className="px-3 py-3">
-              <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+              <div className="grid grid-cols-[repeat(4,minmax(0,1fr))] gap-1.5 sm:gap-2">
                 {SETUP_STEPS.map((step, index) => {
                   const isCurrent = index === currentStepIndex;
                   const isDone = stepCompletion[step.id];
@@ -3145,10 +3145,10 @@ export default function DashboardSetupFlow({
                               : "rounded-[0.32rem] border-2 border-border/70 bg-card/80"
                         )}
                       />
-                      <p className="mt-2 max-w-full truncate text-[12px] font-semibold leading-4">
+                      <p className="text-fluid-2xs-xs mt-2 max-w-full truncate font-semibold leading-4">
                         {mobileStepLabels[step.id]}
                       </p>
-                      <p className="mt-1 text-[10px] font-semibold uppercase leading-4 tracking-[0.08em] opacity-75">
+                      <p className="text-fluid-9-10 mt-1 font-semibold uppercase leading-4 tracking-[0.08em] opacity-75">
                         Step {index + 1}
                       </p>
                     </button>
@@ -3229,7 +3229,7 @@ export default function DashboardSetupFlow({
             ) : (
               <Card className={setupCardClassName}>
                   <CardHeader className="gap-1 border-b border-border/60 pb-4">
-                    <CardTitle className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                    <CardTitle className="text-fluid-2xl-3xl font-semibold tracking-tight text-foreground">
                       {stepHeading.title}
                     </CardTitle>
                     {stepHeading.description ? (

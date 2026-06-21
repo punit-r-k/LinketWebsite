@@ -47,7 +47,7 @@ function CreativePricing({
       <div className="text-center">
         <span
           className={cn(
-            "inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] sm:px-4 sm:text-xs sm:tracking-[0.35em]",
+            "text-fluid-2xs-xs inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 font-semibold uppercase tracking-[0.22em] sm:px-4 sm:tracking-[0.35em]",
             businessTheme
               ? "border border-[#bfe7f2] text-[#34afcf]"
               : "border border-[#f8ddba] text-[#e3a553]"
@@ -55,10 +55,10 @@ function CreativePricing({
         >
           {tag}
         </span>
-        <h2 className="landing-serif mt-4 text-[1.9rem] font-normal tracking-[-0.03em] text-[#0f172a] sm:mt-5 sm:text-4xl">
+        <h2 className="landing-serif text-fluid-section mt-4 font-normal tracking-[-0.03em] text-[#0f172a] sm:mt-5">
           {title}
         </h2>
-        <p className="mx-auto mt-3 max-w-[34rem] text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
+        <p className="text-fluid-sm-base mx-auto mt-3 max-w-[34rem] leading-7 text-slate-600 sm:leading-8">
           {description}
         </p>
         {controls && <div className="mt-4 flex justify-center sm:mt-5">{controls}</div>}
@@ -87,7 +87,7 @@ function CreativePricing({
             {tier.popular && (
               <div
                 className={cn(
-                  "pointer-events-none absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold shadow-lg sm:px-3 sm:text-xs",
+                  "text-fluid-2xs-xs pointer-events-none absolute left-1/2 top-0 z-10 inline-flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold shadow-lg sm:px-3",
                   businessTheme
                     ? "border-[#bfe7f2] bg-gradient-to-r from-[#68d8e0] to-[#58c0e0] text-[#0f172a] shadow-[0_10px_25px_rgba(88,192,224,0.35)]"
                     : "border-[#f8ddba] bg-gradient-to-r from-[#f8d058] via-[#f8b878] to-[#f8b080] text-[#0f172a] shadow-[0_10px_25px_rgba(248,184,120,0.35)]"
@@ -102,10 +102,10 @@ function CreativePricing({
                 {tier.icon}
               </div>
               <div className="min-w-0">
-                <p className="text-[11px] uppercase tracking-[0.22em] text-slate-700 sm:text-xs sm:tracking-[0.35em]">
+                <p className="text-fluid-11-xs uppercase tracking-[0.22em] text-slate-700 sm:tracking-[0.35em]">
                   {tier.description}
                 </p>
-                <h3 className="text-base font-semibold text-[#0f172a] sm:text-xl">
+                <h3 className="text-fluid-base-xl font-semibold text-[#0f172a]">
                   {tier.name}
                 </h3>
               </div>
@@ -115,7 +115,7 @@ function CreativePricing({
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">
                 You pay
               </p>
-              <p className="text-[2rem] font-semibold text-[#0f172a] sm:text-4xl">
+              <p className="text-fluid-2rem-4xl font-semibold text-[#0f172a]">
                 {typeof tier.price === "number" ? `$${tier.price}` : tier.price}
               </p>
               <p className="text-sm text-slate-600">
@@ -157,7 +157,7 @@ function CreativePricing({
                   asChild
                   variant={businessTheme ? "custom" : "landingPrimary"}
                   className={cn(
-                    "w-full rounded-2xl text-sm font-semibold transition hover:-translate-y-0.5 sm:text-base",
+                    "text-fluid-sm-base w-full rounded-2xl font-semibold transition hover:-translate-y-0.5",
                     businessTheme
                       ? "border border-[#c8ebf3] bg-white text-[#0f172a]"
                       : "",
@@ -186,7 +186,7 @@ function CreativePricing({
                     asChild
                     variant={businessTheme ? "custom" : "landingSecondary"}
                     className={cn(
-                      "w-full rounded-2xl text-sm font-semibold transition hover:-translate-y-0.5 sm:text-base",
+                      "text-fluid-sm-base w-full rounded-2xl font-semibold transition hover:-translate-y-0.5",
                       businessTheme
                         ? "border border-[#c8ebf3] bg-white text-[#34afcf]"
                         : ""
@@ -221,7 +221,7 @@ function CreativePricing({
                   disabled: true,
                 })}
                 className={cn(
-                  "w-full rounded-2xl text-sm font-semibold sm:text-base",
+                  "text-fluid-sm-base w-full rounded-2xl font-semibold",
                   businessTheme ? "border border-[#c8ebf3] bg-white text-[#0f172a]" : ""
                 )}
               >

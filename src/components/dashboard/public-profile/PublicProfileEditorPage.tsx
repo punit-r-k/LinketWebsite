@@ -2034,7 +2034,7 @@ function EditorPanel({
               inputId="profile-logo-upload"
               controls={
                 <div className="flex flex-col gap-2">
-                  <Label className="text-[11px] text-muted-foreground sm:text-xs">Logo shape</Label>
+                  <Label className="text-fluid-11-xs text-muted-foreground">Logo shape</Label>
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       type="button"
@@ -2085,7 +2085,7 @@ function EditorPanel({
           <div className="h-px bg-border/60" aria-hidden="true" />
 
           <div className="space-y-2">
-            <Label htmlFor="profile-name" className="text-[11px] text-muted-foreground sm:text-xs">
+            <Label htmlFor="profile-name" className="text-fluid-11-xs text-muted-foreground">
               Display name
             </Label>
             <Input
@@ -2099,7 +2099,7 @@ function EditorPanel({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="profile-headline" className="text-[11px] text-muted-foreground sm:text-xs">
+            <Label htmlFor="profile-headline" className="text-fluid-11-xs text-muted-foreground">
               Headline
             </Label>
             <Textarea
@@ -2116,11 +2116,11 @@ function EditorPanel({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="profile-handle" className="text-[11px] text-muted-foreground sm:text-xs">
+            <Label htmlFor="profile-handle" className="text-fluid-11-xs text-muted-foreground">
               Public handle
             </Label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 pr-3 text-[10px] text-muted-foreground sm:text-xs">
+              <span className="text-fluid-2xs-xs pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 pr-3 text-muted-foreground">
                 {getSiteHost(getSiteOrigin())}/
               </span>
               <Input

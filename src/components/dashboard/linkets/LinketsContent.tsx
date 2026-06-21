@@ -971,7 +971,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       >
         <DialogContent className="w-[calc(100vw-1rem)] max-w-lg overflow-hidden rounded-[28px] border-border/60 bg-card/95 p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-foreground sm:text-2xl">
+            <DialogTitle className="text-fluid-xl-2xl font-semibold text-foreground">
               Congratulations
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
@@ -1038,7 +1038,7 @@ export default function LinketsContent({ variant = "standalone" }: LinketsConten
       >
         <DialogContent className="w-[calc(100vw-1rem)] max-w-lg overflow-hidden rounded-[28px] border-border/60 bg-card/95 p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold text-foreground sm:text-2xl">
+            <DialogTitle className="text-fluid-xl-2xl font-semibold text-foreground">
               Transfer Linket
             </DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">

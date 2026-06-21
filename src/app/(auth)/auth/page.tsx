@@ -442,7 +442,7 @@ function AuthPageContent() {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
                   Secure access
                 </p>
-                <h2 className="text-lg font-semibold leading-tight text-slate-900 sm:text-2xl">
+                <h2 className="text-fluid-lg-2xl font-semibold leading-tight text-slate-900">
                   {formHeading}
                 </h2>
                 <p className="text-sm leading-5 text-slate-600">

@@ -652,7 +652,7 @@ export default function AnalyticsContent() {
     >
       <header className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">
+          <h1 className="text-fluid-2xl-3xl font-semibold text-foreground">
             Analytics
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -714,7 +714,7 @@ export default function AnalyticsContent() {
           <CardHeader>
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div className="space-y-1">
-                <CardTitle className="text-xl font-semibold text-foreground sm:text-2xl">
+                <CardTitle className="text-fluid-xl-2xl font-semibold text-foreground">
                   Follow-up
                 </CardTitle>
                 <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
@@ -762,7 +762,7 @@ export default function AnalyticsContent() {
                           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
                             Newest Captured Contact
                           </p>
-                          <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+                          <h2 className="text-fluid-xl-2xl font-semibold text-foreground">
                             {latestLead.name?.trim() ||
                               latestLead.email ||
                               "Unknown contact"}
@@ -810,7 +810,7 @@ export default function AnalyticsContent() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
                         {primaryInsight.kicker}
                       </p>
-                      <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+                      <h2 className="text-fluid-xl-2xl font-semibold text-foreground">
                         {primaryInsight.title}
                       </h2>
                       <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -827,7 +827,7 @@ export default function AnalyticsContent() {
                       <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-primary/80">
                         Ready for activity
                       </p>
-                      <h2 className="text-xl font-semibold text-foreground sm:text-2xl">
+                      <h2 className="text-fluid-xl-2xl font-semibold text-foreground">
                         Share your Linket to start building signal.
                       </h2>
                       <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -1390,7 +1390,7 @@ function StatCard({
         ) : null}
       </CardHeader>
       <CardContent className="space-y-1 text-center sm:text-left">
-        <div className="text-2xl font-semibold text-foreground sm:text-3xl">
+        <div className="text-fluid-2xl-3xl font-semibold text-foreground">
           {value}
         </div>
         {helper && (
