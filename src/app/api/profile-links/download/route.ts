@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createServerSupabaseReadonly } from "@/lib/supabase/server";
+import {
+  extractResumeStoragePath,
+  isResumeProfileLink,
+  isSafeResumeStoragePath,
+} from "@/lib/profile-link-resume";
 import { sanitizeAttachmentFilename, sanitizeHttpUrl } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
 import type { ProfileLinkRecord } from "@/types/db";
@@ -11,50 +16,8 @@ type ResumeLinkRecord = ProfileLinkRecord & {
   profile?: { is_active?: boolean | null } | null;
 };
 
-function isSafeStoragePath(value: string) {
-  const trimmed = value.trim();
-  return (
-    trimmed.length > 0 &&
-    !trimmed.startsWith("/") &&
-    !trimmed.includes("..") &&
-    trimmed.split("/").filter(Boolean).length >= 2
-  );
-}
-
 function ownerUserIdFromPath(value: string) {
   return value.split("/")[0]?.trim() || null;
-}
-
-function extractResumeStoragePath(value: string | null | undefined) {
-  const raw = value?.trim();
-  if (!raw) return null;
-
-  if (isSafeStoragePath(raw) && raw.includes("/")) {
-    return raw;
-  }
-
-  try {
-    const parsed = new URL(raw);
-    if (parsed.pathname === "/api/profile-links/download") {
-      const path = parsed.searchParams.get("path")?.trim() ?? "";
-      return isSafeStoragePath(path) ? path : null;
-    }
-
-    const markers = [
-      `/storage/v1/object/public/${RESUME_BUCKET}/`,
-      `/storage/v1/object/sign/${RESUME_BUCKET}/`,
-    ];
-    for (const marker of markers) {
-      const index = parsed.pathname.indexOf(marker);
-      if (index === -1) continue;
-      const path = decodeURIComponent(parsed.pathname.slice(index + marker.length));
-      return isSafeStoragePath(path) ? path : null;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
 }
 
 async function requireStorageOwner(request: NextRequest, path: string) {
@@ -82,6 +45,10 @@ async function redirectToSignedResume(path: string, filename: string) {
     .from(RESUME_BUCKET)
     .createSignedUrl(path, 60, { download: filename });
   if (error || !data?.signedUrl) {
+    console.error(
+      "Resume signed URL error:",
+      error?.message ?? "Signed URL was not returned."
+    );
     return NextResponse.json({ error: "Resume unavailable." }, { status: 404 });
   }
 
@@ -97,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     const directPath = request.nextUrl.searchParams.get("path")?.trim() ?? "";
     if (directPath) {
-      if (!isSafeStoragePath(directPath)) {
+      if (!isSafeResumeStoragePath(directPath)) {
         return NextResponse.json({ error: "Invalid resume path." }, { status: 400 });
       }
       const accessError = await requireStorageOwner(request, directPath);
@@ -118,11 +85,10 @@ export async function GET(request: NextRequest) {
       .select("*, profile:user_profiles!inner(is_active)")
       .eq("id", linkId)
       .eq("is_active", true)
-      .eq("link_type", "resume")
       .eq("profile.is_active", true)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!data) {
+    if (!data || !isResumeProfileLink(data)) {
       return NextResponse.json({ error: "Resume not found." }, { status: 404 });
     }
 

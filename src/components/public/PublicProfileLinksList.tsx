@@ -4,29 +4,11 @@ import { useCallback, type CSSProperties } from "react";
 import { ArrowUpRight, Download } from "lucide-react";
 import LinkFavicon from "@/components/LinkFavicon";
 import { emitAnalyticsEvent } from "@/lib/analytics";
+import { isResumeProfileLink } from "@/lib/profile-link-resume";
 import { sanitizePublicLinkUrl } from "@/lib/security";
 import { coerceThemeName, isDarkTheme } from "@/lib/themes";
 import type { ThemeName } from "@/lib/themes";
 import type { ProfileLinkRecord } from "@/types/db";
-
-function isResumeLink(link: ProfileLinkRecord) {
-  if (link.link_type === "resume") return true;
-
-  const title = link.title.trim().toLowerCase();
-  const url = link.url.trim().toLowerCase();
-  const isResumeTitle =
-    title === "resume" ||
-    title === "cv" ||
-    title.includes("resume") ||
-    title.includes("curriculum vitae");
-
-  return (
-    isResumeTitle ||
-    url.includes("/profile-resumes/") ||
-    url.includes("/storage/v1/object/public/profile-resumes/") ||
-    (isResumeTitle && url.includes(".pdf"))
-  );
-}
 
 export default function PublicProfileLinksList({
   links,
@@ -78,20 +60,19 @@ export default function PublicProfileLinksList({
   return (
     <div className="grid gap-3">
       {safeLinks.map((link, index) => {
-        const resumeLink = isResumeLink(link);
-        const useResumeDownload = link.link_type === "resume";
+        const resumeLink = isResumeProfileLink(link);
 
         return (
           <a
             key={link.id}
             href={
-              useResumeDownload
+              resumeLink
                 ? `/api/profile-links/download?linkId=${encodeURIComponent(link.id)}`
                 : link.url
             }
-            target={useResumeDownload ? undefined : "_blank"}
-            rel={useResumeDownload ? undefined : "noreferrer"}
-            download={useResumeDownload ? "" : undefined}
+            target={resumeLink ? undefined : "_blank"}
+            rel={resumeLink ? undefined : "noreferrer"}
+            download={resumeLink ? "" : undefined}
             onClick={() => trackClick(link.id)}
             style={{ "--public-profile-delay": `${430 + index * 70}ms` } as CSSProperties}
             className="public-profile-link public-profile-link-entrance group flex min-w-0 items-center justify-between gap-4 overflow-hidden rounded-2xl border border-border/60 bg-card/80 px-4 py-3 transition hover:border-[color:var(--ring)] hover:shadow-[0_18px_45px_-35px_var(--ring)] focus-visible:outline-none focus-visible:[box-shadow:0_0_0_2px_var(--color-button-focus-offset),0_0_0_5px_var(--color-button-focus-ring),0_18px_45px_-35px_var(--ring)]"
