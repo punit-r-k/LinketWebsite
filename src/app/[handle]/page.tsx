@@ -143,7 +143,9 @@ export default async function PublicProfilePage({ params }: Props) {
     vcardResult,
   ] = await Promise.all([
     getDashboardPlanAccessForUser(profile.user_id),
-    getSignedAvatarUrl(account.avatar_url, account.avatar_updated_at),
+    profile.avatar_visible === false
+      ? Promise.resolve(null)
+      : getSignedAvatarUrl(account.avatar_url, account.avatar_updated_at),
     getSignedProfileHeaderUrl(
       profile.header_image_url,
       profile.header_image_updated_at

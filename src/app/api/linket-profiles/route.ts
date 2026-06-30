@@ -712,6 +712,7 @@ export async function POST(request: NextRequest) {
           name,
           handle,
           headline: sanitizedProfile.headline?.trim() || null,
+          avatar_visible: sanitizedProfile.avatarVisible ?? true,
           header_image_url: sanitizedProfile.headerImageUrl ?? null,
           header_image_updated_at: sanitizedProfile.headerImageUpdatedAt ?? null,
           header_image_original_file_name:
@@ -736,6 +737,9 @@ export async function POST(request: NextRequest) {
         theme,
         updated_at: new Date().toISOString(),
       };
+      if (sanitizedProfile.avatarVisible !== undefined) {
+        updatePayload.avatar_visible = sanitizedProfile.avatarVisible;
+      }
       if (sanitizedProfile.headerImageUrl !== undefined) {
         updatePayload.header_image_url = sanitizedProfile.headerImageUrl;
       }

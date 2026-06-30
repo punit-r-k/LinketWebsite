@@ -10,6 +10,7 @@ create table if not exists public.user_profiles (
   name text not null,
   handle text not null,
   headline text,
+  avatar_visible boolean not null default true,
   header_image_url text,
   header_image_updated_at timestamptz,
   header_image_original_file_name text,
@@ -148,6 +149,7 @@ export type ProfilePayload = {
   name: string;
   handle: string;
   headline?: string | null;
+  avatarVisible?: boolean | null;
   headerImageUrl?: string | null;
   headerImageUpdatedAt?: string | null;
   headerImageOriginalFileName?: string | null;
@@ -447,6 +449,7 @@ function memorySaveProfileForUser(
   const handle = normaliseHandle(payload.handle);
   const theme = normaliseTheme(payload.theme);
   const headline = payload.headline?.trim() || null;
+  const avatarVisible = payload.avatarVisible ?? true;
   const logoUrl = payload.logoUrl ?? null;
   const logoUpdatedAt = payload.logoUpdatedAt ?? null;
   const logoOriginalFileName = payload.logoOriginalFileName ?? null;
@@ -483,6 +486,7 @@ function memorySaveProfileForUser(
       name,
       handle,
       headline,
+      avatar_visible: avatarVisible,
       header_image_url: payload.headerImageUrl ?? null,
       header_image_updated_at: payload.headerImageUpdatedAt ?? null,
       header_image_original_file_name:
@@ -504,6 +508,9 @@ function memorySaveProfileForUser(
     profile.handle = handle;
     profile.headline = headline;
     profile.theme = theme;
+    if (payload.avatarVisible !== undefined) {
+      profile.avatar_visible = payload.avatarVisible ?? true;
+    }
     if (payload.headerImageUrl !== undefined) {
       profile.header_image_url = payload.headerImageUrl;
     }
@@ -736,6 +743,7 @@ export async function saveProfileForUser(
   }
   const theme = normaliseTheme(payload.theme);
   const headline = payload.headline?.trim() || null;
+  const avatarVisible = payload.avatarVisible ?? true;
   const headerImageUrl = payload.headerImageUrl ?? null;
   const headerImageUpdatedAt = payload.headerImageUpdatedAt ?? null;
   const headerImageOriginalFileName = payload.headerImageOriginalFileName ?? null;
@@ -763,6 +771,7 @@ export async function saveProfileForUser(
         name,
         handle,
         headline,
+        avatar_visible: avatarVisible,
         header_image_url: headerImageUrl,
         header_image_updated_at: headerImageUpdatedAt,
         header_image_original_file_name: headerImageOriginalFileName,
@@ -786,6 +795,9 @@ export async function saveProfileForUser(
       theme,
       updated_at: new Date().toISOString(),
     };
+    if (payload.avatarVisible !== undefined) {
+      updatePayload.avatar_visible = payload.avatarVisible;
+    }
     if (payload.headerImageUrl !== undefined) {
       updatePayload.header_image_url = payload.headerImageUrl;
     }

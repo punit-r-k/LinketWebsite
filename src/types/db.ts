@@ -7,6 +7,7 @@ export type UserProfileRecord = {
   name: string;
   handle: string;
   headline: string | null;
+  avatar_visible: boolean | null;
   header_image_url: string | null;
   header_image_updated_at: string | null;
   header_image_original_file_name: string | null;

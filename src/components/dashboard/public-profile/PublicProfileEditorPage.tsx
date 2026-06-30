@@ -121,6 +121,7 @@ type ProfileDraft = {
   name: string;
   handle: string;
   headline: string;
+  avatarVisible: boolean;
   headerImageUrl: string | null;
   headerImageUpdatedAt: string | null;
   headerImageOriginalFileName: string | null;
@@ -617,6 +618,7 @@ export default function PublicProfileEditorPage() {
         name: draftSnapshot.name,
         handle: draftSnapshot.handle,
         headline: draftSnapshot.headline,
+        avatarVisible: draftSnapshot.avatarVisible,
         headerImageUrl: draftSnapshot.headerImageUrl,
         headerImageUpdatedAt: draftSnapshot.headerImageUpdatedAt,
         headerImageOriginalFileName: draftSnapshot.headerImageOriginalFileName,
@@ -1586,13 +1588,14 @@ export default function PublicProfileEditorPage() {
               userId={userId}
               userEmail={dashboardUser?.email ?? null}
               avatarUrl={avatarUrl}
+              avatarVisible={draft?.avatarVisible ?? true}
               avatarOriginalFileName={avatarOriginalFileName}
               accountHandle={accountHandle}
               headerImageUrl={headerImageUrl}
               previewNode={
                 <PhonePreviewCard
                   profile={{ name: profileDisplayName, tagline: profileTagline }}
-                  avatarUrl={avatarUrl}
+                  avatarUrl={draft?.avatarVisible === false ? null : avatarUrl}
                   headerImageUrl={headerImageUrl}
                   logoUrl={logoPreviewUrl}
                   logoShape={draft?.logoShape ?? "circle"}
@@ -1728,7 +1731,7 @@ export default function PublicProfileEditorPage() {
               <div className="w-full max-w-[340px] origin-top-left scale-[1]">
               <PhonePreviewCard
                 profile={{ name: profileDisplayName, tagline: profileTagline }}
-                avatarUrl={avatarUrl}
+                avatarUrl={draft?.avatarVisible === false ? null : avatarUrl}
                 headerImageUrl={headerImageUrl}
                 logoUrl={logoPreviewUrl}
                 logoShape={draft?.logoShape ?? "circle"}
@@ -1774,6 +1777,7 @@ function EditorPanel({
   userId,
   userEmail,
   avatarUrl,
+  avatarVisible,
   avatarOriginalFileName,
   accountHandle,
   headerImageUrl,
@@ -1806,6 +1810,7 @@ function EditorPanel({
   userId: string | null;
   userEmail: string | null;
   avatarUrl: string | null;
+  avatarVisible: boolean;
   avatarOriginalFileName: string | null;
   accountHandle: string | null;
     headerImageUrl: string | null;
@@ -1992,17 +1997,33 @@ function EditorPanel({
         </CardHeader>
         <CardContent className="profile-details-panel space-y-4">
           {userId ? (
-            <AvatarUploader
-              userId={userId}
-              userEmail={userEmail}
-              avatarUrl={avatarUrl}
-              avatarOriginalFileName={avatarOriginalFileName}
-              onUploaded={({ publicUrl, originalFileName }) =>
-                onAvatarUpdate(publicUrl, originalFileName ?? null)
-              }
-              variant="compact"
-              inputId="profile-avatar-upload"
-            />
+            <div className="space-y-3">
+              <AvatarUploader
+                userId={userId}
+                userEmail={userEmail}
+                avatarUrl={avatarUrl}
+                avatarOriginalFileName={avatarOriginalFileName}
+                onUploaded={({ publicUrl, originalFileName }) =>
+                  onAvatarUpdate(publicUrl, originalFileName ?? null)
+                }
+                variant="compact"
+                inputId="profile-avatar-upload"
+              />
+              <section className="rounded-2xl border border-border/60 bg-background/70 px-3 py-3">
+                <SwitchRow
+                  id="profile-picture-visible"
+                  label="Show profile picture on public page"
+                  description="Turn this off to hide the profile-picture area without removing your uploaded photo."
+                  labelPosition="left"
+                  checked={avatarVisible}
+                  disabled={loading}
+                  onCheckedChange={(value) =>
+                    onProfileChange({ avatarVisible: Boolean(value) })
+                  }
+                  textClassName="text-sm font-medium text-foreground"
+                />
+              </section>
+            </div>
           ) : (
             <div className="h-20 rounded-2xl border border-dashed border-border/60 bg-muted/30" />
           )}
@@ -3392,6 +3413,7 @@ function buildFallbackDraft(
     name: "",
     handle: fallbackHandle,
     headline: "",
+    avatarVisible: true,
     headerImageUrl: null,
     headerImageUpdatedAt: null,
     headerImageOriginalFileName: null,
@@ -3486,6 +3508,7 @@ function mapProfile(record: ProfileWithLinks): ProfileDraft {
     name: record.name,
     handle: record.handle,
     headline: record.headline ?? "",
+    avatarVisible: record.avatar_visible !== false,
     headerImageUrl: record.header_image_url ?? null,
     headerImageUpdatedAt: record.header_image_updated_at ?? null,
     headerImageOriginalFileName: record.header_image_original_file_name ?? null,
@@ -3524,6 +3547,7 @@ function normalizeDraftForCompare(draft: ProfileDraft) {
     name: draft.name,
     handle: draft.handle,
     headline: draft.headline,
+    avatarVisible: draft.avatarVisible,
     headerImageUrl: draft.headerImageUrl,
     headerImageUpdatedAt: draft.headerImageUpdatedAt,
     headerImageOriginalFileName: draft.headerImageOriginalFileName,

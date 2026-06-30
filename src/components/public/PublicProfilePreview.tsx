@@ -54,7 +54,7 @@ export default function PublicProfilePreview({
   contactEmails = [],
   contactPhones = [],
 }: Props) {
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const [signedAvatar, setSignedAvatar] = useState<string | null>(null);
   const [headerImage, setHeaderImage] = useState<string | null>(null);
   const [logoAsset, setLogoAsset] = useState<{
     path: string;
@@ -70,6 +70,7 @@ export default function PublicProfilePreview({
   const logoUrl = logoAsset?.path === logoPath ? logoAsset.url : null;
   const logoShape = profile.logo_shape === "rect" ? "rect" : "circle";
   const logoBadgeClass = profile.logo_bg_white ? "bg-white" : "bg-background";
+  const avatar = profile.avatar_visible === false ? null : signedAvatar;
   const links = sortLinks(profile.links);
   const hasLinks = links.length > 0;
   const hasHeadline = Boolean(headline);
@@ -77,6 +78,7 @@ export default function PublicProfilePreview({
   const [hasLeadForm, setHasLeadForm] = useState(false);
 
   useEffect(() => {
+    if (profile.avatar_visible === false) return;
     let active = true;
     (async () => {
       const signed = await getSignedAvatarUrl(
@@ -84,12 +86,16 @@ export default function PublicProfilePreview({
         account.avatarUpdatedAt
       );
       if (!active) return;
-      setAvatar(signed);
+      setSignedAvatar(signed);
     })();
     return () => {
       active = false;
     };
-  }, [account.avatarPath, account.avatarUpdatedAt]);
+  }, [
+    account.avatarPath,
+    account.avatarUpdatedAt,
+    profile.avatar_visible,
+  ]);
 
   useEffect(() => {
     let active = true;

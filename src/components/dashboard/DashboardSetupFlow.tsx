@@ -495,6 +495,7 @@ function buildPreviewProfile(
     name: draft.name.trim() || "Your Name",
     handle: sanitizeHandleInput(draft.handle) || `user-${userId.slice(0, 8)}`,
     headline: draft.headline.trim() || null,
+    avatar_visible: true,
     header_image_url: draft.headerImageUrl,
     header_image_updated_at: draft.headerImageUpdatedAt,
     header_image_original_file_name: draft.headerImageOriginalFileName,
