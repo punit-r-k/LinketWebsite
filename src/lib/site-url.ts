@@ -1,4 +1,5 @@
 const DEFAULT_SITE_ORIGIN = "http://localhost:3000";
+export const CANONICAL_SITE_ORIGIN = "https://www.linketconnect.com";
 
 function normalizeOrigin(value: string | null | undefined) {
   if (!value) return null;
@@ -64,6 +65,10 @@ export function toPublicProfileUrl(handle: string, origin = getSiteOrigin()) {
     return origin.replace(/\/$/, "");
   }
   return toAbsoluteSiteUrl(`/${normalizedHandle}`, origin);
+}
+
+export function toCanonicalPublicProfileUrl(handle: string) {
+  return toPublicProfileUrl(handle, CANONICAL_SITE_ORIGIN);
 }
 
 export function getDefaultProfileLinkUrl(origin = getConfiguredSiteOrigin()) {

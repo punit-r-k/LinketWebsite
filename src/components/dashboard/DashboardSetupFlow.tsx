@@ -169,6 +169,7 @@ type SetupDraftCache<T> = {
 };
 
 const AUTO_HANDLE_PATTERN = /^user-[0-9a-f]{8}$/i;
+const DEFAULT_ONBOARDING_PROFILE_NAME = "Linket Public Profile";
 const DEFAULT_LINK_HOST = getConfiguredSiteHost();
 const MAX_LINK_ROWS = 5;
 const ONBOARDING_COMPLETION_SESSION_KEY_PREFIX =
@@ -201,6 +202,14 @@ function formatPhoneNumber(value: string) {
     return `(${digits.slice(0, 3)}) ${digits.slice(3)}`;
   }
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)} - ${digits.slice(6)}`;
+}
+
+function normalizeOnboardingName(value: string | null | undefined) {
+  const name = value ?? "";
+  return name.trim().toLowerCase() ===
+    DEFAULT_ONBOARDING_PROFILE_NAME.toLowerCase()
+    ? ""
+    : name;
 }
 
 function normalizeContactList(values: string[] | null | undefined, primary = "") {
@@ -515,7 +524,7 @@ function buildPreviewProfile(
 function mapProfileRecord(record: ProfileWithLinks): ProfileDraft {
   return {
     id: record.id,
-    name: record.name ?? "",
+    name: normalizeOnboardingName(record.name),
     handle: record.handle ?? "",
     headline: record.headline ?? "",
     headerImageUrl: record.header_image_url ?? null,
@@ -546,7 +555,9 @@ function mapContactFields(
   fallbackName: string
 ): ContactDraft {
   return {
-    fullName: fields?.fullName?.trim() || fallbackName,
+    fullName:
+      normalizeOnboardingName(fields?.fullName) ||
+      normalizeOnboardingName(fallbackName),
     title: fields?.title ?? "",
     email: fields?.email ?? "",
     additionalEmails: normalizeContactList(
@@ -577,13 +588,22 @@ function normalizeContactDraftCache(
   fallbackName: string
 ) {
   if (!cache) return null;
+  const savedDraft = cache.savedDraft
+    ? mapContactFields(cache.savedDraft, fallbackName)
+    : undefined;
   return {
     ...cache,
     draft: mapContactFields(cache.draft, fallbackName),
-    savedDraft: cache.savedDraft
-      ? mapContactFields(cache.savedDraft, fallbackName)
-      : undefined,
+    savedDraft,
+    savedSignature: savedDraft
+      ? buildContactDraftSignature(savedDraft, fallbackName)
+      : cache.savedSignature,
   };
+}
+
+function normalizeOnboardingProfileDraft(draft: ProfileDraft) {
+  const name = normalizeOnboardingName(draft.name);
+  return name === draft.name ? draft : { ...draft, name };
 }
 
 function prepareSetupLinks(draft: ProfileDraft, publishEventCount: number) {
@@ -611,7 +631,7 @@ function mapOnboardingStateProfile(
   return prepareSetupLinks(
     {
       id: state.activeProfile.id ?? "preview-profile",
-      name: state.activeProfile.name ?? "",
+      name: normalizeOnboardingName(state.activeProfile.name),
       handle: state.activeProfile.handle ?? "",
       headline: state.activeProfile.headline ?? "",
       headerImageUrl: null,
@@ -1198,18 +1218,31 @@ export default function DashboardSetupFlow({
           contactSeededFromAccount
             ? { ...mappedContact, email: userEmail ?? "" }
             : mappedContact;
-        const localProfileDraft = readOnboardingDraftCache<ProfileDraft>(
+        const rawLocalProfileDraft = readOnboardingDraftCache<ProfileDraft>(
           userId,
           "profile"
         );
+        const localProfileDraft = rawLocalProfileDraft
+          ? {
+              ...rawLocalProfileDraft,
+              draft: normalizeOnboardingProfileDraft(
+                rawLocalProfileDraft.draft
+              ),
+              savedDraft: rawLocalProfileDraft.savedDraft
+                ? normalizeOnboardingProfileDraft(
+                    rawLocalProfileDraft.savedDraft
+                  )
+                : undefined,
+            }
+          : null;
         const rawLocalContactDraft = readOnboardingDraftCache<ContactDraft>(
           userId,
           "contact"
         );
         const localProfileDirty = Boolean(
-          localProfileDraft &&
-            buildProfileDraftSignature(localProfileDraft.draft) !==
-              localProfileDraft.savedSignature
+          rawLocalProfileDraft &&
+            buildProfileDraftSignature(rawLocalProfileDraft.draft) !==
+              rawLocalProfileDraft.savedSignature
         );
         const nextProfile =
           localProfileDirty && localProfileDraft
@@ -1265,7 +1298,10 @@ export default function DashboardSetupFlow({
           ? localContactDraft?.savedDraft ?? seededContact
           : nextContact;
         savedProfileSignatureRef.current = localProfileDirty
-          ? localProfileDraft?.savedSignature ?? buildProfileDraftSignature(mappedProfile)
+          ? localProfileDraft?.savedDraft
+            ? buildProfileDraftSignature(localProfileDraft.savedDraft)
+            : localProfileDraft?.savedSignature ??
+              buildProfileDraftSignature(mappedProfile)
           : buildProfileDraftSignature(nextProfile);
         savedContactSignatureRef.current = buildContactDraftSignature(
           localContactDirty ? seededContact : nextContact,
@@ -1290,18 +1326,31 @@ export default function DashboardSetupFlow({
           error instanceof Error
             ? error.message
             : "Unable to load your setup flow.";
-        const localProfileDraft = readOnboardingDraftCache<ProfileDraft>(
+        const rawLocalProfileDraft = readOnboardingDraftCache<ProfileDraft>(
           userId,
           "profile"
         );
+        const localProfileDraft = rawLocalProfileDraft
+          ? {
+              ...rawLocalProfileDraft,
+              draft: normalizeOnboardingProfileDraft(
+                rawLocalProfileDraft.draft
+              ),
+              savedDraft: rawLocalProfileDraft.savedDraft
+                ? normalizeOnboardingProfileDraft(
+                    rawLocalProfileDraft.savedDraft
+                  )
+                : undefined,
+            }
+          : null;
         const rawLocalContactDraft = readOnboardingDraftCache<ContactDraft>(
           userId,
           "contact"
         );
         const localProfileDirty = Boolean(
-          localProfileDraft &&
-            buildProfileDraftSignature(localProfileDraft.draft) !==
-              localProfileDraft.savedSignature
+          rawLocalProfileDraft &&
+            buildProfileDraftSignature(rawLocalProfileDraft.draft) !==
+              rawLocalProfileDraft.savedSignature
         );
         const fallbackProfile = localProfileDraft?.draft ?? null;
         const localContactDraft = normalizeContactDraftCache(
@@ -1341,8 +1390,10 @@ export default function DashboardSetupFlow({
             ? localContactDraft?.savedDraft ?? null
             : fallbackContact;
           savedProfileSignatureRef.current =
-            localProfileDraft?.savedSignature ??
-            buildProfileDraftSignature(fallbackProfile);
+            localProfileDirty && localProfileDraft?.savedDraft
+              ? buildProfileDraftSignature(localProfileDraft.savedDraft)
+              : localProfileDraft?.savedSignature ??
+                buildProfileDraftSignature(fallbackProfile);
           savedContactSignatureRef.current =
             localContactDraft?.savedSignature ??
             buildContactDraftSignature(fallbackContact, fallbackProfile.name);
@@ -3293,7 +3344,7 @@ export default function DashboardSetupFlow({
                           <Input
                             id="setup-name"
                             value={profileDraft.name}
-                            placeholder="Jane Smith"
+                            placeholder="Name"
                             className={fieldInputClassName}
                             onChange={(event) => {
                               const nextName = event.target.value;

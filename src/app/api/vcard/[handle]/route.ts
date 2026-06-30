@@ -203,8 +203,12 @@ export async function GET(
     }
 
     const { account, profile } = payload;
-    const fallbackName =
-      profile.name || account.display_name || profile.handle || handle;
+    const fallbackName = resolveVCardName(
+      null,
+      profile.name,
+      profile.handle || handle,
+      account.display_name
+    );
     const fallbackTitle = profile.headline?.trim() || "";
 
     const vcardRecord = await fetchVCardRecord(account.user_id);

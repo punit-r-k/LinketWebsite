@@ -20,6 +20,29 @@ test("preserves an explicitly saved contact-card name", () => {
   );
 });
 
+test("replaces the legacy contact-card placeholder with the editor name", () => {
+  assert.equal(
+    resolveVCardName(
+      "Linket Public Profile",
+      "Punit Kothakonda",
+      "punit"
+    ),
+    "Punit Kothakonda"
+  );
+});
+
+test("uses the account name when the public profile still has the legacy placeholder", () => {
+  assert.equal(
+    resolveVCardName(
+      null,
+      "Linket Public Profile",
+      "punit",
+      "Punit Kothakonda"
+    ),
+    "Punit Kothakonda"
+  );
+});
+
 test("uses the public-profile editor photo when no contact photo is saved", () => {
   assert.equal(
     resolveVCardPhotoData(null, null, publicProfilePhoto),

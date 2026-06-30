@@ -43,7 +43,10 @@ import { isPublicProfilePathname } from "@/lib/routing";
 import { toast } from "@/components/system/toaster";
 import { LEGAL_PAGE_LINKS } from "@/components/site/legal-page-actions";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
-import { getSiteOrigin } from "@/lib/site-url";
+import {
+  getSiteOrigin,
+  toCanonicalPublicProfileUrl,
+} from "@/lib/site-url";
 import { scrollWindowTo } from "@/lib/scroll";
 import type { DashboardNotificationItem } from "@/lib/dashboard-notifications";
 import {
@@ -628,6 +631,9 @@ function Navbar() {
   }, [markNotificationsAsOpened, markNotificationsAsRead, notificationsOpen]);
 
   const profileUrl = accountHandle ? buildPublicProfileUrl(accountHandle) : null;
+  const shareProfileUrl = accountHandle
+    ? toCanonicalPublicProfileUrl(accountHandle)
+    : null;
 
   const handleViewProfile = () => {
     if (!profileUrl) return;
@@ -645,9 +651,9 @@ function Navbar() {
     }, 2000);
   };
 
-  const copyProfileLinkToClipboard = async () => {
-    if (!profileUrl) return;
-    await navigator.clipboard.writeText(profileUrl);
+  const copyProfileLinkToClipboard = async (targetUrl = profileUrl) => {
+    if (!targetUrl) return;
+    await navigator.clipboard.writeText(targetUrl);
     markProfileLinkCopied();
   };
 
@@ -663,12 +669,12 @@ function Navbar() {
   };
 
   const handleShareProfileLink = async () => {
-    if (!profileUrl) return;
+    if (!shareProfileUrl) return;
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
           title: `${brand.name} public profile`,
-          url: profileUrl,
+          url: shareProfileUrl,
         });
         return;
       } catch (error) {
@@ -678,7 +684,7 @@ function Navbar() {
       }
     }
     try {
-      await copyProfileLinkToClipboard();
+      await copyProfileLinkToClipboard(shareProfileUrl);
       toast({
         title: "Link copied",
         description: "Public page link copied to clipboard.",
@@ -1321,7 +1327,7 @@ function Navbar() {
                 variant="outline"
                 className="dashboard-view-profile-button dashboard-share-link-button rounded-full cursor-pointer disabled:cursor-not-allowed md:hidden"
                 onClick={handleShareProfileLink}
-                disabled={!profileUrl}
+                disabled={!shareProfileUrl}
                 aria-label="Share public profile link"
                 title="Share public profile link"
               >

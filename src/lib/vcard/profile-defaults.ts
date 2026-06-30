@@ -1,14 +1,24 @@
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
 
+const LEGACY_DEFAULT_PROFILE_NAME = "linket public profile";
+
+function normalizeNameCandidate(value: string | null | undefined) {
+  const name = value?.trim() ?? "";
+  if (!name || name.toLowerCase() === LEGACY_DEFAULT_PROFILE_NAME) return "";
+  return name;
+}
+
 export function resolveVCardName(
   contactName: string | null | undefined,
   publicProfileName: string | null | undefined,
-  handle: string
+  handle: string,
+  accountName?: string | null
 ) {
   return (
-    contactName?.trim() ||
-    publicProfileName?.trim() ||
-    handle.trim()
+    normalizeNameCandidate(contactName) ||
+    normalizeNameCandidate(publicProfileName) ||
+    normalizeNameCandidate(accountName) ||
+    normalizeNameCandidate(handle)
   );
 }
 

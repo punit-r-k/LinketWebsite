@@ -9,6 +9,7 @@ import { validateJsonBody, validateSearchParams } from "@/lib/request-validation
 import { rejectUntrustedWrite } from "@/lib/request-security";
 import { createServerSupabase } from "@/lib/supabase/server";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
+import { resolveVCardName } from "@/lib/vcard/profile-defaults";
 
 type VCardFields = {
   fullName: string;
@@ -180,10 +181,12 @@ async function loadPublicProfileDefaults(userId: string) {
   ).catch(() => null);
 
   return {
-    fullName:
-      activeProfile?.name?.trim() ||
-      account?.display_name?.trim() ||
-      "",
+    fullName: resolveVCardName(
+      null,
+      activeProfile?.name,
+      activeProfile?.handle ?? "",
+      account?.display_name
+    ),
     title: activeProfile?.headline?.trim() || "",
     defaultPhotoName:
       account?.avatar_original_file_name?.trim() || "profile-photo.jpg",
@@ -197,7 +200,7 @@ function applyPublicProfileDefaults(
 ): VCardFields {
   return {
     ...fields,
-    fullName: fields.fullName.trim() || defaults.fullName,
+    fullName: resolveVCardName(fields.fullName, defaults.fullName, ""),
     title: fields.title.trim() || defaults.title,
   };
 }
@@ -299,7 +302,8 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServerSupabase();
 
-    const { fields } = body;
+    const defaults = await loadPublicProfileDefaults(body.userId);
+    const fields = applyPublicProfileDefaults(body.fields, defaults);
     const photoData = sanitizeVCardPhotoData(fields.photoData);
     const savedFields: VCardFields = {
       ...fields,
