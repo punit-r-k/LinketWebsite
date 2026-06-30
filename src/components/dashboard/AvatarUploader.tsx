@@ -747,7 +747,7 @@ export default function AvatarUploader({
                   ? "Uploading crop..."
                   : autoSave
                     ? "Unsaved crop. It saves automatically after you stop moving."
-                    : "Adjust the crop, then save when you're ready."}
+                    : "Adjust and Save"}
               </span>
               <Button
                 type="button"
