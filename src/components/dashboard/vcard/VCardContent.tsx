@@ -8,7 +8,6 @@ import {
   useState,
   type ChangeEvent,
   type FocusEvent,
-  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -26,6 +25,10 @@ import {
 import { supabase } from "@/lib/supabase";
 import { confirmRemove } from "@/lib/confirm-remove";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
+import {
+  useImageCropGesture,
+  type CropPoint,
+} from "@/components/dashboard/useImageCropGesture";
 
 const OUTPUT_SIZE = 256;
 const MIN_ZOOM = 0.1;
@@ -220,14 +223,12 @@ export default function VCardContent({
   const queuedPersistRef = useRef(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
   const photoFileInputRef = useRef<HTMLInputElement | null>(null);
-  const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const [photoSourceUrl, setPhotoSourceUrl] = useState<string | null>(null);
   const [photoSourceName, setPhotoSourceName] = useState<string | null>(null);
   const [imageMeta, setImageMeta] = useState<{ width: number; height: number } | null>(null);
   const [previewReady, setPreviewReady] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  const [offset, setOffset] = useState<CropPoint>({ x: 0, y: 0 });
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -295,8 +296,13 @@ export default function VCardContent({
 
   const previewScale = baseScale * zoom;
 
+  const applyCropTransform = useCallback((nextZoom: number, nextOffset: CropPoint) => {
+    setZoom(nextZoom);
+    setOffset(nextOffset);
+  }, []);
+
   const clampOffset = useCallback(
-    (next: { x: number; y: number }, nextZoom = zoom, meta = imageMeta): { x: number; y: number } => {
+    (next: CropPoint, nextZoom: number, meta = imageMeta): CropPoint => {
       if (!meta) return next;
       const scale = baseScale * nextZoom;
       const halfWidth = (meta.width * scale) / 2;
@@ -308,8 +314,22 @@ export default function VCardContent({
         y: Math.max(-limitY, Math.min(limitY, next.y)),
       };
     },
-    [baseScale, zoom, imageMeta, cropHalf]
+    [baseScale, imageMeta, cropHalf]
   );
+
+  const {
+    isInteracting: isAdjustingCrop,
+    resetGesture: resetCropGesture,
+    cropGestureHandlers,
+  } = useImageCropGesture({
+    enabled: previewReady && status !== "saving",
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
+    zoom,
+    offset,
+    clampOffset,
+    onTransform: applyCropTransform,
+  });
 
   const resetPhotoEditor = useCallback(() => {
     if (photoSourceUrl?.startsWith("blob:")) {
@@ -322,10 +342,9 @@ export default function VCardContent({
     setPhotoSourceName(null);
     setImageMeta(null);
     setPreviewReady(false);
-    setZoom(1);
-    setOffset({ x: 0, y: 0 });
-    setIsDragging(false);
-  }, [photoSourceUrl]);
+    resetCropGesture();
+    applyCropTransform(1, { x: 0, y: 0 });
+  }, [applyCropTransform, photoSourceUrl, resetCropGesture]);
 
   function handlePhotoChange(file: File | null) {
     resetPhotoEditor();
@@ -333,32 +352,6 @@ export default function VCardContent({
     setPhotoSourceUrl(URL.createObjectURL(file));
     setPhotoSourceName(file.name);
   }
-
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!previewReady || event.button !== 0) return;
-    setIsDragging(true);
-    pointerPosition.current = { x: event.clientX, y: event.clientY };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }, [previewReady]);
-
-  const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      event.preventDefault();
-      const deltaX = event.clientX - pointerPosition.current.x;
-      const deltaY = event.clientY - pointerPosition.current.y;
-      pointerPosition.current = { x: event.clientX, y: event.clientY };
-      setOffset((prev) => clampOffset({ x: prev.x + deltaX, y: prev.y + deltaY }));
-    },
-    [isDragging, clampOffset]
-  );
-
-  const handlePointerUp = useCallback((event?: ReactPointerEvent<HTMLDivElement>) => {
-    if (event && event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    setIsDragging(false);
-  }, []);
 
   useEffect(() => {
     if (!photoSourceUrl) return;
@@ -369,8 +362,7 @@ export default function VCardContent({
       if (cancelled) return;
       setImageMeta({ width: img.naturalWidth, height: img.naturalHeight });
       setPreviewReady(true);
-      setOffset({ x: 0, y: 0 });
-      setZoom(1);
+      applyCropTransform(1, { x: 0, y: 0 });
     };
     img.onerror = () => {
       if (cancelled) return;
@@ -380,11 +372,19 @@ export default function VCardContent({
     return () => {
       cancelled = true;
     };
-  }, [photoSourceUrl, resetPhotoEditor]);
+  }, [applyCropTransform, photoSourceUrl, resetPhotoEditor]);
 
   useEffect(() => {
-    setOffset((current) => clampOffset(current));
-  }, [zoom, clampOffset]);
+    setOffset((current) => clampOffset(current, zoom));
+  }, [clampOffset, zoom]);
+
+  const handleZoomChange = useCallback(
+    (nextValue: number) => {
+      const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, nextValue));
+      applyCropTransform(nextZoom, clampOffset(offset, nextZoom));
+    },
+    [applyCropTransform, clampOffset, offset]
+  );
 
   useEffect(() => {
     let active = true;
@@ -994,12 +994,9 @@ export default function VCardContent({
               <div
                 className="relative mx-auto flex touch-none items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab active:cursor-grabbing"
                 style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
+                {...cropGestureHandlers}
                 role="application"
-                aria-label="Profile photo crop preview"
+                aria-label="Profile photo crop preview. Drag to move the photo. Pinch with two fingers to zoom."
               >
                 {!previewReady && (
                   <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
@@ -1043,7 +1040,10 @@ export default function VCardContent({
                   </svg>
                 </div>
               </div>
-              <div className="space-y-2">
+              <p className="text-center text-xs text-muted-foreground">
+                Use one finger to move the photo. Pinch with two fingers to zoom.
+              </p>
+              <div className="hidden space-y-2 sm:block">
                 <label htmlFor="vcard-photo-zoom" className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground">
                   Zoom:
                   <span className="text-[11px] font-semibold text-foreground">
@@ -1057,7 +1057,7 @@ export default function VCardContent({
                   max={MAX_ZOOM}
                   step={ZOOM_STEP}
                   value={zoom}
-                  onChange={(event) => setZoom(Number(event.target.value))}
+                  onChange={(event) => handleZoomChange(Number(event.target.value))}
                   className="w-full accent-primary"
                 />
               </div>
@@ -1079,7 +1079,7 @@ export default function VCardContent({
                   size="sm"
                   className="h-10 w-full rounded-full sm:h-8 sm:w-auto"
                   onClick={() => void handlePhotoApply()}
-                  disabled={!previewReady || !imageMeta || isDragging || status === "saving"}
+                  disabled={!previewReady || !imageMeta || isAdjustingCrop || status === "saving"}
                 >
                   Save crop
                 </Button>

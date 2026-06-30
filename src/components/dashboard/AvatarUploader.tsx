@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
   type DragEvent,
-  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -29,6 +28,10 @@ import {
   rememberOriginalUploadFileName,
 } from "@/lib/upload-filename-cache";
 import { cn } from "@/lib/utils";
+import {
+  useImageCropGesture,
+  type CropPoint,
+} from "@/components/dashboard/useImageCropGesture";
 
 type Props = {
   userId: string;
@@ -47,19 +50,6 @@ type Props = {
   onSaveStateChange?: (state: "saved" | "saving" | "unsaved" | "error") => void;
 };
 
-type Point = {
-  x: number;
-  y: number;
-};
-
-type PinchGesture = {
-  distance: number;
-  center: Point;
-  centerRelativeToPreview: Point;
-  zoom: number;
-  offset: Point;
-};
-
 const OUTPUT_SIZE = 640;
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 3;
@@ -70,23 +60,6 @@ function getAutoSaveRetryDelay(attempt: number) {
   return AUTO_SAVE_RETRY_DELAYS_MS[
     Math.min(Math.max(attempt, 0), AUTO_SAVE_RETRY_DELAYS_MS.length - 1)
   ];
-}
-
-function clampZoom(value: number) {
-  return Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, value));
-}
-
-function getPinchMetrics(pointers: Map<number, Point>) {
-  const [first, second] = Array.from(pointers.values());
-  if (!first || !second) return null;
-
-  return {
-    center: {
-      x: (first.x + second.x) / 2,
-      y: (first.y + second.y) / 2,
-    },
-    distance: Math.hypot(second.x - first.x, second.y - first.y),
-  };
 }
 
 export default function AvatarUploader({
@@ -119,10 +92,6 @@ export default function AvatarUploader({
   const cropHalf = cropSize / 2;
   const cropCorner = Math.round(cropSize * 0.22);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const activePointersRef = useRef<Map<number, Point>>(new Map());
-  const pinchGestureRef = useRef<PinchGesture | null>(null);
-  const zoomRef = useRef(1);
-  const offsetRef = useRef<Point>({ x: 0, y: 0 });
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -134,7 +103,7 @@ export default function AvatarUploader({
   const [previewReady, setPreviewReady] = useState(false);
   const [latestAvatarUrl, setLatestAvatarUrl] = useState<string | null>(avatarUrl ?? null);
   const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState<Point>({ x: 0, y: 0 });
+  const [offset, setOffset] = useState<CropPoint>({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
@@ -149,15 +118,13 @@ export default function AvatarUploader({
 
   const previewScale = baseScale * zoom;
 
-  const applyCropTransform = useCallback((nextZoom: number, nextOffset: Point) => {
-    zoomRef.current = nextZoom;
-    offsetRef.current = nextOffset;
+  const applyCropTransform = useCallback((nextZoom: number, nextOffset: CropPoint) => {
     setZoom(nextZoom);
     setOffset(nextOffset);
   }, []);
 
   const clampOffset = useCallback(
-    (next: Point, nextZoom = zoom, meta = imageMeta): Point => {
+    (next: CropPoint, nextZoom: number, meta = imageMeta): CropPoint => {
       if (!meta) return next;
       const scale = baseScale * nextZoom;
       const halfWidth = (meta.width * scale) / 2;
@@ -169,8 +136,22 @@ export default function AvatarUploader({
         y: Math.max(-limitY, Math.min(limitY, next.y)),
       };
     },
-    [baseScale, zoom, imageMeta, cropHalf]
+    [baseScale, imageMeta, cropHalf]
   );
+
+  const {
+    isInteracting: isAdjustingCrop,
+    resetGesture: resetCropGesture,
+    cropGestureHandlers,
+  } = useImageCropGesture({
+    enabled: previewReady && !loading,
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
+    zoom,
+    offset,
+    clampOffset,
+    onTransform: applyCropTransform,
+  });
 
   const resetEditor = useCallback(() => {
     if (sourceUrl) {
@@ -179,11 +160,10 @@ export default function AvatarUploader({
     setSourceUrl(null);
     setImageMeta(null);
     setPreviewReady(false);
-    activePointersRef.current.clear();
-    pinchGestureRef.current = null;
+    resetCropGesture();
     applyCropTransform(1, { x: 0, y: 0 });
     setError(null);
-  }, [applyCropTransform, sourceUrl]);
+  }, [applyCropTransform, resetCropGesture, sourceUrl]);
 
   const handleFile = useCallback(
     (file: File | null) => {
@@ -281,127 +261,18 @@ export default function AvatarUploader({
   }, [applyCropTransform, sourceUrl, resetEditor]);
 
   useEffect(() => {
-    const nextOffset = clampOffset(offsetRef.current, zoomRef.current);
-    offsetRef.current = nextOffset;
-    setOffset(nextOffset);
-  }, [clampOffset]);
-
-  const handlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (
-        !previewReady ||
-        loading ||
-        (event.pointerType === "mouse" && event.button !== 0) ||
-        activePointersRef.current.has(event.pointerId) ||
-        activePointersRef.current.size >= 2
-      ) {
-        return;
-      }
-
-      event.preventDefault();
-      activePointersRef.current.set(event.pointerId, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-      event.currentTarget.setPointerCapture(event.pointerId);
-
-      if (activePointersRef.current.size === 2) {
-        const metrics = getPinchMetrics(activePointersRef.current);
-        if (!metrics) return;
-        const bounds = event.currentTarget.getBoundingClientRect();
-        pinchGestureRef.current = {
-          distance: Math.max(metrics.distance, 1),
-          center: metrics.center,
-          centerRelativeToPreview: {
-            x: metrics.center.x - (bounds.left + bounds.width / 2),
-            y: metrics.center.y - (bounds.top + bounds.height / 2),
-          },
-          zoom: zoomRef.current,
-          offset: { ...offsetRef.current },
-        };
-      }
-    },
-    [loading, previewReady]
-  );
-
-  const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      const previousPoint = activePointersRef.current.get(event.pointerId);
-      if (!previousPoint) return;
-
-      event.preventDefault();
-      activePointersRef.current.set(event.pointerId, {
-        x: event.clientX,
-        y: event.clientY,
-      });
-
-      if (activePointersRef.current.size === 2) {
-        const metrics = getPinchMetrics(activePointersRef.current);
-        const gesture = pinchGestureRef.current;
-        if (!metrics || !gesture) return;
-
-        const nextZoom = clampZoom(
-          gesture.zoom * (metrics.distance / gesture.distance)
-        );
-        const zoomRatio = nextZoom / gesture.zoom;
-        const centerDelta = {
-          x: metrics.center.x - gesture.center.x,
-          y: metrics.center.y - gesture.center.y,
-        };
-        const focalPoint = {
-          x: gesture.centerRelativeToPreview.x - gesture.offset.x,
-          y: gesture.centerRelativeToPreview.y - gesture.offset.y,
-        };
-        const nextOffset = clampOffset(
-          {
-            x:
-              gesture.offset.x +
-              centerDelta.x +
-              (1 - zoomRatio) * focalPoint.x,
-            y:
-              gesture.offset.y +
-              centerDelta.y +
-              (1 - zoomRatio) * focalPoint.y,
-          },
-          nextZoom
-        );
-
-        applyCropTransform(nextZoom, nextOffset);
-        return;
-      }
-
-      pinchGestureRef.current = null;
-      const nextOffset = clampOffset(
-        {
-          x: offsetRef.current.x + event.clientX - previousPoint.x,
-          y: offsetRef.current.y + event.clientY - previousPoint.y,
-        },
-        zoomRef.current
-      );
-      applyCropTransform(zoomRef.current, nextOffset);
-    },
-    [applyCropTransform, clampOffset]
-  );
-
-  const handlePointerEnd = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!activePointersRef.current.has(event.pointerId)) return;
-
-    activePointersRef.current.delete(event.pointerId);
-    pinchGestureRef.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-  }, []);
+    setOffset((current) => clampOffset(current, zoom));
+  }, [clampOffset, zoom]);
 
   const handleZoomChange = useCallback(
     (nextValue: number) => {
-      const nextZoom = clampZoom(nextValue);
+      const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, nextValue));
       applyCropTransform(
         nextZoom,
-        clampOffset(offsetRef.current, nextZoom)
+        clampOffset(offset, nextZoom)
       );
     },
-    [applyCropTransform, clampOffset]
+    [applyCropTransform, clampOffset, offset]
   );
 
   const handleDrop = useCallback(
@@ -622,7 +493,7 @@ export default function AvatarUploader({
   }, [cropSnapshot, error]);
 
   useEffect(() => {
-    if (!autoSave || !cropSnapshot || loading) {
+    if (!autoSave || !cropSnapshot || loading || isAdjustingCrop) {
       if (!cropSnapshot) {
         autoSaveSnapshotRef.current = "";
         autoSaveRetryAttemptRef.current = 0;
@@ -645,7 +516,7 @@ export default function AvatarUploader({
     }, shouldRetryFailedSnapshot ? getAutoSaveRetryDelay(autoSaveRetryAttemptRef.current) : 900);
 
     return () => window.clearTimeout(timer);
-  }, [autoSave, cropSnapshot, error, handleUpload, loading]);
+  }, [autoSave, cropSnapshot, error, handleUpload, isAdjustingCrop, loading]);
 
   const saveState = loading
     ? "saving"
@@ -785,11 +656,7 @@ export default function AvatarUploader({
             <div
               className="relative mx-auto flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
               style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerEnd}
-              onPointerCancel={handlePointerEnd}
-              onLostPointerCapture={handlePointerEnd}
+              {...cropGestureHandlers}
               role="application"
               aria-label="Avatar crop preview. Drag to move the photo. Pinch with two fingers to zoom."
             >
@@ -852,7 +719,7 @@ export default function AvatarUploader({
               {cropGestureHint}
             </p>
 
-            <div className="space-y-2">
+            <div className="hidden space-y-2 sm:block">
               <label
                 htmlFor="avatar-zoom"
                 className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground"
@@ -895,7 +762,7 @@ export default function AvatarUploader({
                 size="sm"
                 className="h-10 rounded-full px-4 sm:h-8"
                 onClick={() => void handleUpload()}
-                disabled={!previewReady || loading}
+                disabled={!previewReady || loading || isAdjustingCrop}
               >
                 {autoSave ? "Save now" : "Save photo"}
               </Button>
@@ -953,11 +820,7 @@ export default function AvatarUploader({
               <div
                 className="relative cursor-grab touch-none active:cursor-grabbing"
                 style={{ width: previewSize, height: previewSize }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerEnd}
-                onPointerCancel={handlePointerEnd}
-                onLostPointerCapture={handlePointerEnd}
+                {...cropGestureHandlers}
                 role="application"
                 aria-label="Avatar crop preview. Drag to move the photo. Pinch with two fingers to zoom."
               >
@@ -1091,7 +954,7 @@ export default function AvatarUploader({
             </div>
 
             {sourceUrl && (
-              <div className="space-y-2">
+              <div className="hidden space-y-2 sm:block">
                 <label
                   htmlFor="avatar-zoom"
                   className={cn(
@@ -1126,7 +989,7 @@ export default function AvatarUploader({
                     size="sm"
                     className="h-10 rounded-full px-4"
                     onClick={() => void handleUpload()}
-                    disabled={!previewReady || loading}
+                    disabled={!previewReady || loading || isAdjustingCrop}
                   >
                     {autoSave ? "Save now" : "Save photo"}
                   </Button>

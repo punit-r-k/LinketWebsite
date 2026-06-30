@@ -7,7 +7,6 @@ import {
   useRef,
   useState,
   type DragEvent,
-  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -28,6 +27,10 @@ import {
   rememberOriginalUploadFileName,
 } from "@/lib/upload-filename-cache";
 import { cn } from "@/lib/utils";
+import {
+  useImageCropGesture,
+  type CropPoint,
+} from "@/components/dashboard/useImageCropGesture";
 
 type Props = {
   userId: string;
@@ -87,7 +90,6 @@ export default function ProfileHeaderUploader({
   const cropHalfWidth = cropWidth / 2;
   const cropHalfHeight = cropHeight / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -99,8 +101,7 @@ export default function ProfileHeaderUploader({
   const [previewReady, setPreviewReady] = useState(false);
   const [latestHeaderUrl, setLatestHeaderUrl] = useState<string | null>(headerUrl ?? null);
   const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  const [offset, setOffset] = useState<CropPoint>({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDraggingOver, setDraggingOver] = useState(false);
@@ -112,8 +113,13 @@ export default function ProfileHeaderUploader({
 
   const previewScale = baseScale * zoom;
 
+  const applyCropTransform = useCallback((nextZoom: number, nextOffset: CropPoint) => {
+    setZoom(nextZoom);
+    setOffset(nextOffset);
+  }, []);
+
   const clampOffset = useCallback(
-    (next: { x: number; y: number }, nextZoom = zoom, meta = imageMeta): { x: number; y: number } => {
+    (next: CropPoint, nextZoom: number, meta = imageMeta): CropPoint => {
       if (!meta) return next;
       const scale = baseScale * nextZoom;
       const halfWidth = (meta.width * scale) / 2;
@@ -125,8 +131,22 @@ export default function ProfileHeaderUploader({
         y: Math.max(-limitY, Math.min(limitY, next.y)),
       };
     },
-    [baseScale, zoom, imageMeta, cropHalfWidth, cropHalfHeight]
+    [baseScale, imageMeta, cropHalfWidth, cropHalfHeight]
   );
+
+  const {
+    isInteracting: isAdjustingCrop,
+    resetGesture: resetCropGesture,
+    cropGestureHandlers,
+  } = useImageCropGesture({
+    enabled: previewReady && !loading,
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
+    zoom,
+    offset,
+    clampOffset,
+    onTransform: applyCropTransform,
+  });
 
   const resetEditor = useCallback(() => {
     if (sourceUrl) {
@@ -135,10 +155,10 @@ export default function ProfileHeaderUploader({
     setSourceUrl(null);
     setImageMeta(null);
     setPreviewReady(false);
-    setZoom(1);
-    setOffset({ x: 0, y: 0 });
+    resetCropGesture();
+    applyCropTransform(1, { x: 0, y: 0 });
     setError(null);
-  }, [sourceUrl]);
+  }, [applyCropTransform, resetCropGesture, sourceUrl]);
 
   const handleFile = useCallback(
     (file: File | null) => {
@@ -222,8 +242,7 @@ export default function ProfileHeaderUploader({
       if (cancelled) return;
       setImageMeta({ width: img.naturalWidth, height: img.naturalHeight });
       setPreviewReady(true);
-      setOffset({ x: 0, y: 0 });
-      setZoom(1);
+      applyCropTransform(1, { x: 0, y: 0 });
     };
     img.onerror = () => {
       if (cancelled) return;
@@ -234,37 +253,19 @@ export default function ProfileHeaderUploader({
     return () => {
       cancelled = true;
     };
-  }, [sourceUrl, resetEditor]);
+  }, [applyCropTransform, sourceUrl, resetEditor]);
 
   useEffect(() => {
-    setOffset((current) => clampOffset(current));
-  }, [zoom, clampOffset]);
+    setOffset((current) => clampOffset(current, zoom));
+  }, [clampOffset, zoom]);
 
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!previewReady || loading || event.button !== 0) return;
-    setIsDragging(true);
-    pointerPosition.current = { x: event.clientX, y: event.clientY };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }, [loading, previewReady]);
-
-  const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      event.preventDefault();
-      const deltaX = event.clientX - pointerPosition.current.x;
-      const deltaY = event.clientY - pointerPosition.current.y;
-      pointerPosition.current = { x: event.clientX, y: event.clientY };
-      setOffset((prev) => clampOffset({ x: prev.x + deltaX, y: prev.y + deltaY }));
+  const handleZoomChange = useCallback(
+    (nextValue: number) => {
+      const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, nextValue));
+      applyCropTransform(nextZoom, clampOffset(offset, nextZoom));
     },
-    [isDragging, clampOffset]
+    [applyCropTransform, clampOffset, offset]
   );
-
-  const handlePointerUp = useCallback((event?: ReactPointerEvent<HTMLDivElement>) => {
-    if (event && event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    setIsDragging(false);
-  }, []);
 
   const handleDrop = useCallback(
     (event: DragEvent<HTMLElement>) => {
@@ -435,8 +436,11 @@ export default function ProfileHeaderUploader({
     }
   }, [loading, latestHeaderUrl, sourceUrl, profileId, userId, onUploaded, resetEditor]);
 
+  const cropGestureHint = isSmallScreen
+    ? "Use one finger to move the photo. Pinch with two fingers to zoom."
+    : "Drag to move the photo within the fixed crop.";
   const helperText = sourceFile
-    ? "Drag to reposition the image inside the crop."
+    ? cropGestureHint
     : "Upload a photo to start cropping.";
 
   const previewContainerClassName = cn(
@@ -533,12 +537,9 @@ export default function ProfileHeaderUploader({
             <div
               className="relative mx-auto flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
               style={{ width: "100%", maxWidth: `${previewWidth}px`, height: `${previewHeight}px` }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
+              {...cropGestureHandlers}
               role="application"
-              aria-label="Header crop preview"
+              aria-label="Header crop preview. Drag to move the photo. Pinch with two fingers to zoom."
             >
               {!previewReady && (
                 <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
@@ -586,7 +587,11 @@ export default function ProfileHeaderUploader({
               </div>
             </div>
 
-            <div className="space-y-2">
+            <p className="text-center text-xs text-muted-foreground">
+              {cropGestureHint}
+            </p>
+
+            <div className="hidden space-y-2 sm:block">
               <label
                 htmlFor="header-zoom"
                 className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground"
@@ -603,7 +608,7 @@ export default function ProfileHeaderUploader({
                 max={MAX_ZOOM}
                 step={ZOOM_STEP}
                 value={zoom}
-                onChange={(event) => setZoom(Number(event.target.value))}
+                onChange={(event) => handleZoomChange(Number(event.target.value))}
                 disabled={loading}
                 className="dashboard-zoom-slider w-full"
               />
@@ -637,7 +642,7 @@ export default function ProfileHeaderUploader({
                 size="sm"
                 className="h-10 rounded-full px-4 sm:h-8"
                 onClick={() => void handleUpload()}
-                disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+                disabled={!sourceUrl || !previewReady || !imageMeta || loading || isAdjustingCrop}
               >
                 Save crop
               </Button>
@@ -687,12 +692,9 @@ export default function ProfileHeaderUploader({
               <div
                 className="relative cursor-grab touch-none active:cursor-grabbing"
                 style={{ width: previewWidth, height: previewHeight }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
+                {...cropGestureHandlers}
                 role="application"
-                aria-label="Header crop preview"
+                aria-label="Header crop preview. Drag to move the photo. Pinch with two fingers to zoom."
               >
                 {!previewReady && (
                   <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
@@ -820,7 +822,7 @@ export default function ProfileHeaderUploader({
             </div>
 
             {sourceUrl && (
-              <div className="space-y-2">
+              <div className="hidden space-y-2 sm:block">
                 <label
                   htmlFor="header-zoom"
                   className={cn(
@@ -840,7 +842,7 @@ export default function ProfileHeaderUploader({
                   max={MAX_ZOOM}
                   step={ZOOM_STEP}
                   value={zoom}
-                  onChange={(event) => setZoom(Number(event.target.value))}
+                  onChange={(event) => handleZoomChange(Number(event.target.value))}
                   disabled={loading}
                   className="dashboard-zoom-slider w-full"
                 />
@@ -854,7 +856,7 @@ export default function ProfileHeaderUploader({
                   size="sm"
                   className="h-8 rounded-full px-4"
                   onClick={() => void handleUpload()}
-                  disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+                  disabled={!sourceUrl || !previewReady || !imageMeta || loading || isAdjustingCrop}
                 >
                   Save crop
                 </Button>

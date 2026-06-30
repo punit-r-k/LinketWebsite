@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
   type DragEvent,
-  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +26,10 @@ import {
   rememberOriginalUploadFileName,
 } from "@/lib/upload-filename-cache";
 import { cn } from "@/lib/utils";
+import {
+  useImageCropGesture,
+  type CropPoint,
+} from "@/components/dashboard/useImageCropGesture";
 
 type Props = {
   userId: string;
@@ -83,7 +86,6 @@ export default function ProfileLogoUploader({
   const rectGuideX = (previewSize - rectGuideWidth) / 2;
   const rectGuideOffset = (previewSize - rectGuideHeight) / 2;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const pointerPosition = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const [sourceFile, setSourceFile] = useState<File | null>(null);
   const [inputFileName, setInputFileName] = useState<string | null>(null);
@@ -95,8 +97,7 @@ export default function ProfileLogoUploader({
   const [previewReady, setPreviewReady] = useState(false);
   const [latestLogoUrl, setLatestLogoUrl] = useState<string | null>(logoUrl ?? null);
   const [zoom, setZoom] = useState(1);
-  const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
+  const [offset, setOffset] = useState<CropPoint>({ x: 0, y: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [, setDraggingOver] = useState(false);
@@ -105,6 +106,39 @@ export default function ProfileLogoUploader({
     if (!imageMeta) return 1;
     return Math.max(cropSize / imageMeta.width, cropSize / imageMeta.height);
   }, [imageMeta, cropSize]);
+
+  const applyCropTransform = useCallback((nextZoom: number, nextOffset: CropPoint) => {
+    setZoom(nextZoom);
+    setOffset(nextOffset);
+  }, []);
+
+  const clampOffset = useCallback(
+    (next: CropPoint, nextZoom: number): CropPoint => {
+      if (!imageMeta) return next;
+      const scale = baseScale * nextZoom;
+      const limitX = Math.max(0, (imageMeta.width * scale) / 2 - cropHalf);
+      const limitY = Math.max(0, (imageMeta.height * scale) / 2 - cropHalf);
+      return {
+        x: Math.max(-limitX, Math.min(limitX, next.x)),
+        y: Math.max(-limitY, Math.min(limitY, next.y)),
+      };
+    },
+    [baseScale, cropHalf, imageMeta]
+  );
+
+  const {
+    isInteracting: isAdjustingCrop,
+    resetGesture: resetCropGesture,
+    cropGestureHandlers,
+  } = useImageCropGesture({
+    enabled: previewReady && !loading,
+    minZoom: MIN_ZOOM,
+    maxZoom: MAX_ZOOM,
+    zoom,
+    offset,
+    clampOffset,
+    onTransform: applyCropTransform,
+  });
 
   useEffect(() => {
     setLatestLogoUrl(logoUrl ?? null);
@@ -139,11 +173,10 @@ export default function ProfileLogoUploader({
     setSourceUrl(null);
     setImageMeta(null);
     setPreviewReady(false);
-    setZoom(1);
-    setOffset({ x: 0, y: 0 });
-    setIsDragging(false);
+    resetCropGesture();
+    applyCropTransform(1, { x: 0, y: 0 });
     setDraggingOver(false);
-  }, []);
+  }, [applyCropTransform, resetCropGesture]);
 
   const handleFile = useCallback(
     (file: File | null) => {
@@ -205,33 +238,17 @@ export default function ProfileLogoUploader({
     setDraggingOver(false);
   }, []);
 
-  const handlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!previewReady || loading) return;
-      setIsDragging(true);
-      pointerPosition.current = { x: event.clientX, y: event.clientY };
-    },
-    [loading, previewReady]
-  );
+  useEffect(() => {
+    setOffset((current) => clampOffset(current, zoom));
+  }, [clampOffset, zoom]);
 
-  const handlePointerMove = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      const prev = pointerPosition.current;
-      const next = { x: event.clientX, y: event.clientY };
-      const delta = { x: next.x - prev.x, y: next.y - prev.y };
-      pointerPosition.current = next;
-      setOffset((current) => ({
-        x: current.x + delta.x,
-        y: current.y + delta.y,
-      }));
+  const handleZoomChange = useCallback(
+    (nextValue: number) => {
+      const nextZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, nextValue));
+      applyCropTransform(nextZoom, clampOffset(offset, nextZoom));
     },
-    [isDragging]
+    [applyCropTransform, clampOffset, offset]
   );
-
-  const handlePointerUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
 
   const handleCropReady = useCallback(async () => {
     if (!sourceUrl) return;
@@ -413,6 +430,9 @@ export default function ProfileLogoUploader({
   );
   const logoFrameClassName = logoShape === "circle" ? "rounded-full" : "rounded-xl";
   const logoFrameBgClassName = logoBackgroundWhite ? "bg-white" : "bg-background/80";
+  const cropGestureHint = isSmallScreen
+    ? "Use one finger to move the photo. Pinch with two fingers to zoom."
+    : "Drag to move the photo within the fixed crop.";
 
   const displayUrl = sourceUrl || latestLogoUrl;
   const visibleFileName = inputFileName ?? persistedFileName;
@@ -516,15 +536,12 @@ export default function ProfileLogoUploader({
             <div
               className="relative mx-auto flex items-center justify-center overflow-hidden rounded-2xl border bg-muted/40 cursor-grab touch-none active:cursor-grabbing"
               style={{ width: "100%", maxWidth: `${previewSize}px`, height: `${previewSize}px` }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerUp}
+              {...cropGestureHandlers}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               role="application"
-              aria-label="Logo crop preview"
+              aria-label="Logo crop preview. Drag to move the photo. Pinch with two fingers to zoom."
             >
               {!previewReady && (
                 <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
@@ -594,7 +611,11 @@ export default function ProfileLogoUploader({
                 </div>
               </div>
 
-            <div className="space-y-2">
+            <p className="text-center text-xs text-muted-foreground">
+              {cropGestureHint}
+            </p>
+
+            <div className="hidden space-y-2 sm:block">
               <label
                 htmlFor="logo-zoom"
                 className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground"
@@ -611,7 +632,7 @@ export default function ProfileLogoUploader({
                 max={MAX_ZOOM}
                 step={ZOOM_STEP}
                 value={zoom}
-                onChange={(event) => setZoom(Number(event.target.value))}
+                onChange={(event) => handleZoomChange(Number(event.target.value))}
                 disabled={loading}
                 className="dashboard-zoom-slider w-full"
               />
@@ -645,7 +666,7 @@ export default function ProfileLogoUploader({
                 size="sm"
                 className="h-10 rounded-full px-4 sm:h-8"
                 onClick={() => void handleUpload()}
-                disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+                disabled={!sourceUrl || !previewReady || !imageMeta || loading || isAdjustingCrop}
               >
                 Save crop
               </Button>
@@ -698,12 +719,9 @@ export default function ProfileLogoUploader({
               <div
                 className="relative cursor-grab touch-none active:cursor-grabbing"
                 style={{ width: previewSize, height: previewSize }}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerLeave={handlePointerUp}
+                {...cropGestureHandlers}
                 role="application"
-                aria-label="Logo crop preview"
+                aria-label="Logo crop preview. Drag to move the photo. Pinch with two fingers to zoom."
               >
                 {!previewReady && (
                   <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-muted/60 text-sm text-muted-foreground">
@@ -805,7 +823,10 @@ export default function ProfileLogoUploader({
           </div>
           {sourceUrl ? (
             <div className="mx-auto w-full max-w-sm space-y-3">
-              <div className="space-y-2">
+              <p className="text-center text-xs text-muted-foreground">
+                {cropGestureHint}
+              </p>
+              <div className="hidden space-y-2 sm:block">
                 <label
                   htmlFor="logo-zoom-default"
                   className="flex items-center justify-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground"
@@ -822,7 +843,7 @@ export default function ProfileLogoUploader({
                   max={MAX_ZOOM}
                   step={ZOOM_STEP}
                   value={zoom}
-                  onChange={(event) => setZoom(Number(event.target.value))}
+                  onChange={(event) => handleZoomChange(Number(event.target.value))}
                   disabled={loading}
                   className="dashboard-zoom-slider w-full"
                 />
@@ -853,7 +874,7 @@ export default function ProfileLogoUploader({
                   size="sm"
                   className="h-10 rounded-full px-4 sm:h-8"
                   onClick={() => void handleUpload()}
-                  disabled={!sourceUrl || !previewReady || !imageMeta || loading || isDragging}
+                  disabled={!sourceUrl || !previewReady || !imageMeta || loading || isAdjustingCrop}
                 >
                   Save crop
                 </Button>
