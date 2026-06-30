@@ -1,5 +1,6 @@
 import type { ContactProfile, Address, Email, Phone } from "@/lib/profile.store";
 import { normalizePublicLinkUrlInput } from "@/lib/public-link-url";
+import { MAX_EMBEDDED_VCARD_PHOTO_BYTES } from "./photo";
 import { escapeText } from "./escape";
 import { foldLine } from "./fold";
 
@@ -56,13 +57,12 @@ function toVCardPhotoType(mime: string | undefined) {
 
 function toPhoto(p: ContactProfile): string | null {
   if (!p.photo) return null;
-  const maxEmbeddedPhotoBytes = 500 * 1024;
   const trimmedDataUrl = p.photo.dataUrl?.trim() ?? "";
   const dataUrlMatch = trimmedDataUrl.match(/^data:([^;,]+);base64,([\s\S]+)$/i);
   const mime = p.photo.mime || dataUrlMatch?.[1] || undefined;
   const base64 = (dataUrlMatch?.[2] ?? trimmedDataUrl).replace(/\s+/g, "");
   if (!base64 || !/^[a-z0-9+/]+={0,2}$/i.test(base64)) return null;
-  if (base64.length * 0.75 > maxEmbeddedPhotoBytes) return null;
+  if (base64.length * 0.75 > MAX_EMBEDDED_VCARD_PHOTO_BYTES) return null;
   const type = toVCardPhotoType(mime);
   return `PHOTO;ENCODING=b;TYPE=${type}:${base64}`;
 }

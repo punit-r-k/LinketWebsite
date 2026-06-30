@@ -4,7 +4,12 @@ import { getActiveProfileForPublicHandle } from "@/lib/profile-service";
 import type { ContactProfile } from "@/lib/profile.store";
 import { sanitizeAttachmentFilename } from "@/lib/security";
 import { isSupabaseAdminAvailable, supabaseAdmin } from "@/lib/supabase-admin";
+import { loadAvatarPhotoDataUrl } from "@/lib/vcard/avatar-photo.server";
 import { sanitizeVCardPhotoData } from "@/lib/vcard/photo";
+import {
+  resolveVCardName,
+  resolveVCardPhotoData,
+} from "@/lib/vcard/profile-defaults";
 import type { ProfileLinkRecord } from "@/types/db";
 
 export const dynamic = "force-dynamic";
@@ -60,12 +65,17 @@ function buildContactProfile(
   fallbackTitle: string,
   links: ProfileLinkRecord[],
   uid: string,
-  updatedAt: string
+  updatedAt: string,
+  publicProfilePhotoData: string | null
 ): ContactProfile {
-  const name = record?.full_name?.trim() || fallbackName;
+  const name = resolveVCardName(record?.full_name, fallbackName, handle);
   const { firstName, lastName } = splitName(name);
   const parsedAddress = parseAddress(record?.address ?? null);
-  const photoData = sanitizeVCardPhotoData(record?.photo_data);
+  const photoData = resolveVCardPhotoData(
+    record?.photo_data,
+    record?.photo_removed_at,
+    publicProfilePhotoData
+  );
   const title = record?.title?.trim() || fallbackTitle.trim();
   const primaryEmail = record?.email?.trim() ?? "";
   const primaryPhone = record?.phone?.trim() ?? "";
@@ -99,10 +109,7 @@ function buildContactProfile(
       : undefined,
     note: record?.note ?? undefined,
     address: parsedAddress ?? undefined,
-    photo:
-      photoData && !record?.photo_removed_at
-        ? { dataUrl: photoData }
-        : undefined,
+    photo: photoData ? { dataUrl: photoData } : undefined,
     links: links
       .map((link) => ({
         title: link.title || undefined,
@@ -208,9 +215,16 @@ export async function GET(
       );
     }
     const displayedLinks = getDisplayedProfileLinks(profile.links);
+    const needsPublicProfilePhoto =
+      !vcardRecord?.photo_removed_at &&
+      !sanitizeVCardPhotoData(vcardRecord?.photo_data);
+    const publicProfilePhotoData = needsPublicProfilePhoto
+      ? await loadAvatarPhotoDataUrl(account.avatar_url).catch(() => null)
+      : null;
     const updatedAt = getLatestTimestamp([
       vcardRecord?.updated_at,
       profile.updated_at,
+      account.avatar_updated_at,
       ...displayedLinks.map((link) => link.updated_at ?? link.created_at),
     ]);
 
@@ -221,7 +235,8 @@ export async function GET(
       fallbackTitle,
       displayedLinks,
       `urn:uuid:${profile.id}`,
-      updatedAt
+      updatedAt,
+      publicProfilePhotoData
     );
     const vcard = buildVCard(contactProfile);
 

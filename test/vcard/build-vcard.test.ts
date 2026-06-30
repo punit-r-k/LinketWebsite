@@ -36,3 +36,14 @@ test("does not embed remote or inherited photo URLs", () => {
   assert.doesNotMatch(vcard, /^PHOTO/m);
   assert.doesNotMatch(vcard, /avatar\.jpg/);
 });
+
+test("includes the contact name in full and structured fields", () => {
+  const vcard = buildVCard({
+    handle: "punit",
+    firstName: "Punit Anand",
+    lastName: "Kothakonda",
+  });
+
+  assert.match(vcard, /^FN:Punit Anand Kothakonda\r$/m);
+  assert.match(vcard, /^N:Kothakonda;Punit Anand;;;\r$/m);
+});
