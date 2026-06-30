@@ -568,7 +568,12 @@ export default function AvatarUploader({
         {!sourceUrl ? (
           <div className={UPLOADER_TWO_COLUMN_ROW_CLASS}>
             <div className={UPLOADER_MEDIA_COLUMN_CLASS}>
-              <div className={cn(UPLOADER_AVATAR_PREVIEW_CLASS, "border-2 border-[var(--accent)]")}>
+              <div
+                className={cn(
+                  UPLOADER_AVATAR_PREVIEW_CLASS,
+                  "rounded-3xl border-2 border-[var(--accent)]"
+                )}
+              >
                 {displayUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={displayUrl} alt="Profile photo" className="h-full w-full object-cover" />
