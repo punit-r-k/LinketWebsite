@@ -12,6 +12,10 @@ import { validateJsonBody, validateSearchParams } from "@/lib/request-validation
 import { ensurePublishedLeadFormRow } from "@/lib/lead-form.server";
 import { sanitizeThemeForPlan } from "@/lib/plan-access";
 import { getDashboardPlanAccessForUser } from "@/lib/plan-access.server";
+import {
+  isOwnedResumeStorageUrl,
+  isResumeProfileLink,
+} from "@/lib/profile-link-resume";
 import { sanitizePublicLinkUrl } from "@/lib/security";
 import { normalizeThemeName } from "@/lib/themes";
 import { isSupabaseAdminAvailable } from "@/lib/supabase-admin";
@@ -339,6 +343,9 @@ function isUuid(value: string | null | undefined): value is string {
 type ExistingLinkState = {
   is_active: boolean;
   is_override: boolean;
+  link_type: string | null;
+  title: string;
+  url: string;
 };
 
 type IncomingLinkForSave = {
@@ -360,7 +367,9 @@ function normalizeIncomingLinksForSave(
     isActive?: boolean;
     isOverride?: boolean;
   }>,
-  existingById: Map<string, ExistingLinkState>
+  existingById: Map<string, ExistingLinkState>,
+  userId: string,
+  profileId: string
 ): IncomingLinkForSave[] {
   const indexed = links.map((link, index) => ({
     ...link,
@@ -392,11 +401,25 @@ function normalizeIncomingLinksForSave(
       : hasExplicitActive
       ? Boolean(link.isActive)
       : existing?.is_active ?? true;
+    const existingIsResume = existing
+      ? isResumeProfileLink(existing)
+      : false;
+    const linkType =
+      existingIsResume || link.linkType === "resume" ? "resume" : "link";
+    const url = sanitizePublicLinkUrl(link.url);
+    if (
+      linkType === "resume" &&
+      !isOwnedResumeStorageUrl(url, userId, profileId)
+    ) {
+      throw new Error(
+        "Resume links can only be changed by uploading a PDF in the resume editor."
+      );
+    }
     return {
       id: suppliedId,
       title: link.title,
-      url: sanitizePublicLinkUrl(link.url),
-      linkType: link.linkType === "resume" ? "resume" : "link",
+      url,
+      linkType,
       order_index: index,
       isActive,
       isOverride,
@@ -776,7 +799,7 @@ export async function POST(request: NextRequest) {
 
     const { data: existingLinks, error: existingError } = await supabase
       .from("profile_links")
-      .select("id,is_active,is_override")
+      .select("id,is_active,is_override,link_type,title,url")
       .eq("profile_id", profileId);
     if (existingError) throw new Error(existingError.message);
 
@@ -788,12 +811,18 @@ export async function POST(request: NextRequest) {
           is_override: Boolean(
             (row as { is_override?: boolean | null }).is_override
           ),
+          link_type:
+            (row as { link_type?: string | null }).link_type ?? null,
+          title: (row as { title?: string | null }).title ?? "",
+          url: (row as { url?: string | null }).url ?? "",
         },
       ])
     );
     const normalizedLinks = normalizeIncomingLinksForSave(
       linksForSave,
-      existingLinkStateById
+      existingLinkStateById,
+      userId,
+      profileId
     );
     const selectedOverrideOrderIndex =
       normalizedLinks.find((link) => link.isOverride)?.order_index ?? null;

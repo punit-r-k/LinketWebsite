@@ -73,3 +73,13 @@ export function extractResumeStoragePath(value: string | null | undefined) {
 
   return null;
 }
+
+export function isOwnedResumeStorageUrl(
+  value: string | null | undefined,
+  userId: string,
+  profileId: string
+) {
+  const path = extractResumeStoragePath(value);
+  if (!path) return false;
+  return path.startsWith(`${userId}/${profileId}/`);
+}

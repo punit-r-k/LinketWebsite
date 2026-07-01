@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   extractResumeStoragePath,
+  isOwnedResumeStorageUrl,
   isResumeProfileLink,
 } from "../src/lib/profile-link-resume";
 
@@ -52,5 +53,19 @@ test("preserves a valid object path without treating URLs as paths", () => {
   assert.equal(
     extractResumeStoragePath("user-id/profile-id/resume.pdf"),
     "user-id/profile-id/resume.pdf"
+  );
+});
+
+test("accepts resume URLs only when the object belongs to the profile", () => {
+  const url =
+    "https://example.supabase.co/storage/v1/object/public/profile-resumes/user-id/profile-id/resume.pdf";
+
+  assert.equal(
+    isOwnedResumeStorageUrl(url, "user-id", "profile-id"),
+    true
+  );
+  assert.equal(
+    isOwnedResumeStorageUrl(url, "different-user", "profile-id"),
+    false
   );
 });

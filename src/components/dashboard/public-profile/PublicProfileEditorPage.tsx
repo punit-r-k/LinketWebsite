@@ -2359,6 +2359,8 @@ function EditorLinkItem({
   onToggleLink: (linkId: string) => void;
   onRemoveLink: (linkId: string) => void;
 }) {
+  const isResumeLink = isResumeLinkItem(link);
+  const resumeFileName = isResumeLink ? formatResumeFileName(link.url) : "";
   const handleCommitOnEnter = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
     event.preventDefault();
@@ -2405,14 +2407,27 @@ function EditorLinkItem({
             enterKeyHint="next"
             className="h-9 text-left text-sm"
           />
-          <LinkUrlInput
-            value={link.url}
-            placeholder="www.website.com"
-            className="h-9 text-sm"
-            enterKeyHint="done"
-            onValueChange={(url) => onUpdateLink(link.id, { url })}
-            onKeyDown={handleCommitOnEnter}
-          />
+          {isResumeLink ? (
+            <div
+              className="flex h-9 min-w-0 items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-3 text-sm text-muted-foreground"
+              aria-label={`Resume file: ${resumeFileName}`}
+            >
+              <FileText className="h-4 w-4 shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1 truncate">{resumeFileName}</span>
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide">
+                Fixed
+              </span>
+            </div>
+          ) : (
+            <LinkUrlInput
+              value={link.url}
+              placeholder="www.website.com"
+              className="h-9 text-sm"
+              enterKeyHint="done"
+              onValueChange={(url) => onUpdateLink(link.id, { url })}
+              onKeyDown={handleCommitOnEnter}
+            />
+          )}
           <div
             data-tour={showOverrideTourTarget ? "profile-override-link" : undefined}
             className="mt-1 flex items-start gap-2 rounded-md border border-border/50 bg-muted/20 px-2 py-2"
@@ -3277,6 +3292,10 @@ function LinkModal({
                     </span>
                   </p>
                 ) : null}
+                <p className="text-xs leading-5 text-muted-foreground">
+                  The resume link is generated from the uploaded PDF and cannot
+                  be edited directly.
+                </p>
                 {resumeUploadError ? (
                   <p className="break-words rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs leading-5 text-destructive">
                     <span className="font-semibold">Resume PDF error: </span>
